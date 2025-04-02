@@ -2,8 +2,10 @@ package com.example.adbpurrytify.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -14,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -49,11 +52,21 @@ fun SongsListRow(song: Song) {
 }
 
 @Composable
-fun SongsList(songs: List<Song>) {
-    LazyColumn {
+fun SongsList(songs: List<Song>, height: Int, showBorder: Boolean) {
+    LazyColumn(modifier = Modifier
+        .height(height.dp)
+        .border(
+            width = 4.dp,
+            color =
+                if (showBorder) Color(255, 0, 0, 255)
+                else Color(255, 0, 0, 0)
+        )
+    ) {
         songs.forEach { song ->
-            item {
-                SongsListRow(song)
+            for (i in 1..5) {
+                item {
+                    SongsListRow(song)
+                }
             }
         }
     }
@@ -68,6 +81,6 @@ fun TestSongsList() {
 
     var songs = listOf(song1, song2, song3)
     ADBPurrytifyTheme {
-        SongsList(songs)
+        SongsList(songs, 400, true)
     }
 }
