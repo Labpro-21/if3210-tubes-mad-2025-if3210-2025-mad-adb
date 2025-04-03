@@ -14,7 +14,7 @@ import androidx.navigation.compose.composable
 
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.adbpurrytify.HomePage
+import com.example.adbpurrytify.ui.screens.HomePage
 import com.example.adbpurrytify.ui.screens.LoginScreen
 import com.example.adbpurrytify.ui.screens.SplashScreen
 

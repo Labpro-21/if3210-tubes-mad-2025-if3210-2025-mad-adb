@@ -1,4 +1,4 @@
-package com.example.adbpurrytify
+package com.example.adbpurrytify.ui.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
