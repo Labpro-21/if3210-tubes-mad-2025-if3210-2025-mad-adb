@@ -16,6 +16,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.adbpurrytify.ui.screens.HomePage
 import com.example.adbpurrytify.ui.screens.LoginScreen
+import com.example.adbpurrytify.ui.screens.SongPlayer
 import com.example.adbpurrytify.ui.screens.SplashScreen
 
 @Composable
@@ -73,6 +74,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
 
             composable(Screen.Library.route) {
                 // TO DO
+                SongPlayer()
             }
 
             composable(Screen.Profile.route) {
