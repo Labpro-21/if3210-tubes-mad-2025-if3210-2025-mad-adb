@@ -1,13 +1,15 @@
 package com.example.adbpurrytify.ui.screens
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
@@ -20,28 +22,76 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.adbpurrytify.R
+import com.example.adbpurrytify.data.model.User
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
 
 @Composable
-fun ProfileScreen(userName: String, location: String) {
+fun ProfileScreen(user: User) {
+    val padding = 8.dp
     ADBPurrytifyTheme {
         Surface {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.padding(all = 8.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Row(
+                    modifier = Modifier.padding(all = 8.dp)
+                ) {
                     Image(
                         painter = painterResource(R.drawable.remembering_sunday),
                         contentDescription = "User Profile Picture",
                         modifier = Modifier
-                            .size(100.dp)
+                            .size(120.dp)
                             .clip(CircleShape)
                     )
-
-                    Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text(text = userName)
-                Text(text = location)
-                Button(onClick = {}) {
+                Text(text = user.userName)
+                Text(text = user.location)
+                Button(
+                    onClick = {},
+                    enabled = true
+                ) {
                     Text("Edit Profile")
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxHeight(1/8f)
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .clickable(true, onClick = {})
+                            .fillMaxHeight()
+                            .fillMaxWidth(1/3f)
+                            .requiredHeight(50.dp)
+                    ) {
+                        Text("135")
+                        Text("Songs")
+                    }
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .clickable(true, onClick = {})
+                            .fillMaxHeight()
+                            .fillMaxWidth(1/2f)
+                            .requiredHeight(50.dp)
+                    ) {
+                        Text("32")
+                        Text("Liked")
+                    }
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .clickable(true, onClick = {})
+                            .fillMaxHeight()
+                            .fillMaxWidth(1f)
+                            .requiredHeight(50.dp)
+                    ) {
+                        Text("50")
+                        Text("Listened")
+                    }
                 }
             }
         }
@@ -51,9 +101,19 @@ fun ProfileScreen(userName: String, location: String) {
 @Preview
 @Composable
 fun PreviewProfileScreen() {
+    val user: User = User(
+        id = 0,
+        userName = "13522XX",
+        email = "test@email.com",
+        image = "pathToImage",
+        location = "ID",
+        createdAt = "10/10/2010",
+        updatedAt = "10/10/2010"
+    )
+
     ADBPurrytifyTheme {
         Surface {
-            ProfileScreen(userName = "13522XX", location = "ID")
+            ProfileScreen(user)
         }
     }
 }

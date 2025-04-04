@@ -1,21 +1,18 @@
 package com.example.adbpurrytify.ui.navigation
 
-import android.util.Log
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.compose.composable
-
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.example.adbpurrytify.ui.screens.HomePage
 import com.example.adbpurrytify.ui.screens.LoginScreen
+import com.example.adbpurrytify.ui.screens.PreviewProfileScreen
 import com.example.adbpurrytify.ui.screens.SongPlayer
 import com.example.adbpurrytify.ui.screens.SplashScreen
 
@@ -79,6 +76,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
 
             composable(Screen.Profile.route) {
                 // TO DO
+                PreviewProfileScreen()
             }
 
         }
