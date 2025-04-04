@@ -2,15 +2,19 @@ package com.example.adbpurrytify.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -28,66 +32,74 @@ import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
 @Composable
 fun ProfileScreen(user: User) {
     val padding = 8.dp
+    val columnFillHeight = 70.dp
     ADBPurrytifyTheme {
         Surface {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding),
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
+
             ) {
+                Spacer(modifier = Modifier.padding(padding * 2))
                 Row(
-                    modifier = Modifier.padding(all = 8.dp)
+                    modifier = Modifier.padding(all = padding)
                 ) {
                     Image(
                         painter = painterResource(R.drawable.remembering_sunday),
                         contentDescription = "User Profile Picture",
                         modifier = Modifier
-                            .size(120.dp)
+                            .size(150.dp)
                             .clip(CircleShape)
                     )
                 }
+                Spacer(modifier = Modifier.padding(padding * 1/2f))
                 Text(text = user.userName)
+                Spacer(modifier = Modifier.padding(padding * 1/8f))
                 Text(text = user.location)
+                Spacer(modifier = Modifier.padding(padding * 1/2f))
                 Button(
                     onClick = {},
                     enabled = true
                 ) {
                     Text("Edit Profile")
                 }
-                Row(
-                    modifier = Modifier
-                        .fillMaxHeight(1/8f)
-                ) {
+                Spacer(modifier = Modifier.padding(padding * 1/2))
+                Row {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .clickable(true, onClick = {})
                             .fillMaxHeight()
                             .fillMaxWidth(1/3f)
-                            .requiredHeight(50.dp)
+                            .requiredHeight(columnFillHeight),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text("135")
                         Text("Songs")
                     }
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .clickable(true, onClick = {})
                             .fillMaxHeight()
                             .fillMaxWidth(1/2f)
-                            .requiredHeight(50.dp)
+                            .requiredHeight(columnFillHeight),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text("32")
                         Text("Liked")
                     }
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .clickable(true, onClick = {})
                             .fillMaxHeight()
                             .fillMaxWidth(1f)
-                            .requiredHeight(50.dp)
+                            .requiredHeight(columnFillHeight),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text("50")
                         Text("Listened")
@@ -101,12 +113,12 @@ fun ProfileScreen(user: User) {
 @Preview
 @Composable
 fun PreviewProfileScreen() {
-    val user: User = User(
+    val user = User(
         id = 0,
-        userName = "13522XX",
+        userName = "My Username",
         email = "test@email.com",
         image = "pathToImage",
-        location = "ID",
+        location = "Indonesia",
         createdAt = "10/10/2010",
         updatedAt = "10/10/2010"
     )
