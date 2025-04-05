@@ -13,6 +13,9 @@ val Pink40 = Color(0xFF7D5260)
 
 val BLACK_BACKGROUND = Color(0xFF121212)
 
+val TEXT_FIELD_BACKGROUND = Color(0xFF292929)
+val TEXT_FIELD_TEXT = Color(0xFFE0E0E0)
+
 
 // Color palette from spec
 val Green = Color(0xff1db954)
