@@ -25,9 +25,9 @@ fun HomePage() {
             }
 
             // ini masih placeholder
-            var song1 = Song("Remembering Sunday", "All Time Low", "drawable/remembering_sunday.jpeg")
-            var song2 = Song("Gold Steps", "Neck Deep", "drawable/remembering_sunday.jpeg")
-            var song3 = Song("Re:make", "ONE OK ROCK", "drawable/remembering_sunday.jpeg")
+            var song1 = Song(id=1,"Remembering Sunday", "All Time Low", "drawable/remembering_sunday.jpeg")
+            var song2 = Song(id=2,"Gold Steps", "Neck Deep", "drawable/remembering_sunday.jpeg")
+            var song3 = Song(id=3,"Re:make", "ONE OK ROCK", "drawable/remembering_sunday.jpeg")
             var songs = mutableListOf<Song>()
             for (i in 1..5) {
                 songs.add(song1)

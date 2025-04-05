@@ -78,9 +78,9 @@ fun HorizontalSongsList(songs: List<Song>, showBorder: Boolean) {
 
 @Composable
 fun HorizontalTestSongsList() {
-    var song1 = Song("Remembering Sunday", "All Time Low", "drawable/remembering_sunday.jpeg")
-    var song2 = Song("Gold Steps", "Neck Deep", "drawable/remembering_sunday.jpeg")
-    var song3 = Song("Re:make", "ONE OK ROCK", "drawable/remembering_sunday.jpeg")
+    var song1 = Song(1, "Remembering Sunday", "All Time Low", "drawable/remembering_sunday.jpeg")
+    var song2 = Song(2, "Gold Steps", "Neck Deep", "drawable/remembering_sunday.jpeg")
+    var song3 = Song(3, "Re:make", "ONE OK ROCK", "drawable/remembering_sunday.jpeg")
     var songs = mutableListOf<Song>()
     for (i in 1..5) {
         songs.add(song1)
