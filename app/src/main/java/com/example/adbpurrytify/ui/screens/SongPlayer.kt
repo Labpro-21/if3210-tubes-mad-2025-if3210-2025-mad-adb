@@ -99,9 +99,14 @@ object SongPlayer {
     }
 
     fun seekTo(position: Long) {
-        player!!.playWhenReady = false
+        var wasPlaying = player!!.playWhenReady
+        if (player!!.playWhenReady)
+            player!!.playWhenReady = false
+
         player!!.seekTo(position)
-        player!!.playWhenReady = true
+
+        if (wasPlaying)
+            player!!.playWhenReady = true
     }
 
     fun release() {
