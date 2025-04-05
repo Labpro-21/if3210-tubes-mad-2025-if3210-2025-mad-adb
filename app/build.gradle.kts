@@ -40,6 +40,11 @@ android {
 }
 
 dependencies {
+
+    // for sys ui colors
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.27.0")
+
+
     implementation("androidx.media3:media3-common:1.4.1")
     implementation("io.coil-kt.coil3:coil-compose:3.0.0")
 //    implementation("androidx.media3:media3-ui:1.0")
