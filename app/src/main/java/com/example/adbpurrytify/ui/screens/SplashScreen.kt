@@ -28,7 +28,7 @@ fun SplashScreen(navController: NavController) {
     }
 
     // To do: Implement the isLoggedIn functionality
-    val isLoggedIn = true
+    val isLoggedIn = false
 
     LaunchedEffect(key1 = true) {
         scale.animateTo(

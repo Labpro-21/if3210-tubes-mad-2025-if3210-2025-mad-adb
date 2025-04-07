@@ -10,6 +10,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.adbpurrytify.data.model.Song
 import com.example.adbpurrytify.ui.components.HorizontalSongsList
+import com.example.adbpurrytify.ui.components.RecyclerSongsList
 import com.example.adbpurrytify.ui.components.SongsList
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
 
@@ -25,9 +26,9 @@ fun HomePage() {
             }
 
             // ini masih placeholder
-            var song1 = Song(id=1,"Remembering Sunday", "All Time Low", "drawable/remembering_sunday.jpeg")
-            var song2 = Song(id=2,"Gold Steps", "Neck Deep", "drawable/remembering_sunday.jpeg")
-            var song3 = Song(id=3,"Re:make", "ONE OK ROCK", "drawable/remembering_sunday.jpeg")
+            var song1 = Song(1, "Remembering Sunday", "All Time Low", "file:///sdcard/Download/remembering_sunday.jpeg", "")
+            var song2 = Song(2, "Gold Steps", "Neck Deep", "", "")
+            var song3 = Song(3, "Re:make", "ONE OK ROCK", "", "")
             var songs = mutableListOf<Song>()
             for (i in 1..5) {
                 songs.add(song1)
@@ -41,7 +42,7 @@ fun HomePage() {
                 Text("Recently Played", modifier = Modifier.padding(start = 12.dp, top = 36.dp))
             }
 
-            SongsList(songs, height = 800, showBorder = false)
+            RecyclerSongsList(songs, height = 800, showBorder = true)
         }
     }
 }
