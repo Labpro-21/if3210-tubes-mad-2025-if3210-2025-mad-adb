@@ -1,6 +1,7 @@
 package com.example.adbpurrytify.ui.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -60,8 +61,11 @@ fun AddSong() {
                                 .padding(all = padding)
                         ) {
                             Image(
-                                painter = painterResource(R.drawable.remembering_sunday),
-                                contentDescription = "Upload Photo"
+                                painter = painterResource(R.drawable.upload_photo),
+                                contentDescription = "Upload Photo",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clickable(true, onClick = {})
                             )
                         }
                         Box(
@@ -70,8 +74,11 @@ fun AddSong() {
                                 .padding(all = padding)
                         ) {
                             Image(
-                                painter = painterResource(R.drawable.remembering_sunday),
-                                contentDescription = "Upload File"
+                                painter = painterResource(R.drawable.upload_file),
+                                contentDescription = "Upload File",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clickable(true, onClick = {})
                             )
                         }
                     }
