@@ -84,7 +84,7 @@ fun RecyclerSongsList(songs: List<Song>, height: Int, showBorder: Boolean) {
         modifier = Modifier
             .height(height.dp)
             .clip(RectangleShape)
-            .background(Color.Black)
+            .background(BLACK_BACKGROUND)
     ) {
         AndroidView(
             factory = { context ->
