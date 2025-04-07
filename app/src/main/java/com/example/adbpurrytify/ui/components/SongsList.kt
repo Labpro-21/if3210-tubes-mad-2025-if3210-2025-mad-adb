@@ -34,6 +34,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.model.Song
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
+import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
 
 @Composable
 fun SongsListRow(song: Song) {
@@ -105,7 +106,7 @@ fun RecyclerSongsList(songs: List<Song>, height: Int, showBorder: Boolean) {
             modifier = Modifier
                 .height(height.dp)
                 .fillMaxWidth()
-                .background(Color(0,0,0))
+                .background(BLACK_BACKGROUND)
         )
     }
 }
