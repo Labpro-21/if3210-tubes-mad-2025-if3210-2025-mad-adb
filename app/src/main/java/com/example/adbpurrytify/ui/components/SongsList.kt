@@ -5,6 +5,7 @@ import android.widget.TextView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -21,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -76,24 +78,36 @@ fun SongsList(songs: List<Song>, height: Int, showBorder: Boolean) {
 
 @Composable
 fun RecyclerSongsList(songs: List<Song>, height: Int, showBorder: Boolean) {
-    AndroidView(
-        factory = { context ->
-            RecyclerView(context).apply {
-                layoutManager = LinearLayoutManager(context)
-                adapter = SongAdapter(songs)
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    height
-                )
-                if (showBorder) {
-                    setBackgroundColor(android.graphics.Color.RED)
-                }
-            }
-        },
+
+    Box(
         modifier = Modifier
             .height(height.dp)
-            .fillMaxWidth()
-    )
+            .clip(RectangleShape)
+            .background(Color.Black)
+    ) {
+        AndroidView(
+            factory = { context ->
+                RecyclerView(context).apply {
+                    layoutManager = LinearLayoutManager(context)
+                    adapter = SongAdapter(songs)
+                    layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        height
+                    )
+                    if (showBorder) {
+                        setBackgroundColor(android.graphics.Color.RED)
+                    }
+                    setPadding(0, 0, 0, 0)
+                    clipToPadding = true
+                    clipChildren = true
+                }
+            },
+            modifier = Modifier
+                .height(height.dp)
+                .fillMaxWidth()
+                .background(Color(0,0,0))
+        )
+    }
 }
 
 
