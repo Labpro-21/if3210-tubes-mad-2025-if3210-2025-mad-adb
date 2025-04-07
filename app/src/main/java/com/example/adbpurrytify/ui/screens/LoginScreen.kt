@@ -189,6 +189,7 @@ fun LoginScreen(navController: NavController) {
 
             PurritifyButton(
                 text = "Log In",
+                onClick =  {}
             )
         }
     }
