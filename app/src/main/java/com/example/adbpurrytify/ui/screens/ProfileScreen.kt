@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -60,7 +61,7 @@ fun ProfileScreen(user: User) {
                 Spacer(modifier = Modifier.padding(padding * 1/8f))
                 Text(text = user.location)
                 Spacer(modifier = Modifier.padding(padding * 1/2f))
-                Button(
+                FilledTonalButton(
                     onClick = {},
                     enabled = true
                 ) {
