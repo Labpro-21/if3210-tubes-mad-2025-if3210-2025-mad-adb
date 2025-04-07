@@ -40,7 +40,6 @@ android {
 }
 
 dependencies {
-
     // for sys ui colors
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.27.0")
 
@@ -56,6 +55,11 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.4.1")
     implementation("androidx.navigation:navigation-compose:2.8.9")
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
+
+    // Room
+    implementation(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

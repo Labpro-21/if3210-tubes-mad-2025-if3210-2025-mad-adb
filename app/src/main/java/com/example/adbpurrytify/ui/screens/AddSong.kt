@@ -31,7 +31,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
-import com.example.adbpurrytify.ui.theme.Green
 
 
 @OptIn(ExperimentalMaterial3Api::class)
