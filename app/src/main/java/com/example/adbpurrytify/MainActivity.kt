@@ -15,8 +15,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.ui.navigation.AppNavigation
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
+import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 
@@ -28,11 +30,17 @@ class MainActivity : ComponentActivity() {
     private val permissions = arrayOf(
         readAudio, readImages
     )
+    private lateinit var songViewModel: SongViewModel
+    private lateinit var appDatabase: AppDatabase
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
-
         super.onCreate(savedInstanceState)
+        // Create the AppDatabase instance
+        appDatabase = AppDatabase.getDatabase(applicationContext)
+        songViewModel = SongViewModel(appDatabase.songDao())
+
         enableEdgeToEdge()
         setContent {
             ADBPurrytifyTheme {

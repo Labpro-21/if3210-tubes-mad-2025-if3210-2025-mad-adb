@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -16,6 +17,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas")
+        }
+
+    //        annotationProcessorOptions {
+//            arguments += ["room.schemaLocation": "$projectDir/schemas".toString()]
+//        }
     }
 
     buildTypes {
@@ -31,6 +39,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
@@ -40,6 +49,11 @@ android {
 }
 
 dependencies {
+
+    // live data
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    implementation("androidx.compose.runtime:runtime-livedata:1.7.8")
+
     // for sys ui colors
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.27.0")
     implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06") // Use the latest stable/alpha version
@@ -67,8 +81,9 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
 
     // Room
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
+    implementation("androidx.room:room-ktx:2.5.0")
+    implementation("androidx.room:room-runtime:2.5.0")
+    ksp("androidx.room:room-compiler:2.5.0")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
