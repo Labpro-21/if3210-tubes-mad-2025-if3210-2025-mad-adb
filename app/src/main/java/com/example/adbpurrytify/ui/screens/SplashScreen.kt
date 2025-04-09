@@ -1,5 +1,6 @@
 package com.example.adbpurrytify.ui.screens
 
+import android.util.Log
 import android.view.animation.OvershootInterpolator
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -8,53 +9,79 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.* // Import remember and LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalContext // Import LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
 import com.example.adbpurrytify.R
+import com.example.adbpurrytify.api.RetrofitClient
+import com.example.adbpurrytify.data.AuthRepository
+import com.example.adbpurrytify.data.TokenManager // Import TokenManager
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(navController: NavController) {
-    val scale = remember {
-        Animatable(1f)
-    }
+    val scale = remember { Animatable(1f) }
+    val context = LocalContext.current // Get context for TokenManager initialization
 
-    // To do: Implement the isLoggedIn functionality
-    val isLoggedIn = false
+    // State to hold the login status after checking
+    // Start as null to indicate the check hasn't completed yet.
+    var loginStatusDetermined by remember { mutableStateOf<Boolean?>(null) }
 
-    LaunchedEffect(key1 = true) {
-        scale.animateTo(
-            targetValue = 1.3f,
-            animationSpec = tween(
-                durationMillis = 500,
-                easing = {
-                    OvershootInterpolator(2f).getInterpolation(it)
-                }
-            )
-        )
-        delay(3000L)
-        if (isLoggedIn) {
-            navController.navigate(Screen.Home.route) {
-                popUpTo(Screen.Splash.route) { inclusive = true }
-            }
-        } else {
-            navController.navigate(Screen.Login.route) {
-                popUpTo(Screen.Splash.route) { inclusive = true }
-            }
+    // Effect to initialize TokenManager and check login status ONCE
+    LaunchedEffect(key1 = Unit) {
+        TokenManager.initialize(context)
+        Log.d("SplashScreen", "Initializing TokenManager and checking token...")
+        try {
+            val authRepository = AuthRepository(RetrofitClient.instance)
+            val token = TokenManager.getAuthToken()
+            loginStatusDetermined = authRepository.isTokenValid()
+            Log.d("SplashScreen", "token is $token")
+            Log.d("SplashScreen", "Token check complete. Logged in: $loginStatusDetermined")
+        } catch (e: Exception) {
+            // Handle potential errors during TokenManager init or access
+            Log.e("SplashScreen", "Error checking login status", e)
+            loginStatusDetermined = false // Assume not logged in if error occurs
         }
     }
 
-    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().background(
-        BLACK_BACKGROUND
-    )) {
+    // Effect for animation and navigation, triggers when loginStatusDetermined changes from null
+    LaunchedEffect(key1 = loginStatusDetermined) {
+        // Only proceed if the login status has been determined (is not null)
+        if (loginStatusDetermined != null) {
+            Log.d("SplashScreen", "Login status determined ($loginStatusDetermined). Starting animation and navigation...")
+            scale.animateTo(
+                targetValue = 1.3f,
+                animationSpec = tween(
+                    durationMillis = 500,
+                    easing = { OvershootInterpolator(2f).getInterpolation(it) }
+                )
+            )
+            // Delay after animation completes - adjust as needed for UX
+            delay(1500L)
+
+            // Navigate based on the determined status
+            val destination = if (loginStatusDetermined == true) Screen.Home.route else Screen.Login.route
+            Log.d("SplashScreen", "Navigating to $destination")
+            navController.navigate(destination) {
+                // Remove Splash screen from the back stack
+                popUpTo(Screen.Splash.route) { inclusive = true }
+            }
+        } else {
+            Log.d("SplashScreen", "Login status not determined yet. Waiting...")
+        }
+    }
+
+    // UI for the Splash Screen
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxSize().background(BLACK_BACKGROUND)
+    ) {
         Image(
             painter = painterResource(id = R.drawable.logo_purrytify),
             contentDescription = "Logo",
