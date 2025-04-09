@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.adbpurrytify"
-    compileSdk = 35
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.adbpurrytify"
@@ -55,7 +55,9 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp")
     implementation("com.squareup.okhttp3:logging-interceptor")
 
-    implementation("androidx.work:work-runtime-ktx:2.10.0")
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
+
 
     implementation("androidx.media3:media3-common:1.4.1")
     implementation("io.coil-kt.coil3:coil-compose:3.0.0")
