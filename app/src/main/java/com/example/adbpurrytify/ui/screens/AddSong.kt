@@ -242,7 +242,7 @@ fun AddSong() {
                                 .fillMaxHeight()
                                 .fillMaxWidth(1f)
                                 .padding(horizontal = padding * 1/4f),
-                            enabled = titleText.isNotEmpty() && artistText.isNotEmpty() && (photoUri != null)
+                            enabled = titleText.isNotEmpty() && artistText.isNotEmpty() && (photoUri != null) && (fileUri != null)
                         ) {
                             Text("Save")
                         }
