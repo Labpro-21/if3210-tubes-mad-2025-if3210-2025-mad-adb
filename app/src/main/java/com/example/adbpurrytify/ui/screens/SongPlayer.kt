@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
@@ -78,7 +79,7 @@ object SongPlayer {
 
         player!!.setMediaItem(mediaItem)
         player!!.prepare()
-        player!!.playWhenReady = false
+        player!!.playWhenReady=false
         player!!.setSeekParameters(SeekParameters.CLOSEST_SYNC)
     }
 
@@ -180,25 +181,25 @@ fun SongPlayer(songId: Int = -1) {
     ) {
 
         // Song Art
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data("https://example.com/image.jpg")
-                .crossfade(true)
-                .build(),
-            placeholder = painterResource(R.drawable.song_art_placeholder),
-            contentDescription = "Song art for " + songTitle,
-            contentScale = ContentScale.Crop,
-        )
+//        AsyncImage(
+//            model = ImageRequest.Builder(LocalContext.current)
+//                .data("https://example.com/image.jpg")
+//                .crossfade(true)
+//                .build(),
+//            placeholder = painterResource(R.drawable.song_art_placeholder),
+//            contentDescription = "Song art for " + songTitle,
+//            contentScale = ContentScale.Crop,
+//        )
 
-        Image(
-            painter = painterResource(id = R.drawable.remembering_sunday),
-            contentDescription = "Sample image art",
-            modifier = Modifier
-                .fillMaxWidth()
-                .width(300.dp)
-                .padding(horizontal = 20.dp)
-                .clip(shape = RoundedCornerShape(4.dp))
-        )
+//        Image(
+//            painter = painterResource(id = R.drawable.remembering_sunday),
+//            contentDescription = "Sample image art",
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .width(300.dp)
+//                .padding(horizontal = 20.dp)
+//                .clip(shape = RoundedCornerShape(4.dp))
+//        )
 
         // Song title
         Text(

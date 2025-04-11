@@ -1,5 +1,6 @@
 package com.example.adbpurrytify.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,7 +25,9 @@ import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 @Composable
 fun SongPlayerScreen(
@@ -38,35 +41,62 @@ fun SongPlayerScreen(
 ) {
     val backgroundColor = Color(0xFF121212)
     val accentColor = Color(0xFF1ED760)
-
     var song by remember { mutableStateOf<SongEntity?>(null) }
-    var isPlaying by remember { mutableStateOf(false) }
 
+    var isPlaying by remember { mutableStateOf(false) }
+    var sliderPosition by remember { mutableStateOf(0L) }
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
     // Load the song
     LaunchedEffect(songId) {
-        coroutineScope.launch {
-            song = viewModel.getSongById(songId)
-            // If song exists, start playing it
-            song?.let { viewModel.playSong(it) }
+        val nextsong = runBlocking { viewModel.getSongById(songId) }
+        if (nextsong?.id == song?.id) return@LaunchedEffect
+
+        song = nextsong
+        song?.let {
+            SongPlayer.release()
+            SongPlayer.loadSong(it.audioUri, context)
         }
     }
 
+    var playerReady by remember { mutableStateOf(false) }
+    LaunchedEffect(songId) {
+        song = viewModel.getSongById(songId)
+        song?.let {
+            SongPlayer.release()
+            SongPlayer.loadSong(it.audioUri, context)
+
+            // Wait for the player to be ready
+            while (SongPlayer.getDuration() <= 0) {
+                delay(100)
+            }
+            playerReady = true
+        }
+    }
+
+    // Update slider position every second
+    LaunchedEffect(isPlaying) {
+        while (isPlaying) {
+            sliderPosition = SongPlayer.getProgress()
+            Log.d("sliderPosition", sliderPosition.toString())
+            delay(1000L)
+        }
+    }
+
+    // UI
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor)
             .padding(16.dp)
     ) {
-        // Top bar with back button
+        // Top Bar
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
-                onClick = { navController.navigateUp() }
-            ) {
+            IconButton(onClick = { navController.navigateUp() }) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Go back",
@@ -82,14 +112,14 @@ fun SongPlayerScreen(
                 textAlign = TextAlign.Center
             )
 
-            // Empty spacer to balance the layout
             Spacer(modifier = Modifier.width(48.dp))
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Album artwork
+        // Song info dan art
         song?.let { currentSong ->
+            // Album Art
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -98,79 +128,93 @@ fun SongPlayerScreen(
                     .align(Alignment.CenterHorizontally),
                 contentAlignment = Alignment.Center
             ) {
-                // If artUri is empty, use placeholder
-                if (currentSong.artUri.isNotEmpty()) {
-                    AsyncImage(
-                        model = currentSong.artUri,
-                        contentDescription = "Album cover for ${currentSong.title}",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    // Use a placeholder image
-                    AsyncImage(
-                        model = R.drawable.remembering_sunday,
-                        contentDescription = "Album cover placeholder",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                val art = if (currentSong.artUri.isNotEmpty()) currentSong.artUri else R.drawable.remembering_sunday
+                AsyncImage(
+                    model = art,
+                    contentDescription = "Album art",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Song Title + Author
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(currentSong.title, color = Color.White, style = MaterialTheme.typography.titleLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(currentSong.author, color = Color.LightGray, style = MaterialTheme.typography.bodyLarge)
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Slider section
+            if (playerReady) {
+                // Slider
+                Slider(
+                    value = sliderPosition.toFloat(),
+                    onValueChange = { sliderPosition = it.toLong() },
+                    onValueChangeFinished = {
+                        SongPlayer.seekTo(sliderPosition)
+                    },
+                    valueRange = 0f..(SongPlayer.getDuration().toFloat()),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Time display
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(formatTime(SongPlayer.getProgress()), color = Color.White)
+                    Text(formatTime(SongPlayer.getDuration()), color = Color.White)
+                }
+            } else {
+                // Show loading indicator for slider
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = accentColor, modifier = Modifier.size(24.dp))
                 }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Song info
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = currentSong.title,
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleLarge
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = currentSong.author,
-                    color = Color.LightGray,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // Playback controls
+            // Play/Pause
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Play/Pause button
                 IconButton(
-                    onClick = { isPlaying = !isPlaying },
+                    onClick = {
+                        if (isPlaying) {
+                            SongPlayer.pause()
+                        } else {
+                            SongPlayer.play()
+                        }
+                        isPlaying = !isPlaying
+                    },
                     modifier = Modifier
                         .size(64.dp)
-                        .background(accentColor)
-                        .padding(8.dp)
+                        .background(accentColor, shape = RoundedCornerShape(50))
                 ) {
                     Icon(
                         imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (isPlaying) "Pause" else "Play",
+                        contentDescription = null,
                         tint = Color.Black,
                         modifier = Modifier.size(32.dp)
                     )
                 }
             }
         } ?: run {
-            // Show loading or error state if song is null
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = accentColor)
             }
         }
     }
+
 }
