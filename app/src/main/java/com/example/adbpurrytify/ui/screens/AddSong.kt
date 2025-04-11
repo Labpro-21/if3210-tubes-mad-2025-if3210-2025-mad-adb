@@ -77,11 +77,28 @@ fun AddSong() {
         // Log.d("PhotoUri", "Photo URI: $photoUri")
     }
 
+    val context = LocalContext.current
     val pickAudio = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri -> fileUri = uri }
+    ) { uri ->
+        fileUri = uri
+        uri?.let {
+            val retriever = android.media.MediaMetadataRetriever()
+            retriever.setDataSource(context, it)
 
-    val context = LocalContext.current
+            val retrievedTitle = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE)
+            val retrievedArtist = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST)
+
+            if (titleText.isEmpty() && !retrievedTitle.isNullOrEmpty()) {
+                titleText = retrievedTitle
+            }
+            if (artistText.isEmpty() && !retrievedArtist.isNullOrEmpty()) {
+                artistText = retrievedArtist
+            }
+
+            retriever.release()
+        }
+    }
 
     ADBPurrytifyTheme {
         Surface {
@@ -256,5 +273,6 @@ fun AddSong() {
 @Preview
 @Composable
 fun PreviewAddSong() {
+
     AddSong()
 }
