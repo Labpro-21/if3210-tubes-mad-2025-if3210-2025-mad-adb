@@ -57,9 +57,9 @@ fun copyUriToInternalStorage(context: Context, uri: Uri): String? {
 
 
 class SongAdapter(
-    private val songs: List<SongEntity>,
+    private var songs: List<SongEntity>,
     private val context: Context,
-    private val onSongClick: (SongEntity) -> Unit = {} // Add click handler
+    private val onSongClick: (SongEntity) -> Unit = {}
 ) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
 
     inner class SongViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -76,6 +76,13 @@ class SongAdapter(
                 }
             }
         }
+    }
+
+    fun updateData(newSongs: List<SongEntity>) {
+        // Ideally, use DiffUtil here for better performance
+        // For simplicity, we'll just replace and notify
+        this.songs = newSongs
+        notifyDataSetChanged() // Or use DiffUtil.calculateDiff for animations/performance
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongViewHolder {

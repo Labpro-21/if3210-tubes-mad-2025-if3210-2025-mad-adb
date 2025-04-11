@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel // Correct import
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -17,8 +17,8 @@ import androidx.navigation.navArgument
 import com.example.adbpurrytify.api.RetrofitClient
 import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.local.AppDatabase
-import com.example.adbpurrytify.ui.screens.* // Import all screens
-import com.example.adbpurrytify.ui.viewmodels.HomeViewModel // Import HomeViewModel
+import com.example.adbpurrytify.ui.screens.*
+import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
 import com.example.adbpurrytify.ui.viewmodels.ProfileViewModel
 import com.example.adbpurrytify.ui.viewmodels.ProfileViewModelFactory
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel

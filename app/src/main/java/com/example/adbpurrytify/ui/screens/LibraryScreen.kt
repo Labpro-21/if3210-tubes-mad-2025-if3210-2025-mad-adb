@@ -22,6 +22,7 @@ import coil3.compose.AsyncImage
 import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.components.RecyclerSongsList
+import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 
 
@@ -194,10 +195,9 @@ fun LibraryScreen(
                         height = 800, // Consider making this dynamic or using weight
                         showBorder = false,
                         // --- Re-enable these when implementing the actions ---
-                        // onSongClick = { song ->
-                        //     currentlyPlayingSong = song
-                        //     // TODO: Add playback logic
-                        // },
+                         onSongClick = { song ->
+                             navController.navigate("${Screen.Player.route}/${song.id}")
+                         },
                         // onLikeClick = { song ->
                         //     viewModel.toggleLikeSong(song)
                         // }

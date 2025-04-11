@@ -83,7 +83,7 @@ fun RecyclerSongsList(
     songs: List<SongEntity>,
     height: Int,
     showBorder: Boolean,
-    onSongClick: (SongEntity) -> Unit = {} // Add click handler
+    onSongClick: (SongEntity) -> Unit = {} // Make sure this is passed down
 ) {
     Box(
         modifier = Modifier
@@ -95,10 +95,11 @@ fun RecyclerSongsList(
             factory = { context ->
                 RecyclerView(context).apply {
                     layoutManager = LinearLayoutManager(context)
-                    adapter = SongAdapter(songs, context, onSongClick) // Pass click handler to adapter
+                    // Pass onSongClick during initial creation
+                    adapter = SongAdapter(songs, context, onSongClick)
                     layoutParams = ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
-                        height
+                        height // Note: This height is in pixels, while Modifier.height uses dp. Be mindful of this.
                     )
                     if (showBorder) {
                         setBackgroundColor(android.graphics.Color.RED)
@@ -112,7 +113,18 @@ fun RecyclerSongsList(
                 .height(height.dp)
                 .fillMaxWidth()
                 .background(BLACK_BACKGROUND),
-            update = { recyclerView -> recyclerView.adapter = SongAdapter(songs, recyclerView.context) },
+            update = { recyclerView ->
+                // *** FIX: Pass onSongClick when updating the adapter too! ***
+                // Also, ensure the adapter instance is updated correctly if possible
+                // See improvement suggestion below
+                (recyclerView.adapter as? SongAdapter)?.let { adapter ->
+                    // More efficient: Update data in existing adapter
+                    adapter.updateData(songs)
+                } ?: run {
+                    // Fallback: Create new adapter if it's null or wrong type
+                    recyclerView.adapter = SongAdapter(songs, recyclerView.context, onSongClick)
+                }
+            },
         )
     }
 }
