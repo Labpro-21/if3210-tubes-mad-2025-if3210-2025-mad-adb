@@ -16,6 +16,10 @@ interface SongDao {
     @Update
     suspend fun update(song: SongEntity)
 
+    // Get a specific song by ID
+    @Query("SELECT * FROM songs WHERE id = :songId")
+    suspend fun getSongById(songId: Long): SongEntity?
+
     // 0. All songs
     @Query("SELECT * FROM songs WHERE userId = :userId")
     fun getAllSongs(userId: Long): Flow<List<SongEntity>>

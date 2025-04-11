@@ -3,137 +3,134 @@ package com.example.adbpurrytify.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.adbpurrytify.data.AuthRepository // Keep if needed directly
-import com.example.adbpurrytify.data.model.SongEntity // Use SongEntity
-import com.example.adbpurrytify.ui.components.HorizontalSongsList // Assuming this takes List<SongEntity>
-import com.example.adbpurrytify.ui.components.RecyclerSongsList // Assuming this takes List<SongEntity>
+import com.example.adbpurrytify.data.AuthRepository
+import com.example.adbpurrytify.data.local.AppDatabase
+import com.example.adbpurrytify.ui.components.HorizontalSongsList
+import com.example.adbpurrytify.ui.components.RecyclerSongsList
+import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
 
 @Composable
 fun HomeScreen(
-    navController: NavController, // Keep navController if needed for navigation from home
-    viewModel: HomeViewModel
-    // authRepository is now injected into the ViewModel, so likely not needed here
+    navController: NavController? = null,
+    authRepository: AuthRepository = remember {
+        AuthRepository(com.example.adbpurrytify.api.RetrofitClient.instance)
+    }
 ) {
+    // Get database and create ViewModel
+    val context = LocalContext.current
+    val songDao = AppDatabase.getDatabase(context).songDao()
+    val viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory(songDao))
+
     val backgroundColor = Color(0xFF121212)
-    val textColor = Color.White
-    val accentColor = Color(0xFF1ED760) // Spotify green for loading indicators
 
-    // Observe state from ViewModel
+    // Observe data from ViewModel
     val newSongs by viewModel.newSongs.observeAsState(emptyList())
-    val recentlyPlayedSongs by viewModel.recentlyPlayedSongs.observeAsState(
-        emptyList()
-    )
-    val currentlyPlayingSong by viewModel.currentlyPlayingSong.observeAsState(null)
-    val isLoadingNew by viewModel.isLoadingNew.observeAsState(false)
-    val isLoadingRecent by viewModel.isLoadingRecent.observeAsState(false)
-    val error by viewModel.error.observeAsState(null) // Observe error state
+    val recentlyPlayed by viewModel.recentlyPlayed.observeAsState(emptyList())
+    val isNewSongsLoading by viewModel.isNewSongsLoading.observeAsState(false)
+    val isRecentlyPlayedLoading by viewModel.isRecentlyPlayedLoading.observeAsState(false)
+    val currentlyPlayingSong by viewModel.currentlyPlayingSong.observeAsState()
 
-    // TODO: Display error messages appropriately (e.g., Snackbar)
-    // error?.let { /* Show Snackbar or error message */ }
+    // Get current user ID and load data
+    LaunchedEffect(key1 = Unit) {
+        val userProfile = authRepository.currentUser()
+        val userId = userProfile?.id ?: -1L
+        if (userId != -1L) {
+            viewModel.setCurrentUser(userId)
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor)
     ) {
-        // --- New Songs Section ---
-        Text(
-            text = "New Songs",
-            color = textColor,
-            fontSize = 20.sp, // Adjust size as needed
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp)
-        )
-
-        Box(
+        Column(
             modifier = Modifier
+                .weight(1f)
                 .fillMaxWidth()
-                .height(180.dp), // Adjust height for HorizontalSongsList items
-            contentAlignment = Alignment.Center
+                .padding(top = 16.dp)
         ) {
-            when {
-                isLoadingNew -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(40.dp),
-                        color = accentColor
-                    )
+            // New Songs Section
+            Text(
+                text = "New songs",
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 16.dp)
+            )
+
+            if (isNewSongsLoading) {
+                Box(
+                    modifier = Modifier
+                        .height(170.dp)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFF1ED760))
                 }
-                newSongs.isEmpty() && !isLoadingNew -> {
-                    Text("No new songs found.", color = Color.Gray)
+            } else {
+                // Add click handler to navigate to player
+                HorizontalSongsList(
+                    songs = newSongs,
+                    showBorder = false,
+                    onSongClick = { song ->
+                        navController?.navigate("${Screen.Player.route}/${song.id}")
+                    }
+                )
+            }
+
+            // Recently Played Section
+            Text(
+                text = "Recently played",
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp)
+            )
+
+            if (isRecentlyPlayedLoading) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFF1ED760))
                 }
-                else -> {
-                    // Assuming HorizontalSongsList takes List<SongEntity>
-                    HorizontalSongsList(
-                        songs = newSongs,
-                        showBorder = false,
-//                        onSongClick = { song -> viewModel.playSong(song) }
-                        // Add onLikeClick if HorizontalSongsList supports it
-                    )
-                }
+            } else {
+                // Add click handler to na
+                // vigate to player
+                RecyclerSongsList(
+                    songs = recentlyPlayed,
+                    height = 400,
+                    showBorder = false,
+                    onSongClick = { song ->
+                        navController?.navigate("${Screen.Player.route}/${song.id}")
+                    }
+                )
             }
         }
 
-        // --- Recently Played Section ---
-        Text(
-            text = "Recently Played",
-            color = textColor,
-            fontSize = 20.sp, // Adjust size as needed
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
-        )
-
-        Box(
-            modifier = Modifier
-                .weight(1f) // Takes remaining vertical space
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            when {
-                isLoadingRecent -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(48.dp),
-                        color = accentColor
-                    )
-                }
-                recentlyPlayedSongs.isEmpty() && !isLoadingRecent -> {
-                    Text("No recently played songs.", color = Color.Gray)
-                }
-                else -> {
-                    // Assuming RecyclerSongsList takes List<SongEntity>
-                    // Remove fixed height if RecyclerSongsList can adapt
-                    RecyclerSongsList(
-                        songs = recentlyPlayedSongs,
-                         height = 800, // Remove fixed height if possible
-                        showBorder = false,
-//                        onSongClick = { song -> viewModel.playSong(song) },
-//                        onLikeClick = { song -> viewModel.toggleLikeSong(song) }
-                    )
-                }
-            }
-        }
-
-        // --- Currently Playing Bar ---
-        // Use the same CurrentlyPlayingBar composable from LibraryScreen
+        // Currently playing bar with navigation to player
         currentlyPlayingSong?.let { song ->
-            CurrentlyPlayingBar(song = song)
-            // TODO: Add onClick for play/pause to CurrentlyPlayingBar
-            // and connect it to viewModel functions if needed
+            CurrentlyPlayingBar(
+                song = song,
+                onClick = {
+                    navController?.navigate("${Screen.Player.route}/${song.id}")
+                }
+            )
         }
     }
 }
-
-
-
-// Remove the @Preview HomePage composable if it's no longer needed
-// or update it to use the new HomeScreen structure if desired for previews.

@@ -210,7 +210,7 @@ fun LibraryScreen(
 
         // Currently playing bar (only show if we have a song playing)
         currentlyPlayingSong?.let { song ->
-            CurrentlyPlayingBar(song = song)
+            CurrentlyPlayingBar(song = song, onClick = {})
         }
     }
 
@@ -226,9 +226,11 @@ fun LibraryScreen(
 
 
 @Composable
-fun CurrentlyPlayingBar(song: SongEntity) {
+fun CurrentlyPlayingBar(song: SongEntity,
+                        onClick: () -> Unit
+) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable(true, onClick = onClick),
         color = Color(0xFF460B41), // Consider MaterialTheme colors
         shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
     ) {

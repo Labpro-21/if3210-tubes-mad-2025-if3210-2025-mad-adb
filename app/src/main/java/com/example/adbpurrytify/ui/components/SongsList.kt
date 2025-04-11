@@ -79,8 +79,12 @@ fun SongsList(songs: List<Song>, height: Int, showBorder: Boolean) {
 }
 
 @Composable
-fun RecyclerSongsList(songs: List<SongEntity>, height: Int, showBorder: Boolean) {
-
+fun RecyclerSongsList(
+    songs: List<SongEntity>,
+    height: Int,
+    showBorder: Boolean,
+    onSongClick: (SongEntity) -> Unit = {} // Add click handler
+) {
     Box(
         modifier = Modifier
             .height(height.dp)
@@ -91,7 +95,7 @@ fun RecyclerSongsList(songs: List<SongEntity>, height: Int, showBorder: Boolean)
             factory = { context ->
                 RecyclerView(context).apply {
                     layoutManager = LinearLayoutManager(context)
-                    adapter = SongAdapter(songs, context)
+                    adapter = SongAdapter(songs, context, onSongClick) // Pass click handler to adapter
                     layoutParams = ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         height
@@ -112,6 +116,7 @@ fun RecyclerSongsList(songs: List<SongEntity>, height: Int, showBorder: Boolean)
         )
     }
 }
+
 
 
 

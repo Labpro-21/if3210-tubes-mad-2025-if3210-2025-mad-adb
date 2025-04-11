@@ -13,6 +13,12 @@ import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.model.Song
 import android.view.View
 import androidx.compose.ui.platform.LocalContext
+import coil3.ImageLoader
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import coil3.request.error
+import coil3.request.placeholder
+import coil3.request.target
 import com.example.adbpurrytify.data.model.SongEntity
 import java.io.File
 import java.io.FileOutputStream
@@ -50,34 +56,59 @@ fun copyUriToInternalStorage(context: Context, uri: Uri): String? {
 }
 
 
-class SongAdapter(private val songs: List<SongEntity>, context: Context) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
+class SongAdapter(
+    private val songs: List<SongEntity>,
+    private val context: Context,
+    private val onSongClick: (SongEntity) -> Unit = {} // Add click handler
+) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
 
-    private val context = context
-    class SongViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val songArt: ImageView = itemView.findViewById(R.id.song_image)
-        val title: TextView = itemView.findViewById(R.id.song_title)
-        val author: TextView = itemView.findViewById(R.id.song_author)
+    inner class SongViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val songImage: ImageView = view.findViewById(R.id.song_image)
+        val songTitle: TextView = view.findViewById(R.id.song_title)
+        val songAuthor: TextView = view.findViewById(R.id.song_author)
+
+        // Set up click listener in the view holder
+        init {
+            view.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onSongClick(songs[position])
+                }
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_song_row, parent, false)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_song_row, parent, false)
         return SongViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: SongViewHolder, position: Int) {
-
         val song = songs[position]
-        val path = song.artUri
+        holder.songTitle.text = song.title
+        holder.songAuthor.text = song.author
 
-        val file = File(path)
-        if (file.exists())
-            holder.songArt.setImageURI(Uri.fromFile(file))
-        else
-            holder.songArt.setImageResource(R.drawable.song_art_placeholder)
+        // For loading images, you can use a library like Coil
+        // If artUri is a valid URL or file path
+        if (song.artUri.isNotEmpty()) {
+            val imageLoader = ImageLoader.Builder(context)
+                .crossfade(true)
+                .build()
 
-        holder.title.text = song.title
-        holder.author.text = song.author
+            val request = ImageRequest.Builder(context)
+                .data(song.artUri)
+                .target(holder.songImage)
+                .placeholder(R.drawable.remembering_sunday)
+                .error(R.drawable.remembering_sunday)
+                .build()
+
+            imageLoader.enqueue(request)
+        } else {
+            // Use default image
+            holder.songImage.setImageResource(R.drawable.remembering_sunday)
+        }
     }
 
-    override fun getItemCount(): Int = songs.size
+    override fun getItemCount() = songs.size
 }

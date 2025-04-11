@@ -8,10 +8,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel // Correct import
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.adbpurrytify.api.RetrofitClient
 import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.local.AppDatabase
@@ -39,7 +41,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     val context = LocalContext.current
     val database = AppDatabase.getDatabase(context)
     val songDao = database.songDao()
-    val authRepository = AuthRepository(RetrofitClient.instance) // Reused
+    val authRepository = AuthRepository(RetrofitClient.instance)
 
     Scaffold(
         bottomBar = {
@@ -61,40 +63,53 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             }
 
             composable(Screen.Login.route) {
-                // Pass authRepository if LoginScreen needs it
-                LoginScreen(navController = navController /*, authRepository = authRepository */)
+                LoginScreen(navController)
             }
 
             composable(Screen.Home.route) {
-                // Create HomeViewModel Factory
-                val homeViewModelFactory = HomeViewModel.Factory(songDao, authRepository)
-                // Get HomeViewModel instance scoped to this navigation destination
-                val homeViewModel: HomeViewModel = viewModel(factory = homeViewModelFactory)
-
-                HomeScreen(navController = navController, viewModel = homeViewModel)
+                // Using your existing HomeScreen function signature
+                HomeScreen(navController, authRepository)
             }
 
             composable(Screen.Library.route) {
-                // Create SongViewModel Factory
-                val songViewModelFactory = SongViewModel.Factory(songDao)
-                // Get SongViewModel instance
-                val songViewModel: SongViewModel = viewModel(factory = songViewModelFactory)
+                val songViewModel: SongViewModel = viewModel(
+                    factory = SongViewModel.Factory(songDao)
+                )
 
                 LibraryScreen(
                     navController = navController,
                     viewModel = songViewModel,
-                    authRepository = authRepository // LibraryScreen uses it directly
+                    authRepository = authRepository
                 )
             }
 
             composable(Screen.Profile.route) {
-                // Use existing ProfileViewModel setup
                 val viewModelFactory = ProfileViewModelFactory(RetrofitClient.instance)
                 val viewModel: ProfileViewModel = viewModel(factory = viewModelFactory)
 
                 ProfileScreen(viewModel = viewModel, navController = navController)
             }
 
+            // Add player route
+            composable(
+                route = "${Screen.Player.route}/{songId}",
+                arguments = listOf(
+                    navArgument("songId") { type = NavType.LongType }
+                )
+            ) { backStackEntry ->
+                val songId = backStackEntry.arguments?.getLong("songId") ?: -1L
+
+                val homeViewModel: HomeViewModel = viewModel(
+                    factory = HomeViewModel.Factory(songDao)
+                )
+
+                SongPlayerScreen(
+                    navController = navController,
+                    songId = songId,
+                    viewModel = homeViewModel
+                )
+            }
         }
     }
 }
+
