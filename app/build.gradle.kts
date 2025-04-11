@@ -69,12 +69,16 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp")
     implementation("com.squareup.okhttp3:logging-interceptor")
 
+
     implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("androidx.compose.runtime:runtime-livedata:1.7.8")
 
 
 
     implementation("androidx.media3:media3-common:1.4.1")
-    implementation("io.coil-kt.coil3:coil-compose:3.0.0")
+    implementation("io.coil-kt.coil3:coil:3.0.0-alpha09")
+    implementation("io.coil-kt.coil3:coil-compose:3.0.0-alpha09")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.0-alpha09")
 //    implementation("androidx.media3:media3-ui:1.0")
     implementation("androidx.media3:media3-exoplayer:1.4.1")
     implementation("androidx.navigation:navigation-compose:2.8.9")
