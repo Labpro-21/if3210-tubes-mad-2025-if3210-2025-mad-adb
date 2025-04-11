@@ -67,9 +67,9 @@ class SongAdapter(private val songs: List<SongEntity>, context: Context) : Recyc
     override fun onBindViewHolder(holder: SongViewHolder, position: Int) {
 
         val song = songs[position]
-        val copiedPath = copyUriToInternalStorage(context, Uri.parse(song.artUri))
+        val path = song.artUri
 
-        val file = File(copiedPath)
+        val file = File(path)
         if (file.exists())
             holder.songArt.setImageURI(Uri.fromFile(file))
         else

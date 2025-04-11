@@ -1,5 +1,8 @@
 package com.example.adbpurrytify.ui.screens
 
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -30,9 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,12 +51,42 @@ import com.example.adbpurrytify.R
 import com.example.adbpurrytify.api.RetrofitClient
 import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.local.AppDatabase
-import com.example.adbpurrytify.data.local.SongDao
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
+
+fun copyUriToInternalStorage(context: Context, uri: Uri): String? {
+    val contentResolver = context.contentResolver
+    val returnCursor = contentResolver.query(uri, null, null, null, null) ?: return null
+
+    val nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+    returnCursor.moveToFirst()
+    val name = returnCursor.getString(nameIndex)
+    returnCursor.close()
+
+    val inputStream = contentResolver.openInputStream(uri) ?: return null
+    val file = File(context.filesDir, name)
+    val outputStream = FileOutputStream(file)
+
+    try {
+        val buffer = ByteArray(1024)
+        var length: Int
+        while (inputStream.read(buffer).also { length = it } > 0) {
+            outputStream.write(buffer, 0, length)
+        }
+    } catch (e: Exception) {
+        Log.e("copyUri", "Error copying file: ${e.message}")
+        return null
+    } finally {
+        inputStream.close()
+        outputStream.close()
+    }
+
+    return file.absolutePath
+}
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -246,11 +277,19 @@ fun AddSong(
                             onClick = {
                                 val title = titleText
                                 val author = artistText
-                                val artUri = photoUri.toString()
                                 val audioUri = fileUri.toString()
+                                var artUri = photoUri.toString()
 
                                 // Get current timestamp for lastPlayedTimestamp
                                 val currentTimestamp = java.time.Instant.now().toString()
+
+                                try {
+                                    val copiedPath = copyUriToInternalStorage(context, Uri.parse(artUri))
+                                    if (copiedPath != null) artUri = copiedPath
+                                    else artUri = "null"
+                                } catch (e: Exception) {
+                                    artUri = "null"
+                                }
 
                                 val song = SongEntity(
                                     title = title,
