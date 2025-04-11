@@ -283,7 +283,7 @@ fun AddSong(
                                 var artUri = photoUri.toString()
 
                                 // Get current timestamp for lastPlayedTimestamp
-                                val currentTimestamp = java.time.Instant.now().toString()
+                                val currentTimestamp = java.time.Instant.now().toEpochMilli()
 
                                 try {
                                     val copiedPath = copyUriToInternalStorage(context, Uri.parse(artUri))

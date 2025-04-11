@@ -24,10 +24,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.model.Song
+import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
 
 @Composable
-fun HorizontalSongsListColumn(song: Song) {
+fun HorizontalSongsListColumn(song: SongEntity) {
     Column(
         modifier = Modifier
             .width(144.dp)
@@ -58,7 +59,7 @@ fun HorizontalSongsListColumn(song: Song) {
 }
 
 @Composable
-fun HorizontalSongsList(songs: List<Song>, showBorder: Boolean) {
+fun HorizontalSongsList(songs: List<SongEntity>, showBorder: Boolean) {
     LazyRow (modifier = Modifier
         .fillMaxWidth()
         .border(

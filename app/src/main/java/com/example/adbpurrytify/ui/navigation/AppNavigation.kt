@@ -6,8 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.compose.viewModel // Correct import
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,14 +15,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.adbpurrytify.api.RetrofitClient
 import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.local.AppDatabase
-import com.example.adbpurrytify.ui.screens.HomePage
-import com.example.adbpurrytify.ui.screens.LibraryScreen
-import com.example.adbpurrytify.ui.screens.LibraryScreenn
-import com.example.adbpurrytify.ui.screens.LoginScreen
-import com.example.adbpurrytify.ui.screens.ProfileScreen
-import com.example.adbpurrytify.ui.screens.SongPlayer
-import com.example.adbpurrytify.ui.screens.SplashScreen
-import com.example.adbpurrytify.ui.viewmodels.LibraryViewModel
+import com.example.adbpurrytify.ui.screens.* // Import all screens
+import com.example.adbpurrytify.ui.viewmodels.HomeViewModel // Import HomeViewModel
 import com.example.adbpurrytify.ui.viewmodels.ProfileViewModel
 import com.example.adbpurrytify.ui.viewmodels.ProfileViewModelFactory
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
@@ -31,32 +24,24 @@ import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 @Composable
 fun AppNavigation(navController: NavHostController = rememberNavController()) {
 
-    // Get the main screens that will be shown at the bottom navbar
     val navigationItems = listOf(
         NavigationItem.Home,
         NavigationItem.Library,
         NavigationItem.Profile
     )
-
-    // For each of the navigation item, then get the route
     val mainRoutes = navigationItems.map { item -> item.route }
 
-
-    // Get current route to determine if we should show bottom navigation
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-
-    /**
-     * Should we show the bottom bar?
-     *
-     * Note from @ganadipa: I think this will be useful for some pages that don't need
-     * a navbar, perhaps they only need a back button, what do u think?
-     */
     val showBottomBar = currentRoute in mainRoutes
 
-    val authRepository = AuthRepository(RetrofitClient.instance)
+    // Instantiate dependencies once
+    val context = LocalContext.current
+    val database = AppDatabase.getDatabase(context)
+    val songDao = database.songDao()
+    val authRepository = AuthRepository(RetrofitClient.instance) // Reused
 
-    Scaffold (
+    Scaffold(
         bottomBar = {
             if (showBottomBar) {
                 BottomNavigationBar(
@@ -76,26 +61,34 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             }
 
             composable(Screen.Login.route) {
-                LoginScreen(navController)
+                // Pass authRepository if LoginScreen needs it
+                LoginScreen(navController = navController /*, authRepository = authRepository */)
             }
 
             composable(Screen.Home.route) {
-                HomePage()
+                // Create HomeViewModel Factory
+                val homeViewModelFactory = HomeViewModel.Factory(songDao, authRepository)
+                // Get HomeViewModel instance scoped to this navigation destination
+                val homeViewModel: HomeViewModel = viewModel(factory = homeViewModelFactory)
+
+                HomeScreen(navController = navController, viewModel = homeViewModel)
             }
 
             composable(Screen.Library.route) {
-                // Get instance of SongDao from your database
-                val database = AppDatabase.getDatabase(LocalContext.current)
-                val songDao = database.songDao()
+                // Create SongViewModel Factory
+                val songViewModelFactory = SongViewModel.Factory(songDao)
+                // Get SongViewModel instance
+                val songViewModel: SongViewModel = viewModel(factory = songViewModelFactory)
 
-                // Create the ViewModel with the Factory
-                val viewModel = SongViewModel(songDao)
-
-
-                LibraryScreenn(navController = navController, viewModel=viewModel, authRepository = authRepository)
+                LibraryScreen(
+                    navController = navController,
+                    viewModel = songViewModel,
+                    authRepository = authRepository // LibraryScreen uses it directly
+                )
             }
 
             composable(Screen.Profile.route) {
+                // Use existing ProfileViewModel setup
                 val viewModelFactory = ProfileViewModelFactory(RetrofitClient.instance)
                 val viewModel: ProfileViewModel = viewModel(factory = viewModelFactory)
 
@@ -105,4 +98,3 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
         }
     }
 }
-

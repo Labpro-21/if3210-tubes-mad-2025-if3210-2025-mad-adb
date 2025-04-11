@@ -13,6 +13,6 @@ data class SongEntity(
     val audioUri: String,
     val userId: Long,
     val isLiked: Boolean,
-    val lastPlayedTimestamp: String?,
-    val lastPlayedPositionMs: Int
+    val lastPlayedTimestamp: Long?,
+    val lastPlayedPositionMs: Long?
 )
