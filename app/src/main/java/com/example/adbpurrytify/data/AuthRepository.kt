@@ -1,6 +1,9 @@
 package com.example.adbpurrytify.data
 
+import android.util.Log
 import com.example.adbpurrytify.api.ApiService
+import com.example.adbpurrytify.api.UserProfile
+import com.example.adbpurrytify.data.model.User
 import retrofit2.HttpException
 
 class AuthRepository constructor(
@@ -16,6 +19,16 @@ class AuthRepository constructor(
             e.code() != 401
         } catch (e: Exception) {
             false
+        }
+    }
+
+    suspend fun currentUser(): UserProfile? {
+        val token = TokenManager.getAuthToken() ?: return null
+        return try {
+            apiService.getProfile("Bearer $token").body()
+        } catch (e: Exception) {
+            Log.e("Profile Request", e.toString())
+            null
         }
     }
 }

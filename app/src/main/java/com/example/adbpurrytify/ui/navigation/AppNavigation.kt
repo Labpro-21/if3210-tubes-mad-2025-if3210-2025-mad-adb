@@ -14,9 +14,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.adbpurrytify.api.RetrofitClient
+import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.ui.screens.HomePage
 import com.example.adbpurrytify.ui.screens.LibraryScreen
+import com.example.adbpurrytify.ui.screens.LibraryScreenn
 import com.example.adbpurrytify.ui.screens.LoginScreen
 import com.example.adbpurrytify.ui.screens.ProfileScreen
 import com.example.adbpurrytify.ui.screens.SongPlayer
@@ -52,6 +54,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
      */
     val showBottomBar = currentRoute in mainRoutes
 
+    val authRepository = AuthRepository(RetrofitClient.instance)
+
     Scaffold (
         bottomBar = {
             if (showBottomBar) {
@@ -86,7 +90,9 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
 
                 // Create the ViewModel with the Factory
                 val viewModel = SongViewModel(songDao)
-                LibraryScreen(navController = navController, viewModel=viewModel)
+
+
+                LibraryScreenn(navController = navController, viewModel=viewModel, authRepository = authRepository)
             }
 
             composable(Screen.Profile.route) {

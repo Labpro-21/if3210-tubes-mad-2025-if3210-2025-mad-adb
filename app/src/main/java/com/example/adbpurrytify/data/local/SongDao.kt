@@ -9,10 +9,30 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SongDao {
+
     @Insert
     suspend fun insert(song: SongEntity)
+
     @Update
     suspend fun update(song: SongEntity)
+
+    // 0. All songs
     @Query("SELECT * FROM songs")
     fun getAllSongs(): Flow<List<SongEntity>>
+
+    // 1. Get all songs for a specific user
+    @Query("SELECT * FROM songs WHERE userId = :userId")
+    fun getSongsByUser(userId: Long): Flow<List<SongEntity>>
+
+    // 2. Get liked songs for a specific user
+    @Query("SELECT * FROM songs WHERE userId = :userId AND isLiked = 1")
+    fun getLikedSongs(userId: Long): Flow<List<SongEntity>>
+
+    // 3. Get recently played songs (non-null lastPlayedTimestamp) for a user
+    @Query("SELECT * FROM songs WHERE userId = :userId AND lastPlayedTimestamp IS NOT NULL ORDER BY lastPlayedTimestamp DESC")
+    fun getRecentlyPlayedSongs(userId: Long): Flow<List<SongEntity>>
+
+    // 4. Get the latest recently played song for a user (limit 1)
+    @Query("SELECT * FROM songs WHERE userId = :userId AND lastPlayedTimestamp IS NOT NULL ORDER BY lastPlayedTimestamp DESC LIMIT 1")
+    suspend fun getLastPlayedSong(userId: Long): SongEntity?
 }

@@ -29,6 +29,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -46,6 +47,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.rememberAsyncImagePainter
 import com.example.adbpurrytify.R
+import com.example.adbpurrytify.api.RetrofitClient
+import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.data.local.SongDao
 import com.example.adbpurrytify.data.model.SongEntity
@@ -77,9 +80,6 @@ fun AddSong(
 
     val pickMedia = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
         photoUri = uri
-
-        // Uncomment for DEBUGGING only, after enabling the below code, kindly check logcat
-        // Log.d("PhotoUri", "Photo URI: $photoUri")
     }
 
     val context = LocalContext.current
@@ -104,6 +104,18 @@ fun AddSong(
             retriever.release()
         }
     }
+    val authRepository = AuthRepository(RetrofitClient.instance)
+
+// State to hold current user ID
+    var currentUserId by rememberSaveable { mutableStateOf(-1L) }
+
+// Load current user when composable launches
+    LaunchedEffect(Unit) {
+        val userProfile = authRepository.currentUser()
+
+        // Set user ID or default to -1
+        currentUserId = userProfile?.id ?: -1L
+    }
 
     ADBPurrytifyTheme {
         Surface {
@@ -116,7 +128,7 @@ fun AddSong(
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
+                ) {
                     Row(
                         horizontalArrangement = Arrangement.Center
                     ) {
@@ -234,14 +246,23 @@ fun AddSong(
                             onClick = {
                                 val title = titleText
                                 val author = artistText
-                                val artUri = photoUri
-                                val audioUri = fileUri
+                                val artUri = photoUri.toString()
+                                val audioUri = fileUri.toString()
+
+                                // Get current timestamp for lastPlayedTimestamp
+                                val currentTimestamp = java.time.Instant.now().toString()
+
                                 val song = SongEntity(
                                     title = title,
                                     author = author,
-                                    artUri = artUri.toString(),
-                                    audioUri = audioUri.toString()
+                                    artUri = artUri,
+                                    audioUri = audioUri,
+                                    userId = currentUserId,
+                                    isLiked = false,
+                                    lastPlayedTimestamp = currentTimestamp,
+                                    lastPlayedPositionMs = 0
                                 )
+
                                 scope.launch {
                                     val db = AppDatabase.getDatabase(context)
                                     val songDao = db.songDao()
@@ -250,19 +271,16 @@ fun AddSong(
                                     sheetState.hide()
                                     onDismiss()
                                 }
-
-
-                                scope.launch {
-                                    val db = AppDatabase.getDatabase(context)
-                                    Log.d("Pause", "Pause")
-                                }
-
                             },
                             modifier = Modifier
                                 .fillMaxHeight()
                                 .fillMaxWidth(1f)
                                 .padding(horizontal = padding * 1/4f),
-                            enabled = titleText.isNotEmpty() && artistText.isNotEmpty() && (photoUri != null) && (fileUri != null)
+                            enabled = titleText.isNotEmpty() &&
+                                    artistText.isNotEmpty() &&
+                                    photoUri != null &&
+                                    fileUri != null &&
+                                    currentUserId != -1L
                         ) {
                             Text("Save")
                         }

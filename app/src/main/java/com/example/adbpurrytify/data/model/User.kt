@@ -1,7 +1,7 @@
 package com.example.adbpurrytify.data.model
 
 data class User(
-    val id: Int = 0,
+    val id: Long = 0,
     val userName: String = "",
     val email: String = "",
     val image: String = "",
