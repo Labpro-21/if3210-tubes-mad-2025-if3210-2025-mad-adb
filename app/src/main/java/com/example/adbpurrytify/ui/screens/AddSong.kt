@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -168,7 +169,7 @@ fun AddSong(
                     Row {
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth(1/2f)
+                                .fillMaxWidth(1 / 2f)
                                 .padding(start = padding, top = padding, end = padding)
                         ) {
                             Image(
@@ -176,7 +177,8 @@ fun AddSong(
                                 contentDescription = "Upload Photo",
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .clickable(true,
+                                    .clickable(
+                                        true,
                                         onClick = {
                                             pickMedia.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
                                         }
@@ -202,7 +204,7 @@ fun AddSong(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = padding * 1/2f, vertical = padding * 1/4f),
+                            .padding(horizontal = padding * 1 / 2f, vertical = padding * 1 / 4f),
                         horizontalArrangement = Arrangement.Start
                     ) {
                         Text("Title")
@@ -210,7 +212,7 @@ fun AddSong(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = padding * 1/2f),
+                            .padding(horizontal = padding * 1 / 2f),
                         horizontalArrangement = Arrangement.Start,
                     ) {
                         OutlinedTextField(
@@ -229,7 +231,7 @@ fun AddSong(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = padding * 1/2f, vertical = padding * 1/4f),
+                            .padding(horizontal = padding * 1 / 2f, vertical = padding * 1 / 4f),
                         horizontalArrangement = Arrangement.Start
                     ) {
                         Text("Artist")
@@ -237,7 +239,7 @@ fun AddSong(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = padding * 1/2f),
+                            .padding(horizontal = padding * 1 / 2f),
                         horizontalArrangement = Arrangement.Start
                     ) {
                         OutlinedTextField(
@@ -257,7 +259,7 @@ fun AddSong(
                         modifier = Modifier
                             .fillMaxWidth()
                             .requiredHeight(padding * 1.3f)
-                            .padding(horizontal = padding * 1/2f),
+                            .padding(horizontal = padding * 1 / 2f),
                         horizontalArrangement = Arrangement.Center
                     ) {
                         FilledTonalButton(
@@ -268,8 +270,8 @@ fun AddSong(
                             },
                             modifier = Modifier
                                 .fillMaxHeight()
-                                .fillMaxWidth(1/2f)
-                                .padding(horizontal = padding * 1/4f),
+                                .fillMaxWidth(1 / 2f)
+                                .padding(horizontal = padding * 1 / 4f),
                         ) {
                             Text("Cancel")
                         }
@@ -277,7 +279,7 @@ fun AddSong(
                             onClick = {
                                 val title = titleText
                                 val author = artistText
-                                val audioUri = fileUri.toString()
+                                var audioUri = fileUri.toString()
                                 var artUri = photoUri.toString()
 
                                 // Get current timestamp for lastPlayedTimestamp
@@ -286,9 +288,23 @@ fun AddSong(
                                 try {
                                     val copiedPath = copyUriToInternalStorage(context, Uri.parse(artUri))
                                     if (copiedPath != null) artUri = copiedPath
-                                    else artUri = "null"
+                                    else artUri = ""
                                 } catch (e: Exception) {
-                                    artUri = "null"
+                                    Toast.makeText(context, "Failed to read/copy the image file", Toast.LENGTH_SHORT).show()
+                                    Log.d("File Copy Err", e.message!!)
+                                    artUri = ""
+                                    return@Button
+                                }
+
+                                try {
+                                    val copiedPath = copyUriToInternalStorage(context, Uri.parse(audioUri))
+                                    if (copiedPath != null) audioUri = copiedPath
+                                    else audioUri = ""
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Failed to read/copy the audio file", Toast.LENGTH_SHORT).show()
+                                    Log.d("File Copy Err", e.message!!)
+                                    artUri = ""
+                                    return@Button
                                 }
 
                                 val song = SongEntity(
@@ -314,7 +330,7 @@ fun AddSong(
                             modifier = Modifier
                                 .fillMaxHeight()
                                 .fillMaxWidth(1f)
-                                .padding(horizontal = padding * 1/4f),
+                                .padding(horizontal = padding * 1 / 4f),
                             enabled = titleText.isNotEmpty() &&
                                     artistText.isNotEmpty() &&
                                     photoUri != null &&
