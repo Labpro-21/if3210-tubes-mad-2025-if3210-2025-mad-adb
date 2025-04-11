@@ -91,7 +91,7 @@ fun RecyclerSongsList(songs: List<SongEntity>, height: Int, showBorder: Boolean)
             factory = { context ->
                 RecyclerView(context).apply {
                     layoutManager = LinearLayoutManager(context)
-                    adapter = SongAdapter(songs)
+                    adapter = SongAdapter(songs, context)
                     layoutParams = ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         height
