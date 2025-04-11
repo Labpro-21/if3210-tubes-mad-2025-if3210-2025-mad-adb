@@ -17,7 +17,7 @@ data class LoginResponse(
 data class RefreshTokenRequest(val refreshToken: String)
 data class RefreshTokenResponse(val accessToken: String, val refreshToken: String)
 data class UserProfile(
-    val id: Int,
+    val id: Long,
     val username: String,
     val email: String,
     val profilePhoto: String,

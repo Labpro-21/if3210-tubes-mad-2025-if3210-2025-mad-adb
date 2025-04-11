@@ -15,24 +15,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import coil3.compose.AsyncImage
+import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.components.RecyclerSongsList
+import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
+import java.time.Instant
 
 // Assuming this is your color definition
 val BLACK_BACKGROUND = Color(0xFF121212)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryScreen(
+fun LibraryScreenn(
     navController: NavController,
-    viewModel: SongViewModel
+    viewModel: SongViewModel,
+    authRepository: AuthRepository
 ) {
     var showAddSongSheet by remember { mutableStateOf(false) }
 
@@ -41,20 +44,48 @@ fun LibraryScreen(
     val activeTabColor = Color(0xFF1ED760) // Spotify green
 
     // Observe songs from LiveData
-    val songs by viewModel.allSongs.observeAsState(emptyList())
+    val allSongs by viewModel.allSongs.observeAsState(emptyList())
+
+    // Track user ID for adding songs
+    var currentUserId by remember { mutableStateOf(-1L) }
+
+    // Get current user ID
+    LaunchedEffect(key1 = true) {
+        val userProfile = authRepository.currentUser()
+        // Convert Long ID to String for the DAO
+        currentUserId = userProfile?.id ?: -1L
+        if (currentUserId != -1L) {
+            viewModel.setCurrentUser(currentUserId)
+        }
+    }
+
+    // Filter songs based on selected tab
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    val tabs = listOf("All", "Liked")
+
+    // When tab changes, update the songs list
+    LaunchedEffect(selectedTabIndex, currentUserId) {
+        if (currentUserId != -1L) {
+            when (selectedTabIndex) {
+                0 -> viewModel.loadAllSongs()
+                1 -> viewModel.loadLikedSongs(currentUserId)
+            }
+        }
+    }
 
     // Keep track of currently playing song
     var currentlyPlayingSong by remember { mutableStateOf<SongEntity?>(null) }
 
     // When songs list changes, update currently playing song if needed
-    LaunchedEffect(songs) {
-        if (songs.isNotEmpty() && currentlyPlayingSong == null) {
-            currentlyPlayingSong = songs[0]
+    LaunchedEffect(allSongs) {
+        if (allSongs.isNotEmpty() && currentlyPlayingSong == null) {
+            currentlyPlayingSong = allSongs[0]
         }
     }
 
-    var selectedTabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("All", "Liked")
+    // For the Add Song bottom sheet
+    val sheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -79,16 +110,6 @@ fun LibraryScreen(
             IconButton(
                 onClick = {
                     showAddSongSheet = true
-
-                    //placeholder
-//                    viewModel.insert(
-//                        SongEntity(
-//                            title = "New Song",
-//                            author = "New Artist",
-//                            artUri = "https://i.scdn.co/image/ab67616d0000b273231fd0b2207747f75b67f867",
-//                            audioUri = "https://example.com/audio/newsong.mp3"
-//                        )
-//                    )
                 },
                 modifier = Modifier
                     .size(40.dp)
@@ -129,21 +150,30 @@ fun LibraryScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Replace LazyColumn with RecyclerSongsList inside a Box with weight
+        // Songs list
         Box(modifier = Modifier.weight(1f)) {
-            if (songs.isEmpty()) {
-                // Show loading or empty state
+            if (allSongs.isEmpty()) {
+                // Show empty state with message based on selected tab
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = Color.White)
+                    Text(
+                        text = if (selectedTabIndex == 0) "No songs in your library yet" else "No liked songs yet",
+                        color = Color.White
+                    )
                 }
             } else {
                 RecyclerSongsList(
-                    songs = songs,
-                    height = 800,  // This will be constrained by the parent Box
-                    showBorder = false
+                    songs = allSongs,
+                    height = 800,
+                    showBorder = false,
+//                    onSongClick = { song ->
+//                        currentlyPlayingSong = song
+//                    },
+//                    onLikeClick = { song ->
+//                        viewModel.toggleLikeSong(song)
+//                    }
                 )
             }
         }
@@ -160,11 +190,12 @@ fun LibraryScreen(
     )
 }
 
+
 @Composable
 fun CurrentlyPlayingBar(song: SongEntity) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = Color(0xFF460B41), // Dark red/purple color as in the image
+        color = Color(0xFF460B41),
         shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
     ) {
         Row(
@@ -173,7 +204,7 @@ fun CurrentlyPlayingBar(song: SongEntity) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                model = song.artUri, // Using artUri from SongEntity
+                model = song.artUri,
                 contentDescription = "Now Playing",
                 modifier = Modifier
                     .size(40.dp)

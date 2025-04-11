@@ -15,6 +15,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import com.example.adbpurrytify.data.TokenManager
 import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.ui.navigation.AppNavigation
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
@@ -38,6 +39,7 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
         // Create the AppDatabase instance
+        TokenManager.initialize(this)
         appDatabase = AppDatabase.getDatabase(applicationContext)
         songViewModel = SongViewModel(appDatabase.songDao())
 
