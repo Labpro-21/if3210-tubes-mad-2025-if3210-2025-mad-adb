@@ -33,6 +33,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -56,7 +57,11 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddSong() {
+fun AddSong(
+    show: Boolean,
+    onDismiss: () -> Unit
+) {
+    if (!show) return
     val padding = 32.dp
 
     // ModalBottomSheet params
@@ -103,7 +108,7 @@ fun AddSong() {
     ADBPurrytifyTheme {
         Surface {
             ModalBottomSheet(
-                onDismissRequest = { showBottomSheet = false },
+                onDismissRequest = { onDismiss() },
                 sheetState = sheetState
             ) {
                 Column(
@@ -215,9 +220,7 @@ fun AddSong() {
                         FilledTonalButton(
                             onClick = {
                                 scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                    if (!sheetState.isVisible) {
-                                        showBottomSheet = false
-                                    }
+                                    onDismiss()
                                 }
                             },
                             modifier = Modifier
@@ -245,7 +248,7 @@ fun AddSong() {
                                     val songViewModel = SongViewModel(songDao)
                                     songViewModel.insert(song)
                                     sheetState.hide()
-                                    showBottomSheet = false
+                                    onDismiss()
                                 }
 
 
@@ -273,6 +276,9 @@ fun AddSong() {
 @Preview
 @Composable
 fun PreviewAddSong() {
-
-    AddSong()
+    var showAddSongSheet by remember { mutableStateOf(false) }
+    AddSong(
+        show = showAddSongSheet,
+        onDismiss = { showAddSongSheet = false }
+    )
 }

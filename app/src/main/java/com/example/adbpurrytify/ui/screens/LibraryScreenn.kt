@@ -34,6 +34,8 @@ fun LibraryScreen(
     navController: NavController,
     viewModel: SongViewModel
 ) {
+    var showAddSongSheet by remember { mutableStateOf(false) }
+
     val backgroundColor = Color(0xFF121212)
     val tabBackgroundColor = Color(0xFF282828)
     val activeTabColor = Color(0xFF1ED760) // Spotify green
@@ -76,15 +78,17 @@ fun LibraryScreen(
 
             IconButton(
                 onClick = {
-                    // Example of adding a new song for testing
-                    viewModel.insert(
-                        SongEntity(
-                            title = "New Song",
-                            author = "New Artist",
-                            artUri = "https://i.scdn.co/image/ab67616d0000b273231fd0b2207747f75b67f867",
-                            audioUri = "https://example.com/audio/newsong.mp3"
-                        )
-                    )
+                    showAddSongSheet = true
+
+                    //placeholder
+//                    viewModel.insert(
+//                        SongEntity(
+//                            title = "New Song",
+//                            author = "New Artist",
+//                            artUri = "https://i.scdn.co/image/ab67616d0000b273231fd0b2207747f75b67f867",
+//                            audioUri = "https://example.com/audio/newsong.mp3"
+//                        )
+//                    )
                 },
                 modifier = Modifier
                     .size(40.dp)
@@ -149,6 +153,11 @@ fun LibraryScreen(
             CurrentlyPlayingBar(song = song)
         }
     }
+
+    AddSong(
+        show = showAddSongSheet,
+        onDismiss = { showAddSongSheet = false }
+    )
 }
 
 @Composable
@@ -190,7 +199,9 @@ fun CurrentlyPlayingBar(song: SongEntity) {
             }
 
             IconButton(
-                onClick = { /* Pause functionality */ }
+                onClick = {
+
+                }
             ) {
                 Icon(
                     imageVector = Icons.Default.Pause,
