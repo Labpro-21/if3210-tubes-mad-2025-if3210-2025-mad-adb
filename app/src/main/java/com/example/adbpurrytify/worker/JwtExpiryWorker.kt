@@ -129,7 +129,7 @@ class JwtExpiryWorker(appContext: Context, workerParams: WorkerParameters) :
 
     private fun scheduleNextWorker(context: Context) {
         val nextWork = OneTimeWorkRequestBuilder<JwtExpiryWorker>()
-            .setInitialDelay(4, TimeUnit.MINUTES)
+            .setInitialDelay(1, TimeUnit.MINUTES)
             .setConstraints(
                 Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)
