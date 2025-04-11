@@ -33,6 +33,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.model.Song
+import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
 import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
 
@@ -78,7 +79,7 @@ fun SongsList(songs: List<Song>, height: Int, showBorder: Boolean) {
 }
 
 @Composable
-fun RecyclerSongsList(songs: List<Song>, height: Int, showBorder: Boolean) {
+fun RecyclerSongsList(songs: List<SongEntity>, height: Int, showBorder: Boolean) {
 
     Box(
         modifier = Modifier
@@ -113,21 +114,21 @@ fun RecyclerSongsList(songs: List<Song>, height: Int, showBorder: Boolean) {
 
 
 
-@Preview
-@Composable
-fun TestSongsList() {
-
-    var song1 = Song(1, "Remembering Sunday", "All Time Low", "file:///sdcard/Download/remembering_sunday.jpeg", "")
-    var song2 = Song(2, "Gold Steps", "Neck Deep", "", "")
-    var song3 = Song(3, "Re:make", "ONE OK ROCK", "", "")
-    var songs = mutableListOf<Song>()
-    for (i in 1..5) {
-        songs.add(song1)
-        songs.add(song2)
-        songs.add(song3)
-    }
-
-    ADBPurrytifyTheme {
-        RecyclerSongsList(songs, 400, false)
-    }
-}
+//@Preview
+//@Composable
+//fun TestSongsList() {
+//
+//    var song1 = Song(1, "Remembering Sunday", "All Time Low", "file:///sdcard/Download/remembering_sunday.jpeg", "")
+//    var song2 = Song(2, "Gold Steps", "Neck Deep", "", "")
+//    var song3 = Song(3, "Re:make", "ONE OK ROCK", "", "")
+//    var songs = mutableListOf<Song>()
+//    for (i in 1..5) {
+//        songs.add(song1)
+//        songs.add(song2)
+//        songs.add(song3)
+//    }
+//
+//    ADBPurrytifyTheme {
+//        RecyclerSongsList(songs, 400, false)
+//    }
+//}

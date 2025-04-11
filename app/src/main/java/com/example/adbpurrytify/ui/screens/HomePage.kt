@@ -52,7 +52,7 @@ fun HomePage() {
                 Text("Recently Played", modifier = Modifier.padding(start = 12.dp, top = 36.dp))
             }
 
-            RecyclerSongsList(songs, height = 800, showBorder = false)
+//            RecyclerSongsList(songs, height = 800, showBorder = false)
         }
     }
 }

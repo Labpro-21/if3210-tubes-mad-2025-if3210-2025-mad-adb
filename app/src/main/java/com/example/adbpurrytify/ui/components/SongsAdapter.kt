@@ -9,9 +9,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.model.Song
 import android.view.View
+import com.example.adbpurrytify.data.model.SongEntity
 import java.io.File
 
-class SongAdapter(private val songs: List<Song>) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
+class SongAdapter(private val songs: List<SongEntity>) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
 
     class SongViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val songArt: ImageView = itemView.findViewById(R.id.song_image)
@@ -27,7 +28,7 @@ class SongAdapter(private val songs: List<Song>) : RecyclerView.Adapter<SongAdap
     override fun onBindViewHolder(holder: SongViewHolder, position: Int) {
 
         val song = songs[position]
-        val coverURI = Uri.parse(song.coverUrl)
+        val coverURI = Uri.parse(song.artUri)
         val file = File(coverURI.path ?: "")
 
         if (file.exists()) {

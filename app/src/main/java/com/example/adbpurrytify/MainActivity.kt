@@ -44,8 +44,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ADBPurrytifyTheme {
-                AppNavigation()
-                requestPermissions() // ini maybe just leave it here,
+                    AppNavigation()
+                    requestPermissions() // ini maybe just leave it here,
+
             }
         }
     }

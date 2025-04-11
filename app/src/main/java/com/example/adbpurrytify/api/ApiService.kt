@@ -1,5 +1,6 @@
 package com.example.adbpurrytify.api
 
+import com.example.adbpurrytify.data.model.User
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -19,7 +20,10 @@ data class UserProfile(
     val id: Int,
     val username: String,
     val email: String,
-
+    val profilePhoto: String,
+    val location: String,
+    val createdAt: String,
+    val updatedAt: String
     )
 
 
@@ -28,7 +32,9 @@ interface ApiService {
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
     @GET("api/profile")
-    suspend fun getProfile(): Response<UserProfile>
+    suspend fun getProfile(
+        @Header("Authorization") authHeader: String
+    ): Response<UserProfile>
 
     @POST("api/refresh-token")
     suspend fun refreshToken(@Body request: RefreshTokenRequest): Response<RefreshTokenResponse>

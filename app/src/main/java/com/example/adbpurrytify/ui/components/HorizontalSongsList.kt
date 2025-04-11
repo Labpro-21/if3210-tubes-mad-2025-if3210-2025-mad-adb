@@ -76,19 +76,19 @@ fun HorizontalSongsList(songs: List<Song>, showBorder: Boolean) {
     }
 }
 
-@Composable
-fun HorizontalTestSongsList() {
-    var song1 = Song(1, "Remembering Sunday", "All Time Low", "drawable/remembering_sunday.jpeg", "")
-    var song2 = Song(2, "Gold Steps", "Neck Deep", "drawable/remembering_sunday.jpeg", "")
-    var song3 = Song(3, "Re:make", "ONE OK ROCK", "drawable/remembering_sunday.jpeg", "")
-    var songs = mutableListOf<Song>()
-    for (i in 1..5) {
-        songs.add(song1)
-        songs.add(song2)
-        songs.add(song3)
-    }
-
-    ADBPurrytifyTheme {
-        HorizontalSongsList(songs, true)
-    }
-}
+//@Composable
+//fun HorizontalTestSongsList() {
+//    var song1 = Song(1, "Remembering Sunday", "All Time Low", "drawable/remembering_sunday.jpeg", "")
+//    var song2 = Song(2, "Gold Steps", "Neck Deep", "drawable/remembering_sunday.jpeg", "")
+//    var song3 = Song(3, "Re:make", "ONE OK ROCK", "drawable/remembering_sunday.jpeg", "")
+//    var songs = mutableListOf<Song>()
+//    for (i in 1..5) {
+//        songs.add(song1)
+//        songs.add(song2)
+//        songs.add(song3)
+//    }
+//
+//    ADBPurrytifyTheme {
+//        HorizontalSongsList(songs, true)
+//    }
+//}
