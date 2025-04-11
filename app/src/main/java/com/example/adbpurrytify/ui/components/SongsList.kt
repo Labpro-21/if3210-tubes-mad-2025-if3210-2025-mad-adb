@@ -107,7 +107,8 @@ fun RecyclerSongsList(songs: List<SongEntity>, height: Int, showBorder: Boolean)
             modifier = Modifier
                 .height(height.dp)
                 .fillMaxWidth()
-                .background(BLACK_BACKGROUND)
+                .background(BLACK_BACKGROUND),
+            update = { recyclerView -> recyclerView.adapter = SongAdapter(songs, recyclerView.context) },
         )
     }
 }
