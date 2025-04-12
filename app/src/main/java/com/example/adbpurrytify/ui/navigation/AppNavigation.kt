@@ -2,8 +2,11 @@ package com.example.adbpurrytify.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -17,8 +20,13 @@ import androidx.navigation.navArgument
 import com.example.adbpurrytify.api.RetrofitClient
 import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.local.AppDatabase
-import com.example.adbpurrytify.ui.screens.*
-import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
+import com.example.adbpurrytify.ui.screens.HomeScreen
+import com.example.adbpurrytify.ui.screens.LibraryScreen
+import com.example.adbpurrytify.ui.screens.LoginScreen
+import com.example.adbpurrytify.ui.screens.NetworkSensingSnackbar
+import com.example.adbpurrytify.ui.screens.ProfileScreen
+import com.example.adbpurrytify.ui.screens.SongPlayerScreen
+import com.example.adbpurrytify.ui.screens.SplashScreen
 import com.example.adbpurrytify.ui.viewmodels.ProfileViewModel
 import com.example.adbpurrytify.ui.viewmodels.ProfileViewModelFactory
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
@@ -42,8 +50,10 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     val database = AppDatabase.getDatabase(context)
     val songDao = database.songDao()
     val authRepository = AuthRepository(RetrofitClient.instance)
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = {
             if (showBottomBar) {
                 BottomNavigationBar(
@@ -53,6 +63,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             }
         }
     ) { paddingValues ->
+        NetworkSensingSnackbar(context = context, snackbarHostState = snackbarHostState)
         NavHost(
             navController = navController,
             startDestination = Screen.Splash.route,
@@ -99,7 +110,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             ) { backStackEntry ->
                 val songId = backStackEntry.arguments?.getLong("songId") ?: -1L
 
-                val songViewModel: SongViewModel = SongViewModel(songDao)
+                val songViewModel = SongViewModel(songDao)
 
                 SongPlayerScreen(
                     navController = navController,
