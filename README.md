@@ -60,6 +60,16 @@ Purrytify is a music streaming app. This Android app is made using Android Studi
 - room-compiler
 
 ## Screenshots
+<img src="screenshot/1.png" alt="Screenshot 1">
+<img src="screenshot/2.png" alt="Screenshot 2">
+<img src="screenshot/3.png" alt="Screenshot 3">
+<img src="screenshot/4.png" alt="Screenshot 4">
+<img src="screenshot/5.png" alt="Screenshot 5">
+<img src="screenshot/6.png" alt="Screenshot 6">
+<img src="screenshot/7.png" alt="Screenshot 7">
+<img src="screenshot/8.png" alt="Screenshot 8">
+<img src="screenshot/9.png" alt="Screenshot 9">
+<img src="screenshot/10.png" alt="Screenshot 10">
 
 ## Contribution
 1. 13522022 Renaldy Arief Susanto: Home, Library, Pemutaran Lagu, Liked Songs
