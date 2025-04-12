@@ -8,7 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 
-class AuthRepository constructor(
+class AuthRepository(
     private val apiService: ApiService
 ) {
 

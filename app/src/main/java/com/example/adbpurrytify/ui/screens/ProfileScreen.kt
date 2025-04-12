@@ -90,7 +90,7 @@ private fun ProfileContent(user: User,
     } else null
 
     // Log the URL for debugging
-    android.util.Log.d("ProfileScreen", "Image URL: $imageUrl")
+    Log.d("ProfileScreen", "Image URL: $imageUrl")
 
     Column(
         modifier = Modifier

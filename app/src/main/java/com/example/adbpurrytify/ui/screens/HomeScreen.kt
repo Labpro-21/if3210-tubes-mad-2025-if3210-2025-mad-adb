@@ -53,7 +53,6 @@ fun HomeScreen(
     val recentlyPlayed by viewModel.recentlyPlayed.observeAsState(emptyList())
     val isNewSongsLoading by viewModel.isNewSongsLoading.observeAsState(true)
     val isRecentlyPlayedLoading by viewModel.isRecentlyPlayedLoading.observeAsState(true)
-    val currentlyPlayingSong by viewModel.currentlyPlayingSong.observeAsState()
 
     // Get current user ID and load data
     LaunchedEffect(key1 = Unit) {

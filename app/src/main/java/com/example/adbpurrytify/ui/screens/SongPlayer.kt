@@ -46,7 +46,7 @@ object SongPlayer {
     }
 
     fun isPlaying(): Boolean {
-        return player?.isPlaying ?: false
+        return player?.isPlaying == true
     }
 
     fun play() {

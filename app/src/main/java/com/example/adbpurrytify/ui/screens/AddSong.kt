@@ -102,13 +102,12 @@ fun AddSong(
     // ModalBottomSheet params
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
-    var showBottomSheet by rememberSaveable { mutableStateOf(false) }
 
     // Remember user input, even when the screen is rotated :(
     var titleText by rememberSaveable { mutableStateOf("") }
     var artistText by rememberSaveable { mutableStateOf("") }
-    var photoUri by rememberSaveable { mutableStateOf<android.net.Uri?>(null) }
-    var fileUri by rememberSaveable { mutableStateOf<android.net.Uri?>(null) }
+    var photoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    var fileUri by rememberSaveable { mutableStateOf<Uri?>(null) }
 
     val pickMedia = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
         photoUri = uri

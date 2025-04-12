@@ -36,7 +36,7 @@ object TokenManager {
     }
 
     fun saveAuthToken(token: String) {
-        getPrefs().edit() { putString(KEY_AUTH_TOKEN, token) }
+        getPrefs().edit { putString(KEY_AUTH_TOKEN, token) }
     }
 
     fun getAuthToken(): String? {
@@ -44,7 +44,7 @@ object TokenManager {
     }
 
     fun saveRefreshToken(token: String) {
-        getPrefs().edit() { putString(KEY_REFRESH_TOKEN, token) }
+        getPrefs().edit { putString(KEY_REFRESH_TOKEN, token) }
     }
 
     fun getRefreshToken(): String? {
@@ -52,7 +52,7 @@ object TokenManager {
     }
 
     fun clearTokens() {
-        getPrefs().edit() {
+        getPrefs().edit {
             remove(KEY_AUTH_TOKEN)
                 .remove(KEY_REFRESH_TOKEN)
         }
