@@ -20,13 +20,19 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.api.RetrofitClient
 import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.TokenManager
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
+import com.example.adbpurrytify.worker.JwtExpiryWorker
 import kotlinx.coroutines.delay
+import java.util.concurrent.TimeUnit
 
 @Composable
 fun SplashScreen(navController: NavController) {
@@ -76,7 +82,22 @@ fun SplashScreen(navController: NavController) {
             delay(1500L)
 
             // Navigate based on the determined status
-            val destination = if (loginStatusDetermined == true) Screen.Home.route else Screen.Login.route
+            var destination = Screen.Home.route
+            if (loginStatusDetermined == false) {
+                destination = Screen.Login.route
+            } else {
+                val workManager = WorkManager.getInstance(context.applicationContext)
+                val firstWork = OneTimeWorkRequestBuilder<JwtExpiryWorker>()
+                    .setInitialDelay(0, TimeUnit.SECONDS)
+                    .setConstraints(
+                        Constraints.Builder()
+                            .setRequiredNetworkType(NetworkType.CONNECTED)
+                            .build()
+                    )
+                    .build()
+
+                workManager.enqueue(firstWork)
+            }
             Log.d("SplashScreen", "Navigating to $destination")
             navController.navigate(destination) {
                 // Remove Splash screen from the back stack
