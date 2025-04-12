@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,9 +20,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.model.SongEntity
 
@@ -38,13 +41,16 @@ fun HorizontalSongsListColumn(
             .clickable { onSongClick(song) }, // Add clickable modifier with callback
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.remembering_sunday),
-            contentDescription = "Album art for ${song.title}",
+
+        AsyncImage(
+            model = song.artUri,
+            contentDescription = "Album art for ${song.title}", // Better description
             modifier = Modifier
-                .width(92.dp)
+                .size(92.dp)
                 .padding(bottom = 6.dp)
-                .clip(shape = RoundedCornerShape(4.dp))
+                .clip(shape = RoundedCornerShape(4.dp)),
+            contentScale = ContentScale.Crop,
+            error = painterResource(R.drawable.song_art_placeholder)
         )
 
         var title = song.title.take(10)

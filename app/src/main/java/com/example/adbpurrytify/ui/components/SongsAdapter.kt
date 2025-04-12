@@ -106,14 +106,14 @@ class SongAdapter(
             val request = ImageRequest.Builder(context)
                 .data(song.artUri)
                 .target(holder.songImage)
-                .placeholder(R.drawable.remembering_sunday)
-                .error(R.drawable.remembering_sunday)
+                .placeholder(R.drawable.song_art_placeholder)
+                .error(R.drawable.song_art_placeholder)
                 .build()
 
             imageLoader.enqueue(request)
         } else {
             // Use default image
-            holder.songImage.setImageResource(R.drawable.remembering_sunday)
+            holder.songImage.setImageResource(R.drawable.song_art_placeholder)
         }
     }
 
