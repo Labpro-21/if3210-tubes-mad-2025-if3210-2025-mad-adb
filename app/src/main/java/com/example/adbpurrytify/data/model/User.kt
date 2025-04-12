@@ -9,3 +9,10 @@ data class User(
     val createdAt: String = "",
     val updatedAt: String = "",
 )
+
+data class UserStats(
+    val songCount: Int = 0,
+    val likedCount: Int = 0,
+    val listenedCount: Int = 0
+)
+
