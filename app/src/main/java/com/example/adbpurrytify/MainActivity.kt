@@ -7,8 +7,6 @@ import android.app.AlertDialog
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.view.WindowInsetsController
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,12 +16,13 @@ import androidx.core.content.ContextCompat
 import com.example.adbpurrytify.data.TokenManager
 import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.ui.navigation.AppNavigation
+import com.example.adbpurrytify.ui.screens.NetworkSensingBaseActivity
+import com.example.adbpurrytify.ui.screens.NetworkSensingScreen
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 
-class MainActivity : ComponentActivity() {
+class MainActivity : NetworkSensingBaseActivity() {
 
     private val readExternal = READ_EXTERNAL_STORAGE
     private val readImages = READ_MEDIA_IMAGES
@@ -46,9 +45,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ADBPurrytifyTheme {
-                    AppNavigation()
-                    requestPermissions() // ini maybe just leave it here,
-
+                AppNavigation()
+                requestPermissions() // ini maybe just leave it here,
             }
         }
     }

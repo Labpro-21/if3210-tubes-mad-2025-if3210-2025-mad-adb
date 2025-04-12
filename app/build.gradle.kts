@@ -51,7 +51,7 @@ android {
 dependencies {
 
     // live data
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
     implementation("androidx.compose.runtime:runtime-livedata:1.7.8")
 
     // for sys ui colors
@@ -61,7 +61,7 @@ dependencies {
     // "Diajarkan di kelas",
     // meanwhile ppt yg di up di edunex belom ada apa2 tentang Android SDK </3
     implementation("androidx.cardview:cardview:1.0.0")
-    implementation("androidx.recyclerview:recyclerview:1.1.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -70,14 +70,14 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor")
 
 
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
     implementation("androidx.compose.runtime:runtime-livedata:1.7.8")
 
 
 
     implementation("androidx.media3:media3-common:1.4.1")
-    implementation("io.coil-kt.coil3:coil:3.0.0-alpha09")
-    implementation("io.coil-kt.coil3:coil-compose:3.0.0-alpha09")
+    implementation("io.coil-kt.coil3:coil:3.0.0")
+    implementation("io.coil-kt.coil3:coil-compose:3.0.0")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.0-alpha09")
 //    implementation("androidx.media3:media3-ui:1.0")
     implementation("androidx.media3:media3-exoplayer:1.4.1")
@@ -85,9 +85,9 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
 
     // Room
-    implementation("androidx.room:room-ktx:2.5.0")
-    implementation("androidx.room:room-runtime:2.5.0")
-    ksp("androidx.room:room-compiler:2.5.0")
+    implementation("androidx.room:room-ktx:2.7.0")
+    implementation("androidx.room:room-runtime:2.7.0")
+    ksp("androidx.room:room-compiler:2.7.0")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
