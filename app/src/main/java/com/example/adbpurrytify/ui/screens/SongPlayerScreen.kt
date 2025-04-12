@@ -127,7 +127,7 @@ fun SongPlayerScreen(
             Log.d("sliderPosition", sliderPosition.toString())
             delay(1000L)
 
-            if ((sliderPosition == SongPlayer.getDuration()) and (nextId > -1))
+            if ((sliderPosition >= SongPlayer.getDuration()) and (nextId > -1))
                 navController?.navigate("${Screen.Player.route}/${nextId}")
         }
     }
