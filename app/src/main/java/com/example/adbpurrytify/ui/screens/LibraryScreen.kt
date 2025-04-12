@@ -21,6 +21,7 @@ import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.model.SongEntity
+import com.example.adbpurrytify.ui.components.MiniPlayer
 //import com.example.adbpurrytify.ui.components.CurrentlyPlayingBar
 import com.example.adbpurrytify.ui.components.RecyclerSongsList
 import com.example.adbpurrytify.ui.navigation.Screen
@@ -207,13 +208,10 @@ fun LibraryScreen(
                 }
             }
         }
+        MiniPlayer(navController = navController)
         // --- End Content Area ---
-
-        // Currently playing bar (only show if we have a song playing)
-        currentlyPlayingSong?.let { song ->
-//            CurrentlyPlayingBar(song = song, onClick = {})
-        }
     }
+
 
     // Conditionally show the bottom sheet
     if (showAddSongSheet) {

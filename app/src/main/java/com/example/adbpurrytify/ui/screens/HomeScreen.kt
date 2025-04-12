@@ -19,6 +19,7 @@ import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.ui.components.HorizontalSongsList
 import com.example.adbpurrytify.ui.components.RecyclerSongsList
+import com.example.adbpurrytify.ui.components.MiniPlayer
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
 
@@ -143,15 +144,8 @@ fun HomeScreen(
                 }
             } // End of scrollable content Column
 
-            // Currently playing bar (stays at the bottom)
-//            currentlyPlayingSong?.let { song ->
-//                CurrentlyPlayingBar(
-//                    song = song,
-//                    onClick = {
-//                        navController?.navigate("${Screen.Player.route}/${song.id}")
-//                    }
-//                )
-//            }
+            MiniPlayer(navController = navController!!)
+
         } // End of main content Column
     } // End of if/else
 }

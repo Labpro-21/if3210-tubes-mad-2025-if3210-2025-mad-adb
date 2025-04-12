@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -37,6 +38,7 @@ import com.example.adbpurrytify.ui.viewmodels.MockProfileViewModel
 import com.example.adbpurrytify.ui.viewmodels.ProfileViewModel
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.model.UserStats
+import com.example.adbpurrytify.ui.components.MiniPlayer
 
 @Composable
 fun ProfileScreen(
@@ -172,13 +174,13 @@ private fun ProfileContent(user: User,
         }
 
 
-        Spacer(modifier = Modifier.padding(padding * 1/2))
+        Spacer(modifier = Modifier.padding(padding * 1 / 2))
         Row {
             Column(
                 modifier = Modifier
                     .clickable(true, onClick = {})
                     .fillMaxHeight()
-                    .fillMaxWidth(1/3f)
+                    .fillMaxWidth(1 / 3f)
                     .requiredHeight(columnFillHeight),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -190,7 +192,7 @@ private fun ProfileContent(user: User,
                 modifier = Modifier
                     .clickable(true, onClick = {})
                     .fillMaxHeight()
-                    .fillMaxWidth(1/2f)
+                    .fillMaxWidth(1 / 2f)
                     .requiredHeight(columnFillHeight),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -211,7 +213,10 @@ private fun ProfileContent(user: User,
                 Text("Listened")
             }
         }
+        Spacer(modifier = Modifier.padding(vertical = 200.dp))
+        MiniPlayer(navController = navController)
     }
+
 
 }
 
