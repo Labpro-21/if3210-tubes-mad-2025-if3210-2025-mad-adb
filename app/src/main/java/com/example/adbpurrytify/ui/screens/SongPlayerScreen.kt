@@ -41,38 +41,41 @@ fun SongPlayerScreen(
 ) {
     val backgroundColor = Color(0xFF121212)
     val accentColor = Color(0xFF1ED760)
-    var song by remember { mutableStateOf<SongEntity?>(null) }
 
+    var song by remember { mutableStateOf<SongEntity?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
     var sliderPosition by remember { mutableStateOf(0L) }
+
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
-    // Load the song
-    LaunchedEffect(songId) {
-        val nextsong = runBlocking { viewModel.getSongById(songId) }
-        if (nextsong?.id == song?.id) return@LaunchedEffect
-
-        song = nextsong
-        song?.let {
-            SongPlayer.release()
-            SongPlayer.loadSong(it.audioUri, context)
-        }
-    }
 
     var playerReady by remember { mutableStateOf(false) }
     LaunchedEffect(songId) {
-        song = viewModel.getSongById(songId)
-        song?.let {
-            SongPlayer.release()
-            SongPlayer.loadSong(it.audioUri, context)
 
-            // Wait for the player to be ready
-            while (SongPlayer.getDuration() <= 0) {
-                delay(100)
+        song = runBlocking { viewModel.getSongById(songId) }
+        song?.let {
+
+            if (SongPlayer.songLoaded == false
+                or ((SongPlayer.songLoaded) and (SongPlayer.curLoadedSongId != songId))) {
+
+                SongPlayer.release()
+                SongPlayer.loadSong(it.audioUri, context, song!!.id)
+                // Wait for the player to be ready
+                while (SongPlayer.getDuration() <= 0) {
+                    delay(100)
+                }
+                playerReady = true
+                isPlaying = true
             }
-            playerReady = true
+
+            else { //lagu yg sama
+                isPlaying = SongPlayer.isPlaying()
+                sliderPosition = SongPlayer.getProgress()
+                playerReady = true
+            }
+
         }
+
     }
 
     // Update slider position every second
