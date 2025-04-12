@@ -28,6 +28,10 @@ class SongViewModel(private val songDao: SongDao) : ViewModel() {
     // Keep track of the last loaded tab index
     private var lastLoadedTabIndex: Int = 0
 
+    suspend fun getSongById(songId: Long): SongEntity? {
+        return songDao.getSongById(songId)
+    }
+
     // Set the current user ID and trigger the initial load
     fun setCurrentUser(userId: Long) {
         if (userId != currentUserId) {
@@ -126,6 +130,21 @@ class SongViewModel(private val songDao: SongDao) : ViewModel() {
                 _error.postValue("Failed to update song: ${e.message}")
             }
         }
+    }
+
+    suspend fun getPrevSongId(songId: Long): Long {
+        var prevSong = songDao.getPreviousSong(currentUserId!!, songId)
+        if (prevSong == null) {
+            return -1L
+        }
+        return prevSong.id
+    }
+    suspend fun getNextSongId(songId: Long): Long {
+        var nextSong = songDao.getNextSong(currentUserId!!, songId)
+        if (nextSong == null) {
+            return -1L
+        }
+        return nextSong.id
     }
 
     // Toggle like status of a song

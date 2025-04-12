@@ -39,4 +39,24 @@ interface SongDao {
     // 4. Get the latest recently played song for a user (limit 1)
     @Query("SELECT * FROM songs WHERE userId = :userId AND lastPlayedTimestamp IS NOT NULL ORDER BY lastPlayedTimestamp DESC LIMIT 1")
     suspend fun getLastPlayedSong(userId: Long): SongEntity?
+
+    // prev
+    @Query("""
+        SELECT * FROM songs 
+        WHERE userId = :userId 
+          AND id < :currentSongId 
+        ORDER BY id DESC 
+    LIMIT 1
+    """)
+    suspend fun getPreviousSong(userId: Long, currentSongId: Long): SongEntity?
+
+    // next
+    @Query("""
+        SELECT * FROM songs 
+        WHERE userId = :userId 
+          AND id > :currentSongId 
+        ORDER BY id ASC 
+    LIMIT 1
+    """)
+    suspend fun getNextSong(userId: Long, currentSongId: Long): SongEntity?
 }

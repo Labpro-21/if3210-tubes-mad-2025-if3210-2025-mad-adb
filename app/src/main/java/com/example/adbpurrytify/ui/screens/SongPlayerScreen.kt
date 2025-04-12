@@ -6,10 +6,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowLeft
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowRight
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,9 +25,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.adbpurrytify.R
+import com.example.adbpurrytify.api.RetrofitClient
+import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.data.model.SongEntity
+import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
+import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -33,12 +40,14 @@ import kotlinx.coroutines.runBlocking
 fun SongPlayerScreen(
     navController: NavController,
     songId: Long,
-    viewModel: HomeViewModel = viewModel(
-        factory = HomeViewModel.Factory(
-            AppDatabase.getDatabase(LocalContext.current).songDao()
-        )
-    )
+    viewModel: SongViewModel = SongViewModel(
+        AppDatabase.getDatabase(LocalContext.current).songDao()
+    ),
+    authRepository: AuthRepository = remember {
+        AuthRepository(RetrofitClient.instance) // Use corrected import
+    }
 ) {
+
     val backgroundColor = Color(0xFF121212)
     val accentColor = Color(0xFF1ED760)
 
@@ -48,9 +57,21 @@ fun SongPlayerScreen(
 
     val context = LocalContext.current
 
+    var prevId by remember { mutableStateOf(-1L) }
+    var nextId by remember { mutableStateOf(-1L) }
 
     var playerReady by remember { mutableStateOf(false) }
+
     LaunchedEffect(songId) {
+
+        val userProfile = authRepository.currentUser()
+        val userId = userProfile?.id ?: -1L
+        if (userId != -1L) {
+            viewModel.setCurrentUser(userId)
+        }
+
+        prevId = viewModel.getPrevSongId(songId)
+        nextId = viewModel.getNextSongId(songId)
 
         song = runBlocking { viewModel.getSongById(songId) }
         song?.let {
@@ -77,13 +98,15 @@ fun SongPlayerScreen(
         }
 
     }
-
     // Update slider position every second
     LaunchedEffect(isPlaying) {
         while (isPlaying) {
             sliderPosition = SongPlayer.getProgress()
             Log.d("sliderPosition", sliderPosition.toString())
             delay(1000L)
+
+            if ((sliderPosition == SongPlayer.getDuration()) and (nextId > -1))
+                navController?.navigate("${Screen.Player.route}/${nextId}")
         }
     }
 
@@ -99,7 +122,7 @@ fun SongPlayerScreen(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { navController.navigateUp() }) {
+            IconButton(onClick = { navController.navigate(Screen.Home.route) }) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Go back",
@@ -192,6 +215,25 @@ fun SongPlayerScreen(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
+                if (prevId > -1)
+                    IconButton(
+                        onClick = {
+                            navController?.navigate("${Screen.Player.route}/${prevId}")
+                        },
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(accentColor, shape = RoundedCornerShape(50))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardDoubleArrowLeft,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(32.dp))
+
                 IconButton(
                     onClick = {
                         if (isPlaying) {
@@ -212,6 +254,25 @@ fun SongPlayerScreen(
                         modifier = Modifier.size(32.dp)
                     )
                 }
+                Spacer(modifier = Modifier.width(32.dp))
+
+                if (nextId > -1)
+                    IconButton(
+                        onClick = {
+                            navController?.navigate("${Screen.Player.route}/${nextId}")
+                        },
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(accentColor, shape = RoundedCornerShape(50))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardDoubleArrowRight,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+
             }
         } ?: run {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

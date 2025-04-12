@@ -99,14 +99,12 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             ) { backStackEntry ->
                 val songId = backStackEntry.arguments?.getLong("songId") ?: -1L
 
-                val homeViewModel: HomeViewModel = viewModel(
-                    factory = HomeViewModel.Factory(songDao)
-                )
+                val songViewModel: SongViewModel = SongViewModel(songDao)
 
                 SongPlayerScreen(
                     navController = navController,
                     songId = songId,
-                    viewModel = homeViewModel
+                    viewModel = songViewModel
                 )
             }
         }

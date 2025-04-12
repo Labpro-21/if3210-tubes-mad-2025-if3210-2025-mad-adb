@@ -132,10 +132,9 @@ fun HomeScreen(
                     }
                 } else {
                     // Ensure RecyclerSongsList doesn't take infinite height if inside a Column
-                    // The height parameter you passed (400.dp) is good.
                     RecyclerSongsList(
                         songs = recentlyPlayed,
-                        height = 400, // Keep explicit height or use weight modifier if needed
+                        height = 600,
                         showBorder = false,
                         onSongClick = { song ->
                             navController?.navigate("${Screen.Player.route}/${song.id}")
@@ -145,14 +144,14 @@ fun HomeScreen(
             } // End of scrollable content Column
 
             // Currently playing bar (stays at the bottom)
-            currentlyPlayingSong?.let { song ->
-                CurrentlyPlayingBar(
-                    song = song,
-                    onClick = {
-                        navController?.navigate("${Screen.Player.route}/${song.id}")
-                    }
-                )
-            }
+//            currentlyPlayingSong?.let { song ->
+//                CurrentlyPlayingBar(
+//                    song = song,
+//                    onClick = {
+//                        navController?.navigate("${Screen.Player.route}/${song.id}")
+//                    }
+//                )
+//            }
         } // End of main content Column
     } // End of if/else
 }

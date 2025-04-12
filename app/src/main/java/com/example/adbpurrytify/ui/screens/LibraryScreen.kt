@@ -21,6 +21,7 @@ import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.model.SongEntity
+//import com.example.adbpurrytify.ui.components.CurrentlyPlayingBar
 import com.example.adbpurrytify.ui.components.RecyclerSongsList
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
@@ -210,7 +211,7 @@ fun LibraryScreen(
 
         // Currently playing bar (only show if we have a song playing)
         currentlyPlayingSong?.let { song ->
-            CurrentlyPlayingBar(song = song, onClick = {})
+//            CurrentlyPlayingBar(song = song, onClick = {})
         }
     }
 
@@ -225,60 +226,3 @@ fun LibraryScreen(
 }
 
 
-@Composable
-fun CurrentlyPlayingBar(song: SongEntity,
-                        onClick: () -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth().clickable(true, onClick = onClick),
-        color = Color(0xFF460B41), // Consider MaterialTheme colors
-        shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AsyncImage(
-                model = song.artUri,
-                contentDescription = "Album art for ${song.title}", // Better description
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(4.dp)),
-                contentScale = ContentScale.Crop
-            )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = song.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White,
-                    maxLines = 1 // Prevent long titles from wrapping too much
-                )
-                Text(
-                    text = song.author,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.LightGray,
-                    maxLines = 1
-                )
-            }
-
-            IconButton(
-                onClick = {
-                    // TODO: Implement Pause/Play toggle logic
-                }
-            ) {
-                Icon(
-                    // TODO: Change icon based on actual playback state
-                    imageVector = Icons.Default.Pause,
-                    contentDescription = "Pause", // Change based on state ("Play")
-                    tint = Color.White
-                )
-            }
-        }
-    }
-}
