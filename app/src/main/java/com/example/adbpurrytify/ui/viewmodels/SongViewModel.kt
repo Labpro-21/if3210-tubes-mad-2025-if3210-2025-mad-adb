@@ -10,6 +10,7 @@ import com.example.adbpurrytify.data.model.SongEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import java.util.Date
 
 class SongViewModel(private val songDao: SongDao) : ViewModel() {
 
@@ -145,6 +146,12 @@ class SongViewModel(private val songDao: SongDao) : ViewModel() {
     // Toggle like status of a song
     fun toggleLikeSong(song: SongEntity) {
         val updatedSong = song.copy(isLiked = !song.isLiked)
+        update(updatedSong)
+    }
+
+    // Update LastPlayedTimestamp
+    fun updateSongTimestamp(song: SongEntity) {
+        val updatedSong = song.copy(lastPlayedTimestamp = Date().time)
         update(updatedSong)
     }
 

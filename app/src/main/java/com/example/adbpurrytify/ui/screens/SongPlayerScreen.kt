@@ -95,6 +95,7 @@ fun SongPlayerScreen(
         nextId = viewModel.getNextSongId(songId)
 
         song = runBlocking { viewModel.getSongById(songId) }
+        viewModel.updateSongTimestamp(song!!)
         song?.let {
             // Initialize the liked state
             isLiked = it.isLiked
