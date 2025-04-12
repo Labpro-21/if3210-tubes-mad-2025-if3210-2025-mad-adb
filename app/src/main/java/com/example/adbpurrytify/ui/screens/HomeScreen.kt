@@ -61,12 +61,10 @@ fun HomeScreen(
         val userId = userProfile?.id ?: -1L
         if (userId != -1L) {
             viewModel.setCurrentUser(userId)
-            // Data loading is triggered within setCurrentUser or subsequent calls in ViewModel
         }
-        // Consider adding error handling or a state for when userId is -1L
     }
 
-    // Determine the overall loading state
+
     val isLoading = isNewSongsLoading || isRecentlyPlayedLoading
 
     // Show a full-screen loader if isLoading is true
@@ -80,7 +78,6 @@ fun HomeScreen(
             CircularProgressIndicator(color = primaryColor)
         }
     } else {
-        // Show the main content once loading is false
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -88,11 +85,10 @@ fun HomeScreen(
         ) {
             Column(
                 modifier = Modifier
-                    .weight(1f) // Takes up available space, pushing the player bar down
+                    .weight(1f)
                     .fillMaxWidth()
-                    .padding(top = 16.dp) // Add padding at the top of the scrollable content
+                    .padding(top = 16.dp)
             ) {
-                // New Songs Section
                 Text(
                     text = "New songs",
                     color = Color.White,
@@ -102,10 +98,10 @@ fun HomeScreen(
                 )
 
 
-                if (isNewSongsLoading) { // This will likely be false here due to the outer check
+                if (isNewSongsLoading) {
                     Box(
                         modifier = Modifier
-                            .height(170.dp) // Adjust height as needed
+                            .height(170.dp)
                             .fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
@@ -133,15 +129,13 @@ fun HomeScreen(
                 if (isRecentlyPlayedLoading) { // This will likely be false here
                     Box(
                         modifier = Modifier
-                            // Use appropriate sizing for this loader if needed
                             .fillMaxWidth()
-                            .padding(vertical = 50.dp), // Example padding
+                            .padding(vertical = 50.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(color = primaryColor)
                     }
                 } else {
-                    // Ensure RecyclerSongsList doesn't take infinite height if inside a Column
                     RecyclerSongsList(
                         songs = recentlyPlayed,
                         height = 600,
