@@ -5,24 +5,21 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.example.adbpurrytify.R
-import com.example.adbpurrytify.data.model.Song
-import android.view.View
-import androidx.compose.ui.platform.LocalContext
 import coil3.ImageLoader
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
 import coil3.request.target
+import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.model.SongEntity
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStream
 
 
 fun copyUriToInternalStorage(context: Context, uri: Uri): String? {

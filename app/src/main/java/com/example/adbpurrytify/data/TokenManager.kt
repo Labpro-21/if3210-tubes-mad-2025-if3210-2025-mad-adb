@@ -3,10 +3,9 @@ package com.example.adbpurrytify.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import androidx.core.content.edit
-import com.example.adbpurrytify.api.ApiService
 
 object TokenManager {
 

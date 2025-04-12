@@ -1,8 +1,6 @@
 // network/RetrofitClient.kt
 package com.example.adbpurrytify.api
 
-import com.example.adbpurrytify.api.ApiService
-import com.example.adbpurrytify.api.AuthInterceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

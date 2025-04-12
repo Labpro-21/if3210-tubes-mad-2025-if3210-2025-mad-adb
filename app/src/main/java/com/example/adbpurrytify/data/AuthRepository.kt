@@ -4,7 +4,6 @@ import android.util.Log
 import com.example.adbpurrytify.api.ApiService
 import com.example.adbpurrytify.api.RefreshTokenRequest
 import com.example.adbpurrytify.api.UserProfile
-import com.example.adbpurrytify.data.model.User
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
