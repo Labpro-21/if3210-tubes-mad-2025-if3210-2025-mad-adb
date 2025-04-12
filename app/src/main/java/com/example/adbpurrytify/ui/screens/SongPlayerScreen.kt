@@ -143,7 +143,7 @@ fun SongPlayerScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Song Title + Author
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Text(currentSong.title, color = Color.White, style = MaterialTheme.typography.titleLarge)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(currentSong.author, color = Color.LightGray, style = MaterialTheme.typography.bodyLarge)
