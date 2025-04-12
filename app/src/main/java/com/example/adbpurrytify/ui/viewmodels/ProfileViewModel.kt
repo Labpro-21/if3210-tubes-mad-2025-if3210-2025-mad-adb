@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.adbpurrytify.api.ApiService
 import com.example.adbpurrytify.api.UserProfile
+import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.TokenManager
 import com.example.adbpurrytify.data.local.SongDao
 import com.example.adbpurrytify.data.model.User
@@ -12,10 +13,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import android.util.Log
+import retrofit2.HttpException
 
 class ProfileViewModel(
     private val apiService: ApiService,
-    private val songDao: SongDao // Inject the SongDao
+    private val songDao: SongDao, // Inject the SongDao
+    private val authRepository: AuthRepository // Add AuthRepository dependency
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
@@ -35,26 +39,53 @@ class ProfileViewModel(
                     return@launch
                 }
 
-                val response = apiService.getProfile("Bearer $token")
-                if (response.isSuccessful) {
-                    val userProfile = response.body()
-                    if (userProfile != null) {
-                        val user = mapToUserModel(userProfile)
+                try {
+                    fetchUserProfile(token)
+                } catch (e: HttpException) {
+                    if (e.code() == 401) {
+                        Log.d("ProfileViewModel", "Token expired, attempting to refresh")
 
-                        // Get song statistics from the database
-                        val userId = userProfile.id
-                        val stats = getUserStats(userId)
+                        val refreshed = authRepository.refreshToken()
 
-                        _uiState.value = ProfileUiState.Success(user, stats)
+                        if (refreshed) {
+                            val newToken = TokenManager.getAuthToken()
+                            if (newToken != null) {
+                                Log.d("ProfileViewModel", "Token refreshed, retrying request")
+                                fetchUserProfile(newToken)
+                            } else {
+                                _uiState.value = ProfileUiState.Error("Failed to get new token after refresh")
+                            }
+                        } else {
+                            _uiState.value = ProfileUiState.Error("Session expired. Please log in again.")
+                        }
                     } else {
-                        _uiState.value = ProfileUiState.Error("Empty response")
+                        _uiState.value = ProfileUiState.Error("Error: ${e.code()}")
                     }
-                } else {
-                    _uiState.value = ProfileUiState.Error("Error: ${response.code()}")
                 }
             } catch (e: Exception) {
+                Log.e("ProfileViewModel", "Error loading profile", e)
                 _uiState.value = ProfileUiState.Error(e.message ?: "Unknown error")
             }
+        }
+    }
+
+    private suspend fun fetchUserProfile(token: String) {
+        val response = apiService.getProfile("Bearer $token")
+        if (response.isSuccessful) {
+            val userProfile = response.body()
+            if (userProfile != null) {
+                val user = mapToUserModel(userProfile)
+
+                // Get song statistics from the database
+                val userId = userProfile.id
+                val stats = getUserStats(userId)
+
+                _uiState.value = ProfileUiState.Success(user, stats)
+            } else {
+                _uiState.value = ProfileUiState.Error("Empty response")
+            }
+        } else {
+            throw HttpException(response)
         }
     }
 
