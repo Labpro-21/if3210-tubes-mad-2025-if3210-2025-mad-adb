@@ -33,7 +33,7 @@ interface SongDao {
     fun getLikedSongs(userId: Long): Flow<List<SongEntity>>
 
     // 3. Get recently played songs (non-null lastPlayedTimestamp) for a user
-    @Query("SELECT * FROM songs WHERE userId = :userId AND lastPlayedTimestamp IS NOT NULL ORDER BY lastPlayedTimestamp DESC")
+    @Query("SELECT * FROM songs WHERE userId = :userId AND lastPlayedTimestamp IS NOT NULL ORDER BY lastPlayedTimestamp DESC LIMIT 20")
     fun getRecentlyPlayedSongs(userId: Long): Flow<List<SongEntity>>
 
     // 4. Get the latest recently played song for a user (limit 1)
