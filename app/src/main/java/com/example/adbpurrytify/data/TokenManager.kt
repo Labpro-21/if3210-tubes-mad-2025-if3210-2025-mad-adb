@@ -58,4 +58,8 @@ object TokenManager {
                 .remove(KEY_REFRESH_TOKEN)
         }
     }
+
+    fun hasTokens(): Boolean {
+        return getAuthToken() != null && getRefreshToken() != null
+    }
 }

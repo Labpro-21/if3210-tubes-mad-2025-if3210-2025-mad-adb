@@ -39,14 +39,20 @@ fun SplashScreen(navController: NavController) {
         Log.d("SplashScreen", "Initializing TokenManager and checking token...")
         try {
             val authRepository = AuthRepository(RetrofitClient.instance)
-            val token = TokenManager.getAuthToken()
-            loginStatusDetermined = authRepository.isTokenValid()
-            Log.d("SplashScreen", "token is $token")
-            Log.d("SplashScreen", "Token check complete. Logged in: $loginStatusDetermined")
+
+            // First check if we have tokens
+            if (TokenManager.hasTokens()) {
+                // Try to validate or refresh tokens
+                loginStatusDetermined = authRepository.validateAndRefreshTokenIfNeeded()
+            } else {
+                // No tokens stored, user needs to log in
+                loginStatusDetermined = false
+            }
+
+            Log.d("SplashScreen", "Authentication check complete. Logged in: $loginStatusDetermined")
         } catch (e: Exception) {
-            // Handle potential errors during TokenManager init or access
             Log.e("SplashScreen", "Error checking login status", e)
-            loginStatusDetermined = false // Assume not logged in if error occurs
+            loginStatusDetermined = false
         }
     }
 
