@@ -18,7 +18,7 @@ class SongViewModel(private val songDao: SongDao) : ViewModel() {
     val allSongs: LiveData<List<SongEntity>> = _allSongs
 
     // Loading state LiveData - Initialize it!
-    private val _isLoading = MutableLiveData<Boolean>(false) // Default to not loading
+    private val _isLoading = MutableLiveData<Boolean>(false)
     val isLoading: LiveData<Boolean> = _isLoading
 
     // Error state LiveData
@@ -39,7 +39,7 @@ class SongViewModel(private val songDao: SongDao) : ViewModel() {
     fun setCurrentUser(userId: Long) {
         if (userId != currentUserId) {
             currentUserId = userId
-            loadSongsForTab(lastLoadedTabIndex) // Load based on current/last tab
+            loadSongsForTab(lastLoadedTabIndex)
         }
     }
 
@@ -52,56 +52,48 @@ class SongViewModel(private val songDao: SongDao) : ViewModel() {
                 1 -> loadLikedSongs(userId)
             }
         } ?: run {
-            _isLoading.postValue(false) // Ensure loading stops if no user ID
-            _allSongs.postValue(emptyList()) // Clear songs if no user
-            _error.postValue("User ID not available.") // Optional error
+            _isLoading.postValue(false)
+            _allSongs.postValue(emptyList())
+            _error.postValue("User ID not available.")
         }
     }
 
     // Get liked songs for the current user
     fun loadLikedSongs(userId: Long) {
-        _isLoading.postValue(true) // Set loading true *before* starting collection
-        _error.postValue(null) // Clear previous errors
+        _isLoading.postValue(true)
+        _error.postValue(null)
         viewModelScope.launch {
-            var isFirstEmission = true // Flag to handle only the first load
+            var isFirstEmission = true
             songDao.getLikedSongs(userId)
                 .catch { e ->
                     _error.postValue("Failed to load liked songs: ${e.message}")
                     _isLoading.postValue(false) // Stop loading on error
-                    // Optionally post an empty list or keep the old data
-                    // _allSongs.postValue(emptyList())
                 }
                 .collect { songs ->
                     _allSongs.postValue(songs)
-                    // Only set loading to false after the *first* emission
+
                     if (isFirstEmission) {
                         _isLoading.postValue(false)
                         isFirstEmission = false
                     }
                 }
-            // Note: If the flow completes without emitting (empty table initially),
-            // isLoading might stay true. Add a finally block if that's a concern.
-            // However, for Room, it usually emits an empty list immediately.
         }
     }
 
     // Load all songs for the current user
     fun loadAllSongs(userId: Long) {
-        _isLoading.postValue(true) // Set loading true *before* starting collection
-        _error.postValue(null) // Clear previous errors
+        _isLoading.postValue(true)
+        _error.postValue(null)
         viewModelScope.launch {
-            var isFirstEmission = true // Flag to handle only the first load
-            // Assuming getAllSongs means songs *by* this user based on previous context
-            songDao.getSongsByUser(userId) // Make sure this is the correct DAO method
+            var isFirstEmission = true
+
+            songDao.getSongsByUser(userId)
                 .catch { e ->
                     _error.postValue("Failed to load all songs: ${e.message}")
-                    _isLoading.postValue(false) // Stop loading on error
-                    // Optionally post an empty list or keep the old data
-                    // _allSongs.postValue(emptyList())
+                    _isLoading.postValue(false)
                 }
                 .collect { songs ->
                     _allSongs.postValue(songs)
-                    // Only set loading to false after the *first* emission
                     if (isFirstEmission) {
                         _isLoading.postValue(false)
                         isFirstEmission = false

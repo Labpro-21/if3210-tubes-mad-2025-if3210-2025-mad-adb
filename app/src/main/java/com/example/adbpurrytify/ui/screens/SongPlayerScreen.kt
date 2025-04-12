@@ -72,7 +72,6 @@ fun SongPlayerScreen(
 ) {
 
     var song by remember { mutableStateOf<SongEntity?>(null) }
-    // Track liked state separately for optimistic updates
     var isLiked by remember { mutableStateOf(false) }
     var isPlaying by remember { mutableStateOf(false) }
     var sliderPosition by remember { mutableStateOf(0L) }
@@ -127,7 +126,7 @@ fun SongPlayerScreen(
             Log.d("sliderPosition", sliderPosition.toString())
             delay(1000L)
 
-            if ((sliderPosition == SongPlayer.getDuration()) and (nextId > -1))
+            if ((sliderPosition >= SongPlayer.getDuration()) and (nextId > -1))
                 navController?.navigate("${Screen.Player.route}/${nextId}")
         }
     }
