@@ -259,8 +259,9 @@ fun LoginScreen(navController: NavController) {
                                 Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
                             } else {
                                 // Handle unsuccessful login (e.g., wrong credentials)
-                                val errorMsg = response.errorBody()?.string() ?: "Login failed: ${response.code()}"
+                                val errorMsg = "Wrong Credentials"
                                 Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+                                Log.i("401", "Invalid credentials")
                             }
 
 
