@@ -2,6 +2,7 @@ package com.example.adbpurrytify.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import com.example.adbpurrytify.data.model.User
+import com.example.adbpurrytify.data.model.UserStats
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -16,6 +17,9 @@ class MockProfileViewModel : ViewModel() {
                 location = "Indonesia",
                 createdAt = "10/10/2010",
                 updatedAt = "10/10/2010"
+            ),
+            UserStats(
+                0, 1, 2
             )
         )
     )

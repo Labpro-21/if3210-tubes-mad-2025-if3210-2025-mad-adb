@@ -5,13 +5,17 @@ import androidx.lifecycle.viewModelScope
 import com.example.adbpurrytify.api.ApiService
 import com.example.adbpurrytify.api.UserProfile
 import com.example.adbpurrytify.data.TokenManager
+import com.example.adbpurrytify.data.local.SongDao
 import com.example.adbpurrytify.data.model.User
+import com.example.adbpurrytify.data.model.UserStats
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ProfileViewModel(
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    private val songDao: SongDao // Inject the SongDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
@@ -36,7 +40,12 @@ class ProfileViewModel(
                     val userProfile = response.body()
                     if (userProfile != null) {
                         val user = mapToUserModel(userProfile)
-                        _uiState.value = ProfileUiState.Success(user)
+
+                        // Get song statistics from the database
+                        val userId = userProfile.id
+                        val stats = getUserStats(userId)
+
+                        _uiState.value = ProfileUiState.Success(user, stats)
                     } else {
                         _uiState.value = ProfileUiState.Error("Empty response")
                     }
@@ -47,6 +56,19 @@ class ProfileViewModel(
                 _uiState.value = ProfileUiState.Error(e.message ?: "Unknown error")
             }
         }
+    }
+
+    private suspend fun getUserStats(userId: Long): UserStats {
+        // Use Flow.first() to get the current value of the Flow
+        val allSongs = songDao.getAllSongs(userId).first()
+        val likedSongs = songDao.getLikedSongs(userId).first()
+        val listenedSongs = songDao.getRecentlyPlayedSongs(userId).first()
+
+        return UserStats(
+            songCount = allSongs.size,
+            likedCount = likedSongs.size,
+            listenedCount = listenedSongs.size
+        )
     }
 
     private fun mapToUserModel(userProfile: UserProfile): User {
@@ -63,7 +85,7 @@ class ProfileViewModel(
 
     sealed class ProfileUiState {
         data object Loading : ProfileUiState()
-        data class Success(val user: User) : ProfileUiState()
+        data class Success(val user: User, val stats: UserStats) : ProfileUiState()
         data class Error(val message: String) : ProfileUiState()
     }
 }

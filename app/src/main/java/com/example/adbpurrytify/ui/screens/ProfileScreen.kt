@@ -36,6 +36,7 @@ import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
 import com.example.adbpurrytify.ui.viewmodels.MockProfileViewModel
 import com.example.adbpurrytify.ui.viewmodels.ProfileViewModel
 import com.example.adbpurrytify.R
+import com.example.adbpurrytify.data.model.UserStats
 
 @Composable
 fun ProfileScreen(
@@ -53,7 +54,11 @@ fun ProfileScreen(
                     }
                 }
                 is ProfileViewModel.ProfileUiState.Success -> {
-                    ProfileContent(user = state.user, navController = navController)
+                    ProfileContent(
+                        user = state.user,
+                        stats = state.stats,
+                        navController = navController
+                    )
                 }
                 is ProfileViewModel.ProfileUiState.Error -> {
                     ErrorContent(message = state.message, onRetry = { viewModel.loadProfile() })
@@ -62,9 +67,9 @@ fun ProfileScreen(
         }
     }
 }
-
 @Composable
-private fun ProfileContent(user: User, navController: NavHostController) {
+private fun ProfileContent(user: User,
+                           stats: UserStats, navController: NavHostController) {
     val padding = 8.dp
     val columnFillHeight = 70.dp
 
@@ -178,7 +183,7 @@ private fun ProfileContent(user: User, navController: NavHostController) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("135")
+                Text("${stats.songCount}")
                 Text("Songs")
             }
             Column(
@@ -190,7 +195,7 @@ private fun ProfileContent(user: User, navController: NavHostController) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("32")
+                Text("${stats.likedCount}")
                 Text("Liked")
             }
             Column(
@@ -202,11 +207,12 @@ private fun ProfileContent(user: User, navController: NavHostController) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("50")
+                Text("${stats.listenedCount}")
                 Text("Listened")
             }
         }
     }
+
 }
 
 @Composable
@@ -246,7 +252,11 @@ fun PreviewProfileScreen() {
 
             when (val uiState = state) {
                 is ProfileViewModel.ProfileUiState.Success -> {
-                    ProfileContent(user = uiState.user, navController = navController)
+                    ProfileContent(
+                        user = uiState.user,
+                        stats = uiState.stats,
+                        navController = navController
+                    )
                 }
                 else -> {
                     // This won't be called in preview since we're using a mock viewmodel

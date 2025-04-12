@@ -84,7 +84,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             }
 
             composable(Screen.Profile.route) {
-                val viewModelFactory = ProfileViewModelFactory(RetrofitClient.instance)
+                val viewModelFactory = ProfileViewModelFactory(RetrofitClient.instance, songDao)
                 val viewModel: ProfileViewModel = viewModel(factory = viewModelFactory)
 
                 ProfileScreen(viewModel = viewModel, navController = navController)
