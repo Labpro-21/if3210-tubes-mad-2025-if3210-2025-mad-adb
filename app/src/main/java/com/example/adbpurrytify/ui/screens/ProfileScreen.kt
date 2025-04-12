@@ -240,6 +240,8 @@ private fun ErrorContent(message: String, onRetry: () -> Unit) {
 fun logout(navController: NavHostController) {
     TokenManager.clearTokens()
     navController.navigate(Screen.Login.route) {
+        SongPlayer.stop()
+        SongPlayer.release()
         // Clear the back stack so user can't go back to profile after logout
         popUpTo(Screen.Login.route) { inclusive = true }
     }

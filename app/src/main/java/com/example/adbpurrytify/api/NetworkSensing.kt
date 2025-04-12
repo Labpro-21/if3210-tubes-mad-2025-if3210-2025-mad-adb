@@ -5,7 +5,6 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import coil3.network.NetworkResponseBody
 
 class ConnectionStateMonitor(
     private val context: Context,
@@ -21,7 +20,7 @@ class ConnectionStateMonitor(
         .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
         .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
         .addTransportType(NetworkCapabilities.TRANSPORT_ETHERNET)
-        .build()!!
+        .build()
 
     /**
      * @return`true` when device is connected to network else `false`
