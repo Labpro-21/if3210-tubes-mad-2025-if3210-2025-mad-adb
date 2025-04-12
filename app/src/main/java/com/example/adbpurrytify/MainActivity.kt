@@ -16,13 +16,11 @@ import androidx.core.content.ContextCompat
 import com.example.adbpurrytify.data.TokenManager
 import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.ui.navigation.AppNavigation
-import com.example.adbpurrytify.ui.screens.NetworkSensingBaseActivity
-import com.example.adbpurrytify.ui.screens.NetworkSensingScreen
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 
 
-class MainActivity : NetworkSensingBaseActivity() {
+class MainActivity : ComponentActivity() {
 
     private val readExternal = READ_EXTERNAL_STORAGE
     private val readImages = READ_MEDIA_IMAGES

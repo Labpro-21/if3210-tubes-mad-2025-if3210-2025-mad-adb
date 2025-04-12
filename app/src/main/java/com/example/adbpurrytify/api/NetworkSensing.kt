@@ -17,7 +17,9 @@ class ConnectionStateMonitor(
 
     private val networkRequest = NetworkRequest.Builder()
         .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
-        .addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build()!!
+        .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+        .addTransportType(NetworkCapabilities.TRANSPORT_ETHERNET)
+        .build()!!
 
     /**
      * @return`true` when device is connected to network else `false`
