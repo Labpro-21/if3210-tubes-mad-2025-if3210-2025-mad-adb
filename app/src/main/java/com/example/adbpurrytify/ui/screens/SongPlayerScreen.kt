@@ -148,7 +148,7 @@ fun SongPlayerScreen(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { navController.navigateUp() }) {
+            IconButton(onClick = { navController.navigate(Screen.Home.route) }) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Go back",
