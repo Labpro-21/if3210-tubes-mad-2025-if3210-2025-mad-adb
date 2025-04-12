@@ -5,11 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.KeyboardDoubleArrowLeft
-import androidx.compose.material.icons.filled.KeyboardDoubleArrowRight
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.remember
@@ -30,7 +26,8 @@ import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.navigation.Screen
-import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
+import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
+import com.example.adbpurrytify.ui.theme.Green
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -44,18 +41,18 @@ fun SongPlayerScreen(
         AppDatabase.getDatabase(LocalContext.current).songDao()
     ),
     authRepository: AuthRepository = remember {
-        AuthRepository(RetrofitClient.instance) // Use corrected import
+        AuthRepository(RetrofitClient.instance)
     }
 ) {
 
-    val backgroundColor = Color(0xFF121212)
-    val accentColor = Color(0xFF1ED760)
-
     var song by remember { mutableStateOf<SongEntity?>(null) }
+    // Track liked state separately for optimistic updates
+    var isLiked by remember { mutableStateOf(false) }
     var isPlaying by remember { mutableStateOf(false) }
     var sliderPosition by remember { mutableStateOf(0L) }
 
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     var prevId by remember { mutableStateOf(-1L) }
     var nextId by remember { mutableStateOf(-1L) }
@@ -63,7 +60,6 @@ fun SongPlayerScreen(
     var playerReady by remember { mutableStateOf(false) }
 
     LaunchedEffect(songId) {
-
         val userProfile = authRepository.currentUser()
         val userId = userProfile?.id ?: -1L
         if (userId != -1L) {
@@ -75,6 +71,8 @@ fun SongPlayerScreen(
 
         song = runBlocking { viewModel.getSongById(songId) }
         song?.let {
+            // Initialize the liked state
+            isLiked = it.isLiked
 
             if (SongPlayer.songLoaded == false
                 or ((SongPlayer.songLoaded) and (SongPlayer.curLoadedSongId != songId))) {
@@ -88,16 +86,14 @@ fun SongPlayerScreen(
                 playerReady = true
                 isPlaying = true
             }
-
-            else { //lagu yg sama
+            else { // same song
                 isPlaying = SongPlayer.isPlaying()
                 sliderPosition = SongPlayer.getProgress()
                 playerReady = true
             }
-
         }
-
     }
+
     // Update slider position every second
     LaunchedEffect(isPlaying) {
         while (isPlaying) {
@@ -114,7 +110,7 @@ fun SongPlayerScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundColor)
+            .background(BLACK_BACKGROUND)
             .padding(16.dp)
     ) {
         // Top Bar
@@ -122,7 +118,7 @@ fun SongPlayerScreen(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { navController.navigate(Screen.Home.route) }) {
+            IconButton(onClick = { navController.navigateUp() }) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Go back",
@@ -143,7 +139,7 @@ fun SongPlayerScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Song info dan art
+        // Song info and art
         song?.let { currentSong ->
             // Album Art
             Box(
@@ -165,11 +161,42 @@ fun SongPlayerScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Song Title + Author
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                Text(currentSong.title, color = Color.White, style = MaterialTheme.typography.titleLarge)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(currentSong.author, color = Color.LightGray, style = MaterialTheme.typography.bodyLarge)
+            // Song Title + Author and Like Button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(currentSong.title, color = Color.White, style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(currentSong.author, color = Color.LightGray, style = MaterialTheme.typography.bodyLarge)
+                }
+
+                // Like Button - Using the separate isLiked state for UI
+                IconButton(
+                    onClick = {
+                        // Immediately update UI (optimistic)
+                        isLiked = !isLiked
+
+                        // Update in background
+                        coroutineScope.launch {
+                            // Create an updated version of the song with new like status
+                            val updatedSong = currentSong.copy(isLiked = isLiked)
+                            viewModel.update(updatedSong)
+                            // No need to refresh the song from DB since we're using optimistic UI
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = if (isLiked) "Unlike song" else "Like song",
+                        tint = if (isLiked) Green else Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -203,19 +230,18 @@ fun SongPlayerScreen(
                         .height(48.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = accentColor, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(color = Green, modifier = Modifier.size(24.dp))
                 }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Play/Pause
+            // Play/Pause and navigation buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 if (prevId > -1)
                     IconButton(
                         onClick = {
@@ -223,16 +249,16 @@ fun SongPlayerScreen(
                         },
                         modifier = Modifier
                             .size(40.dp)
-                            .background(accentColor, shape = RoundedCornerShape(50))
+                            .background(Green, shape = RoundedCornerShape(50))
                     ) {
                         Icon(
                             imageVector = Icons.Default.KeyboardDoubleArrowLeft,
-                            contentDescription = null,
+                            contentDescription = "Previous song",
                             tint = Color.Black,
                             modifier = Modifier.size(32.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(32.dp))
+                Spacer(modifier = Modifier.width(32.dp))
 
                 IconButton(
                     onClick = {
@@ -245,11 +271,11 @@ fun SongPlayerScreen(
                     },
                     modifier = Modifier
                         .size(64.dp)
-                        .background(accentColor, shape = RoundedCornerShape(50))
+                        .background(Green, shape = RoundedCornerShape(50))
                 ) {
                     Icon(
                         imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = null,
+                        contentDescription = if (isPlaying) "Pause" else "Play",
                         tint = Color.Black,
                         modifier = Modifier.size(32.dp)
                     )
@@ -263,22 +289,20 @@ fun SongPlayerScreen(
                         },
                         modifier = Modifier
                             .size(40.dp)
-                            .background(accentColor, shape = RoundedCornerShape(50))
+                            .background(Green, shape = RoundedCornerShape(50))
                     ) {
                         Icon(
                             imageVector = Icons.Default.KeyboardDoubleArrowRight,
-                            contentDescription = null,
+                            contentDescription = "Next song",
                             tint = Color.Black,
                             modifier = Modifier.size(32.dp)
                         )
                     }
-
             }
         } ?: run {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = accentColor)
+                CircularProgressIndicator(color = Green)
             }
         }
     }
-
 }
