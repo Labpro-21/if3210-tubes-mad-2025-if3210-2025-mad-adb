@@ -89,6 +89,9 @@ dependencies {
     implementation("androidx.room:room-runtime:2.7.0")
     ksp("androidx.room:room-compiler:2.7.0")
 
+    // QR generator
+    implementation(libs.qrgenerator)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
