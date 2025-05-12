@@ -17,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.example.adbpurrytify.api.RetrofitClient
 import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.local.AppDatabase
@@ -117,6 +118,16 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     songId = songId,
                     viewModel = songViewModel
                 )
+            }
+
+            // Handle deep links
+            composable(
+                route = "song/{songId}",
+                deepLinks = listOf(navDeepLink { uriPattern = "myapp://song/{songId}" })
+            ) {
+//                backStackEntry ->
+//                val songId = backStackEntry.arguments?.getString("songId")
+//                SongScreen(songId)
             }
         }
     }

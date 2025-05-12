@@ -1,5 +1,6 @@
 package com.example.adbpurrytify.api
 
+import com.example.adbpurrytify.data.model.SongEntity
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -43,4 +44,7 @@ interface ApiService {
     suspend fun verifyTokenWithAuth(
         @Header("Authorization") authHeader: String
     ): Response<Unit>
+
+    @GET("api/top-songs/global")
+    suspend fun getTopGlobalSongs(): Response<SongEntity>
 }
