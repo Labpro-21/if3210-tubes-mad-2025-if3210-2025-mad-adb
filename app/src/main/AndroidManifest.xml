@@ -26,6 +26,10 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+                <data
+                    android:scheme="purrytify"
+                    android:host="song"
+                    android:pathPattern="/.*" />
             </intent-filter>
         </activity>
     </application>
