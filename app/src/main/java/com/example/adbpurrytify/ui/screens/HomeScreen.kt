@@ -67,7 +67,6 @@ fun HomeScreen(
         }
     }
 
-
     val isLoading = isNewSongsLoading || isRecentlyPlayedLoading
 
     // Show a full-screen loader if isLoading is true
@@ -91,6 +90,7 @@ fun HomeScreen(
                     .weight(1f)
                     .fillMaxWidth()
                     .padding(top = 16.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
                 Text(
                     text = "New songs",
@@ -119,6 +119,9 @@ fun HomeScreen(
                         }
                     )
                 }
+
+                // Trending songs section
+                TrendingSongsSection(navController, viewModel)
 
                 // Recently Played Section
                 Text(
