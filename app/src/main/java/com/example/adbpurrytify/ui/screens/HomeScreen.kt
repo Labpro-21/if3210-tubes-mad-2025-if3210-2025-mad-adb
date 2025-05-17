@@ -144,7 +144,6 @@ fun HomeScreen(
                 } else {
                     RecyclerSongsList(
                         songs = recentlyPlayed,
-                        height = 600,
                         showBorder = false,
                         onSongClick = { song ->
                             navController?.navigate("${Screen.Player.route}/${song.id}")

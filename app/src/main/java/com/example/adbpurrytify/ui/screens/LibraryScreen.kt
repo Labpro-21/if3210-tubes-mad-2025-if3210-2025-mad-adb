@@ -210,7 +210,6 @@ fun LibraryScreen(
                 else -> {
                     RecyclerSongsList(
                         songs = allSongs,
-                        height = 800, // Consider making this dynamic or using weight
                         showBorder = false,
                         // --- Re-enable these when implementing the actions ---
                          onSongClick = { song ->

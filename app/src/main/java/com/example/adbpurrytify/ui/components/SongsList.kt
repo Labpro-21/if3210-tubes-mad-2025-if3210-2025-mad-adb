@@ -4,12 +4,11 @@ import android.view.ViewGroup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,13 +19,12 @@ import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
 @Composable
 fun RecyclerSongsList(
     songs: List<SongEntity>,
-    height: Int,
     showBorder: Boolean,
     onSongClick: (SongEntity) -> Unit = {}
 ) {
     Box(
         modifier = Modifier
-            .height(height.dp)
+            .wrapContentHeight()
             .clip(RectangleShape)
             .background(BLACK_BACKGROUND)
     ) {
@@ -38,7 +36,7 @@ fun RecyclerSongsList(
                     adapter = SongAdapter(songs, context, onSongClick)
                     layoutParams = ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
-                        height // Note: This height is in pixels, while Modifier.height uses dp
+                        ViewGroup.LayoutParams.WRAP_CONTENT
                     )
                     if (showBorder) {
                         setBackgroundColor(android.graphics.Color.RED)
@@ -49,7 +47,7 @@ fun RecyclerSongsList(
                 }
             },
             modifier = Modifier
-                .height(height.dp)
+                .wrapContentHeight()
                 .fillMaxWidth()
                 .background(BLACK_BACKGROUND),
             update = { recyclerView ->
