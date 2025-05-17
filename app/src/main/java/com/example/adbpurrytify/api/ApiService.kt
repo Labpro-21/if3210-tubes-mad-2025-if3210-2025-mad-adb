@@ -1,11 +1,12 @@
 package com.example.adbpurrytify.api
 
-import com.example.adbpurrytify.data.model.SongEntity
+import com.example.adbpurrytify.data.model.TrendingSongResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 
 data class LoginRequest(val email: String, val password: String)
@@ -46,5 +47,8 @@ interface ApiService {
     ): Response<Unit>
 
     @GET("api/top-songs/global")
-    suspend fun getTopGlobalSongs(): Response<SongEntity>
+    suspend fun getTopGlobalSongs(): Response<List<TrendingSongResponse>>
+
+    @GET("api/top-songs/{country_code}")
+    suspend fun getTopCountrySongs(@Path("country_code") countryCode: String): Response<List<TrendingSongResponse>>
 }
