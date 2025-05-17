@@ -1,7 +1,6 @@
 package com.example.adbpurrytify.ui.components
 
 
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -108,7 +107,8 @@ fun MiniPlayer(
     LaunchedEffect(isPlaying) {
         while (isPlaying) {
             sliderPosition = SongPlayer.getProgress()
-            Log.d("sliderPosition", sliderPosition.toString())
+            // Commented out because it's adding noise to logcat
+//            Log.d("sliderPosition", sliderPosition.toString())
             delay(1000L)
         }
     }

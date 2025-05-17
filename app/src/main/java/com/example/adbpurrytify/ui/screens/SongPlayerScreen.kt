@@ -1,6 +1,5 @@
 package com.example.adbpurrytify.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -124,7 +123,8 @@ fun SongPlayerScreen(
     LaunchedEffect(isPlaying) {
         while (isPlaying) {
             sliderPosition = SongPlayer.getProgress()
-            Log.d("sliderPosition", sliderPosition.toString())
+            // Commented out because it's adding noise to logcat
+//            Log.d("sliderPosition", sliderPosition.toString())
             delay(1000L)
 
             if (sliderPosition >= SongPlayer.getDuration()) {
