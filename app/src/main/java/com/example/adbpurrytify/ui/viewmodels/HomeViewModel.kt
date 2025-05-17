@@ -73,6 +73,11 @@ class HomeViewModel(private val songDao: SongDao) : ViewModel() {
         }
     }
 
+    // Getter for currentUserId
+    fun getUserId(): Long? {
+        return this.currentUserId
+    }
+
     // Getter for currentLocation
     fun getUserLocation(): String? {
         return this.currentLocation

@@ -4,10 +4,19 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.annotation.OptIn
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
+import com.example.adbpurrytify.ui.theme.Green
 import java.util.concurrent.TimeUnit
 
 
@@ -33,7 +42,7 @@ object SongPlayer {
         var uriparseres = Uri.parse(songPath)
         Log.d("URI Parse Res", uriparseres.toString())
 
-        val mediaItem = MediaItem.fromUri(Uri.parse(songPath))
+        val mediaItem = MediaItem.fromUri(uriparseres)
         Log.d("Media Id", mediaItem.mediaId)
 
         player!!.setMediaItem(mediaItem)
@@ -88,5 +97,25 @@ object SongPlayer {
     fun isPrepared(): Boolean {
         val playerState = player?.playbackState
         return playerState != null && playerState != ExoPlayer.STATE_IDLE && playerState != ExoPlayer.STATE_ENDED
+    }
+}
+
+// I'm going insane, this is for sanity check
+@Composable
+fun TestPlayer(songUrl: String) {
+    val context = LocalContext.current
+    val player = remember {
+        ExoPlayer.Builder(context).build().apply {
+            setMediaItem(MediaItem.fromUri(songUrl))
+            prepare()
+            playWhenReady = true
+        }
+    }
+
+    Box(
+        Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("Testing ExoPlayer's capability to play from http/https", color = Green)
     }
 }

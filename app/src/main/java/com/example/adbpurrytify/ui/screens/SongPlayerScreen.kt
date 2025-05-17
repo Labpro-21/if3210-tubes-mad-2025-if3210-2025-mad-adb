@@ -103,7 +103,7 @@ fun SongPlayerScreen(
                 or ((SongPlayer.songLoaded) and (SongPlayer.curLoadedSongId != songId))) {
 
                 SongPlayer.release()
-                SongPlayer.loadSong(it.audioUri, context, song!!.id)
+                SongPlayer.loadSong(it.audioUri, context, it.id)
                 // Wait for the player to be ready
                 while (SongPlayer.getDuration() <= 0) {
                     delay(100)

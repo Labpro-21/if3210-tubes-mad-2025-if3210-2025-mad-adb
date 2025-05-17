@@ -43,6 +43,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ADBPurrytifyTheme {
+//                TestPlayer("https://storage.googleapis.com/mad-public-bucket/mp3/Alex%20Warren%20-%20Ordinary%20(Official%20Lyric%20Video).mp3")
                 AppNavigation()
                 requestPermissions() // ini maybe just leave it here,
             }
