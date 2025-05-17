@@ -33,6 +33,9 @@ class HomeViewModel(private val songDao: SongDao) : ViewModel() {
     // Current user ID
     private var currentUserId: Long? = null
 
+    // Current user location
+    private var currentLocation: String? = null
+
     // Currently playing song
     private val _currentlyPlayingSong = MutableLiveData<SongEntity?>(null)
     val currentlyPlayingSong: LiveData<SongEntity?> = _currentlyPlayingSong
@@ -44,6 +47,17 @@ class HomeViewModel(private val songDao: SongDao) : ViewModel() {
             loadNewSongs(userId)
             loadRecentlyPlayedSongs(userId)
         }
+    }
+
+    // Set the current user location
+    fun setCurrentUser(location: String) {
+        if (location != currentLocation) {
+            currentLocation = location
+        }
+    }
+    // Getter for currentLocation
+    fun getUserLocation(): String? {
+        return this.currentLocation
     }
 
     // Get song by ID

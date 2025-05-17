@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,8 +60,10 @@ fun HomeScreen(
     LaunchedEffect(key1 = Unit) {
         val userProfile = authRepository.currentUser()
         val userId = userProfile?.id ?: -1L
+        val userLocation = userProfile?.location ?: ""
         if (userId != -1L) {
-            viewModel.setCurrentUser(userId)
+            viewModel.setCurrentUser(userId = userId)
+            viewModel.setCurrentUser(location = userLocation)
         }
     }
 
