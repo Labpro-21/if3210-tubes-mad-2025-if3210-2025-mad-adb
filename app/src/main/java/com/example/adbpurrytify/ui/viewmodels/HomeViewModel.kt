@@ -5,8 +5,10 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.adbpurrytify.api.RetrofitClient
 import com.example.adbpurrytify.data.local.SongDao
 import com.example.adbpurrytify.data.model.SongEntity
+import com.example.adbpurrytify.data.model.toSongEntity
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
@@ -19,12 +21,26 @@ class HomeViewModel(private val songDao: SongDao) : ViewModel() {
     private val _recentlyPlayed = MutableLiveData<List<SongEntity>>()
     val recentlyPlayed: LiveData<List<SongEntity>> = _recentlyPlayed
 
+    // Trending global songs LiveData
+    private val _trendingGlobalSongs = MutableLiveData<List<SongEntity>>()
+    val trendingGlobalSongs: LiveData<List<SongEntity>> = _trendingGlobalSongs
+
+    // Trending local songs LiveData
+    private val _trendingCountrySongs = MutableLiveData<List<SongEntity>>()
+    val trendingCountrySongs: LiveData<List<SongEntity>> = _trendingCountrySongs
+
     // Loading states
     private val _isNewSongsLoading = MutableLiveData<Boolean>(false)
     val isNewSongsLoading: LiveData<Boolean> = _isNewSongsLoading
 
     private val _isRecentlyPlayedLoading = MutableLiveData<Boolean>(false)
     val isRecentlyPlayedLoading: LiveData<Boolean> = _isRecentlyPlayedLoading
+
+    private val _isTrendingGlobalLoading = MutableLiveData<Boolean>(false)
+    val isTrendingGlobalLoading: LiveData<Boolean> = _isTrendingGlobalLoading
+
+    private val _isTrendingCountryLoading = MutableLiveData<Boolean>(false)
+    val isTrendingCountryLoading: LiveData<Boolean> = _isTrendingCountryLoading
 
     // Error state
     private val _error = MutableLiveData<String?>(null)
@@ -49,12 +65,14 @@ class HomeViewModel(private val songDao: SongDao) : ViewModel() {
         }
     }
 
-    // Set the current user location
+    // Set the current user location and load trending song
     fun setCurrentUser(location: String) {
         if (location != currentLocation) {
             currentLocation = location
+            loadTrendingSongs()
         }
     }
+
     // Getter for currentLocation
     fun getUserLocation(): String? {
         return this.currentLocation
@@ -118,6 +136,51 @@ class HomeViewModel(private val songDao: SongDao) : ViewModel() {
                         isFirstEmission = false
                     }
                 }
+        }
+    }
+
+    // Load online trending songs (global and local if it is supported)
+    fun loadTrendingSongs() {
+        viewModelScope.launch {
+            _isTrendingGlobalLoading.postValue(true) // postValue because it's background task
+            try {
+                val response = RetrofitClient.instance.getTopGlobalSongs()
+                if (response.isSuccessful) {
+                    val trendingDTOs = response.body() ?: emptyList()
+                    val mapped = trendingDTOs.map { it.toSongEntity() }
+                    _trendingGlobalSongs.postValue(mapped)
+                } else {
+                    _trendingGlobalSongs.postValue(emptyList())
+                }
+            } catch (e: Exception) {
+                _trendingGlobalSongs.postValue(emptyList())
+            } finally {
+                _isTrendingGlobalLoading.postValue(false)
+            }
+        }
+
+        val supportedCountries = listOf("ID", "MY", "US", "GB", "CH", "DE", "BR") // hardcoded, I know
+        viewModelScope.launch {
+            _isTrendingCountryLoading.postValue(true) // postValue because it's background task
+            try {
+                val country = currentLocation?.takeIf { it.uppercase() in supportedCountries }?.uppercase()
+                if (country != null) {
+                    val response = RetrofitClient.instance.getTopCountrySongs(country)
+                    if (response.isSuccessful) {
+                        val trendingDTOs = response.body() ?: emptyList()
+                        val mapped = trendingDTOs.map { it.toSongEntity() }
+                        _trendingCountrySongs.postValue(mapped)
+                    } else {
+                        _trendingCountrySongs.postValue(emptyList())
+                    }
+                } else {
+                    _trendingCountrySongs.postValue(emptyList())
+                }
+            } catch (e: Exception) {
+                _trendingCountrySongs.postValue(emptyList())
+            } finally {
+                _isTrendingCountryLoading.postValue(false)
+            }
         }
     }
 
