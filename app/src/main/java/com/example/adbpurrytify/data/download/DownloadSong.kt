@@ -14,8 +14,8 @@ suspend fun downloadSong(
     song: SongEntity, context: Context, dispatcher: CoroutineDispatcher = Dispatchers.IO,
     // onProgress: Float => Unit = _ => ()
     onProgress: (Float) -> Unit = {}
-) {
-    withContext(dispatcher) {
+): Boolean {
+    return withContext(dispatcher) {
         try {
             val client = OkHttpClient()
             val request = Request.Builder().url(song.audioUri).build()
@@ -25,7 +25,7 @@ suspend fun downloadSong(
                     return@withContext false
                 }
 
-                val body = response.body ?: (return@withContext false)
+                val body = response.body ?: return@withContext false
                 val totalBytes = body.contentLength()
                 val inputStream = body.byteStream()
 
