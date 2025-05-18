@@ -15,17 +15,11 @@ class ConnectionStateMonitor(
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     }
 
-    private val networkRequest = NetworkRequest.Builder()
-        .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-        .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
-        .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-        .addTransportType(NetworkCapabilities.TRANSPORT_ETHERNET)
-        .build()
-
-    /**
-     * @return`true` when device is connected to network else `false`
-     */
-    fun hasNetworkConnection() = (connectivityManager.activeNetworkInfo != null)
+    private val networkRequest =
+        NetworkRequest.Builder().addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+            .addTransportType(NetworkCapabilities.TRANSPORT_ETHERNET).build()
 
     fun enable() {
         connectivityManager.registerNetworkCallback(networkRequest, this)
