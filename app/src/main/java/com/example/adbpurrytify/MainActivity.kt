@@ -4,15 +4,22 @@ import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.Manifest.permission.READ_MEDIA_AUDIO
 import android.Manifest.permission.READ_MEDIA_IMAGES
 import android.app.AlertDialog
+import android.content.ComponentName
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.media3.common.Player
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.example.adbpurrytify.api.MusicService
 import com.example.adbpurrytify.data.TokenManager
 import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.ui.navigation.AppNavigation
@@ -30,15 +37,35 @@ class MainActivity : ComponentActivity() {
     )
     private lateinit var songViewModel: SongViewModel
     private lateinit var appDatabase: AppDatabase
-
+    private var mediaController: MediaController? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
-        // Create the AppDatabase instance
+        val intent = Intent(this, MusicService::class.java)
+        startService(intent)
+//        // Create the AppDatabase instance
         TokenManager.initialize(this)
         appDatabase = AppDatabase.getDatabase(applicationContext)
         songViewModel = SongViewModel(appDatabase.songDao())
+        val sessionToken = SessionToken(this, ComponentName(this, MusicService::class.java))
+        val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
+
+        controllerFuture.addListener({
+            try {
+                mediaController = controllerFuture.get()
+                mediaController?.play()
+                mediaController?.addListener(object : Player.Listener {
+                    override fun onIsPlayingChanged(isPlaying: Boolean) {
+                        Log.d("Controller", "Playing: $isPlaying")
+                    }
+                })
+                Log.d("Controller", "Connected!")
+
+            } catch (e: Exception) {
+                Log.e("Kontol", "Failed to connect", e)
+            }
+        }, ContextCompat.getMainExecutor(this))
 
         enableEdgeToEdge()
         setContent {
@@ -48,6 +75,12 @@ class MainActivity : ComponentActivity() {
                 requestPermissions() // ini maybe just leave it here,
             }
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        mediaController?.release()
+        mediaController = null
     }
 
     /**
