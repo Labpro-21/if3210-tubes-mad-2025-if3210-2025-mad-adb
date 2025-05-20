@@ -1,0 +1,2083 @@
+// ----------------------------------------------------------------------------------------------------
+// AddSong.kt
+
+package com.example.adbpurrytify.ui.screens
+
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil3.compose.rememberAsyncImagePainter
+import com.example.adbpurrytify.R
+import com.example.adbpurrytify.data.model.SongEntity
+import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
+import com.example.adbpurrytify.ui.viewmodels.SongViewModel
+import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
+
+fun copyUriToInternalStorage(context: Context, uri: Uri): String? {
+    val contentResolver = context.contentResolver
+    val returnCursor = contentResolver.query(uri, null, null, null, null) ?: return null
+
+    val nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+    returnCursor.moveToFirst()
+    val name = returnCursor.getString(nameIndex)
+    returnCursor.close()
+
+    val inputStream = contentResolver.openInputStream(uri) ?: return null
+    val file = File(context.filesDir, name)
+    val outputStream = FileOutputStream(file)
+
+    try {
+        val buffer = ByteArray(1024)
+        var length: Int
+        while (inputStream.read(buffer).also { length = it } > 0) {
+            outputStream.write(buffer, 0, length)
+        }
+    } catch (e: Exception) {
+        Log.e("copyUri", "Error copying file: ${e.message}")
+        return null
+    } finally {
+        inputStream.close()
+        outputStream.close()
+    }
+
+    return file.absolutePath
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddSong(
+    show: Boolean,
+    onDismiss: () -> Unit,
+    viewModel: SongViewModel = hiltViewModel()
+) {
+    if (!show) return
+    val padding = 32.dp
+
+    // ModalBottomSheet params
+    val sheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+
+    // Remember user input, even when the screen is rotated :(
+    var titleText by rememberSaveable { mutableStateOf("") }
+    var artistText by rememberSaveable { mutableStateOf("") }
+    var photoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    var fileUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+
+    val pickMedia = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
+        photoUri = uri
+    }
+
+    val context = LocalContext.current
+    val pickAudio = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        fileUri = uri
+        uri?.let {
+            val retriever = android.media.MediaMetadataRetriever()
+            retriever.setDataSource(context, it)
+
+            val retrievedTitle = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE)
+            val retrievedArtist = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST)
+
+            if (titleText.isEmpty() && !retrievedTitle.isNullOrEmpty()) {
+                titleText = retrievedTitle
+            }
+            if (artistText.isEmpty() && !retrievedArtist.isNullOrEmpty()) {
+                artistText = retrievedArtist
+            }
+
+            retriever.release()
+        }
+    }
+
+    // State to hold current user ID
+    var currentUserId by rememberSaveable { mutableStateOf(-1L) }
+
+    // Load current user when composable launches
+    LaunchedEffect(Unit) {
+        // Use the ViewModel's loadUserData method to get the user data
+        viewModel.loadUserData()
+        // Wait for the user ID to be available
+        val id = viewModel.getCurrentUserId()
+        if (id != null) {
+            currentUserId = id
+        }
+    }
+
+    ADBPurrytifyTheme {
+        Surface {
+            ModalBottomSheet(
+                onDismissRequest = { onDismiss() },
+                sheetState = sheetState
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text("Upload Song")
+                    }
+                    Row {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(1 / 2f)
+                                .padding(start = padding, top = padding, end = padding)
+                        ) {
+                            Image(
+                                painter = if(photoUri == null) painterResource(R.drawable.upload_file) else rememberAsyncImagePainter(photoUri),
+                                contentDescription = "Upload Photo",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clickable(
+                                        onClick = {
+                                            pickMedia.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
+                                        }
+                                    )
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(1f)
+                                .padding(start = padding, top = padding, end = padding)
+                        ) {
+                            Image(
+                                painter = if (fileUri != null) painterResource(R.drawable.song_art_placeholder) else painterResource(R.drawable.upload_file),
+                                contentDescription = "Upload File",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clickable(onClick = {
+                                        pickAudio.launch("audio/*")
+                                    })
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = padding * 1 / 2f, vertical = padding * 1 / 4f),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        Text("Title")
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = padding * 1 / 2f),
+                        horizontalArrangement = Arrangement.Start,
+                    ) {
+                        OutlinedTextField(
+                            value = titleText,
+                            onValueChange = { titleText = it },
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            placeholder = { Text("Title") },
+                            keyboardOptions = KeyboardOptions(
+                                imeAction = ImeAction.Next
+                            ),
+                            maxLines = 1
+                        )
+                    }
+                    Spacer(Modifier.padding(padding * 1/4f))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = padding * 1 / 2f, vertical = padding * 1 / 4f),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        Text("Artist")
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = padding * 1 / 2f),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        OutlinedTextField(
+                            value = artistText,
+                            onValueChange = { artistText = it },
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            placeholder = { Text("Artist") },
+                            keyboardOptions = KeyboardOptions(
+                                imeAction = ImeAction.Done
+                            ),
+                            maxLines = 1
+                        )
+                    }
+                    Spacer(Modifier.padding(padding * 1/2f))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .requiredHeight(padding * 1.3f)
+                            .padding(horizontal = padding * 1 / 2f),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        FilledTonalButton(
+                            onClick = {
+                                scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                    onDismiss()
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth(1 / 2f)
+                                .padding(horizontal = padding * 1 / 4f),
+                        ) {
+                            Text("Cancel")
+                        }
+                        Button(
+                            onClick = {
+                                val title = titleText
+                                val author = artistText
+                                var audioUri = fileUri.toString()
+                                var artUri = photoUri.toString()
+
+                                // Get current timestamp for lastPlayedTimestamp
+                                val currentTimestamp = java.time.Instant.now().toEpochMilli()
+
+                                try {
+                                    val copiedPath = copyUriToInternalStorage(context, Uri.parse(artUri))
+                                    if (copiedPath != null) artUri = copiedPath
+                                    else artUri = ""
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Failed to read/copy the image file", Toast.LENGTH_SHORT).show()
+                                    Log.d("File Copy Err", e.message!!)
+                                    artUri = ""
+                                    return@Button
+                                }
+
+                                try {
+                                    val copiedPath = copyUriToInternalStorage(context, Uri.parse(audioUri))
+                                    if (copiedPath != null) audioUri = copiedPath
+                                    else audioUri = ""
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Failed to read/copy the audio file", Toast.LENGTH_SHORT).show()
+                                    Log.d("File Copy Err", e.message!!)
+                                    artUri = ""
+                                    return@Button
+                                }
+
+                                val song = SongEntity(
+                                    title = title,
+                                    author = author,
+                                    artUri = artUri,
+                                    audioUri = audioUri,
+                                    userId = currentUserId,
+                                    isLiked = false,
+                                    lastPlayedTimestamp = currentTimestamp,
+                                    lastPlayedPositionMs = 0
+                                )
+
+                                scope.launch {
+                                    // Use the injected viewModel to insert the song
+                                    viewModel.insert(song)
+                                    sheetState.hide()
+                                    onDismiss()
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth(1f)
+                                .padding(horizontal = padding * 1 / 4f),
+                            enabled = titleText.isNotEmpty() &&
+                                    artistText.isNotEmpty() &&
+                                    photoUri != null &&
+                                    fileUri != null &&
+                                    currentUserId != -1L
+                        ) {
+                            Text("Save")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun PreviewAddSong() {
+    var showAddSongSheet by remember { mutableStateOf(false) }
+    AddSong(
+        show = showAddSongSheet,
+        onDismiss = { showAddSongSheet = false }
+    )
+}
+
+// -----------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------------------
+// LoginScreen.kt
+
+package com.example.adbpurrytify.ui.screens
+
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.example.adbpurrytify.R
+import com.example.adbpurrytify.ui.navigation.Screen
+import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
+import com.example.adbpurrytify.ui.theme.Green
+import com.example.adbpurrytify.ui.theme.TEXT_FIELD_BACKGROUND
+import com.example.adbpurrytify.ui.theme.TEXT_FIELD_TEXT
+import com.example.adbpurrytify.ui.viewmodels.AuthViewModel
+import com.example.adbpurrytify.worker.JwtExpiryWorker
+import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
+
+
+@Composable
+fun PurritifyLogo(scaleTo: Float) {
+    Image(
+        painter = painterResource(id = R.drawable.logo_purrytify),
+        contentDescription = "Purritify Logo",
+        modifier = Modifier.scale(scaleTo)
+    )
+}
+
+@Composable
+fun PurritifyTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    placeholder: String = "",
+    isPassword: Boolean = false
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = label,
+            color = Color.White,
+            fontWeight = FontWeight.Medium,
+            fontSize = 14.sp,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        var passwordVisible by rememberSaveable { mutableStateOf(false) }
+
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            placeholder = { Text(placeholder, color = Color.Gray) },
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedContainerColor = TEXT_FIELD_BACKGROUND,
+                focusedContainerColor = TEXT_FIELD_BACKGROUND,
+                unfocusedTextColor = TEXT_FIELD_TEXT,
+                focusedTextColor = TEXT_FIELD_TEXT,
+                unfocusedBorderColor = TEXT_FIELD_BACKGROUND,
+                focusedBorderColor = TEXT_FIELD_BACKGROUND
+            ),
+            singleLine = true,
+            shape = RoundedCornerShape(4.dp),
+            visualTransformation = if (isPassword && !passwordVisible)
+                PasswordVisualTransformation() else VisualTransformation.None,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Email
+            ),
+            trailingIcon = {
+                if (isPassword) {
+                    val image = if (passwordVisible)
+                        Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    val description = if (passwordVisible) "Hide password" else "Show password"
+
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(imageVector = image, description, tint = Color.Gray)
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun PurritifyButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(50.dp),
+        shape = RoundedCornerShape(50),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Green,
+            disabledContainerColor = Green.copy(alpha = 0.6f)
+        ),
+        enabled = enabled
+    ) {
+        Text(
+            text = text,
+            color = Color.Black,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp
+        )
+    }
+}
+
+@Composable
+fun LoginScreen(
+    navController: NavController,
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
+    var email by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BLACK_BACKGROUND)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.bg_login),
+            contentDescription = "Login Background",
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter),
+            contentScale = ContentScale.Crop
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 32.dp)
+                .padding(bottom = 48.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            PurritifyLogo(
+                scaleTo = 0.8f
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Millions of Songs.\nOnly on Purritify.",
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            PurritifyTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = "Email",
+                placeholder = "Email",
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            PurritifyTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = "Password",
+                placeholder = "Password",
+                isPassword = true
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            PurritifyButton(
+                text = if (isLoading) "Logging In..." else "Log In",
+                onClick = {
+                    if (isLoading) return@PurritifyButton
+
+                    if (email.isBlank() || password.isBlank()) {
+                        Toast.makeText(context, "Email and password cannot be empty", Toast.LENGTH_SHORT).show()
+                        return@PurritifyButton
+                    }
+
+                    isLoading = true
+                    scope.launch {
+                        try {
+                            val result = authViewModel.login(email, password)
+                            if (result.isSuccess) {
+                                // Schedule Background JWT Check
+                                Log.i("LoginScreen", "Login successful. Scheduling background worker.")
+                                val workManager = WorkManager.getInstance(context.applicationContext)
+                                val firstWork = OneTimeWorkRequestBuilder<JwtExpiryWorker>()
+                                    .setInitialDelay(0, TimeUnit.MINUTES)
+                                    .setConstraints(
+                                        Constraints.Builder()
+                                            .setRequiredNetworkType(NetworkType.CONNECTED)
+                                            .build()
+                                    )
+                                    .build()
+
+                                workManager.enqueue(firstWork)
+
+                                // Navigate to Home
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                                Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, result.exceptionOrNull()?.message ?: "Login failed", Toast.LENGTH_LONG).show()
+                            }
+                        } catch (e: Exception) {
+                            Log.e("LoginScreen", "Error during login", e)
+                            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                        } finally {
+                            isLoading = false
+                        }
+                    }
+                },
+                // Disable button while loading
+                modifier = Modifier.then(if (isLoading) Modifier.alpha(0.6f) else Modifier),
+                enabled = !isLoading
+            )
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------------------
+// SongPlayer.kt
+
+package com.example.adbpurrytify.ui.screens
+
+import android.content.Context
+import android.net.Uri
+import android.util.Log
+import androidx.annotation.OptIn
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.SeekParameters
+import com.example.adbpurrytify.ui.theme.Green
+import java.util.concurrent.TimeUnit
+
+
+fun formatTime(millis: Long): String {
+    val minutes = TimeUnit.MILLISECONDS.toMinutes(millis)
+    val seconds = TimeUnit.MILLISECONDS.toSeconds(millis) % 60
+    return String.format("%02d:%02d", minutes, seconds)
+}
+
+
+object SongPlayer {
+    private var player: ExoPlayer? = null
+
+    var songLoaded: Boolean = false
+    var curLoadedSongId: Long = -1
+
+    @OptIn(UnstableApi::class)
+    fun loadSong(songPath: String, context: Context, songId: Long) {
+        Log.d("path str", songPath)
+        if (player == null) {
+            player = ExoPlayer.Builder(context).build()
+        }
+        var uriparseres = Uri.parse(songPath)
+        Log.d("URI Parse Res", uriparseres.toString())
+
+        val mediaItem = MediaItem.fromUri(uriparseres)
+        Log.d("Media Id", mediaItem.mediaId)
+
+        player!!.setMediaItem(mediaItem)
+        player!!.prepare()
+        player!!.playWhenReady = true
+        player!!.setSeekParameters(SeekParameters.CLOSEST_SYNC)
+
+        songLoaded = true
+        curLoadedSongId = songId
+    }
+
+    fun isPlaying(): Boolean {
+        return player?.isPlaying == true
+    }
+
+    fun play() {
+        player!!.play()
+    }
+
+    fun pause() {
+        player!!.playWhenReady = false
+    }
+
+    fun stop() {
+        player!!.stop()
+    }
+
+    fun seekTo(position: Long) {
+        var wasPlaying = player!!.playWhenReady
+        if (player!!.playWhenReady)
+            player!!.playWhenReady = false
+
+        player!!.seekTo(position)
+
+        if (wasPlaying)
+            player!!.playWhenReady = true
+    }
+
+    fun release() {
+        player?.release()
+        player = null
+    }
+
+    fun getDuration(): Long {
+        return player?.duration ?: 0L
+    }
+
+    fun getProgress(): Long {
+        return player?.currentPosition ?: 0L
+    }
+
+    fun isPrepared(): Boolean {
+        val playerState = player?.playbackState
+        return playerState != null && playerState != ExoPlayer.STATE_IDLE && playerState != ExoPlayer.STATE_ENDED
+    }
+}
+
+// I'm going insane, this is for sanity check
+@Composable
+fun TestPlayer(songUrl: String) {
+    val context = LocalContext.current
+    val player = remember {
+        ExoPlayer.Builder(context).build().apply {
+            setMediaItem(MediaItem.fromUri(songUrl))
+            prepare()
+            playWhenReady = true
+        }
+    }
+
+    Box(
+        Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("Testing ExoPlayer's capability to play from http/https", color = Green)
+    }
+}
+
+
+// -----------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------------------
+// NetworkSensingSnackbar.kt
+
+package com.example.adbpurrytify.ui.screens
+
+import android.content.Context
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import com.example.adbpurrytify.api.ConnectionStateMonitor
+import com.example.adbpurrytify.api.ConnectionStateMonitor.OnNetworkAvailableCallbacks
+import kotlinx.coroutines.launch
+
+@Composable
+fun NetworkSensingSnackbar(
+    context: Context,
+    snackbarHostState: SnackbarHostState
+) {
+    var isNetworkAvailable by rememberSaveable { mutableStateOf(true) }
+    val coroutineScope = rememberCoroutineScope()
+    val networkMonitor = remember {
+        ConnectionStateMonitor(context, object: OnNetworkAvailableCallbacks {
+            override fun onPositive() {
+                isNetworkAvailable = true
+                coroutineScope.launch {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                }
+            }
+
+            override fun onNegative() {
+                isNetworkAvailable = false
+                coroutineScope.launch {
+                    if (snackbarHostState.currentSnackbarData == null) {
+                        snackbarHostState.showSnackbar(
+                            message = "No network connection",
+                            duration = SnackbarDuration.Indefinite
+                        )
+                    }
+                }
+            }
+        })
+    }
+
+    LaunchedEffect(true) {
+        networkMonitor.enable()
+    }
+
+    DisposableEffect(true) {
+        onDispose {
+            networkMonitor.disable()
+        }
+    }
+}
+
+// Although this is a composable, no preview is made, need device context for connection status
+
+// -----------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------------------
+// HomeScreen.kt
+
+package com.example.adbpurrytify.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import com.example.adbpurrytify.ui.components.HorizontalSongsList
+import com.example.adbpurrytify.ui.components.MiniPlayer
+import com.example.adbpurrytify.ui.components.RecyclerSongsList
+import com.example.adbpurrytify.ui.navigation.Screen
+import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
+
+@Composable
+fun HomeScreen(
+    navController: NavController? = null,
+    viewModel: HomeViewModel
+) {
+    val backgroundColor = Color(0xFF121212)
+    val primaryColor = Color(0xFF1ED760) // Define primary color
+
+    // Observe data from ViewModel
+    // Default the loading states to true initially to show the loader first
+    val newSongs by viewModel.newSongs.observeAsState(emptyList())
+    val recentlyPlayed by viewModel.recentlyPlayed.observeAsState(emptyList())
+    val isNewSongsLoading by viewModel.isNewSongsLoading.observeAsState(true)
+    val isRecentlyPlayedLoading by viewModel.isRecentlyPlayedLoading.observeAsState(true)
+
+    // Get current user ID and load data
+    LaunchedEffect(key1 = Unit) {
+        // Load user data via the ViewModel
+        viewModel.loadUserData()
+    }
+
+    val isLoading = isNewSongsLoading || isRecentlyPlayedLoading
+
+    // Show a full-screen loader if isLoading is true
+    if (isLoading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(backgroundColor),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = primaryColor)
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(backgroundColor)
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = "New songs",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 16.dp)
+                )
+
+
+                if (isNewSongsLoading) {
+                    Box(
+                        modifier = Modifier
+                            .height(170.dp)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = primaryColor)
+                    }
+                } else {
+                    HorizontalSongsList(
+                        songs = newSongs,
+                        showBorder = false,
+                        onSongClick = { song ->
+                            navController?.navigate("${Screen.Player.route}/${song.id}")
+                        }
+                    )
+                }
+
+                // Trending songs section
+                TrendingSongsSection(navController, viewModel)
+
+                // Recently Played Section
+                Text(
+                    text = "Recently played",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp)
+                )
+
+                if (isRecentlyPlayedLoading) { // This will likely be false here
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 50.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = primaryColor)
+                    }
+                } else {
+                    RecyclerSongsList(
+                        songs = recentlyPlayed,
+                        showBorder = false,
+                        onSongClick = { song ->
+                            navController?.navigate("${Screen.Player.route}/${song.id}")
+                        }
+                    )
+                }
+            } // End of scrollable content Column
+
+            MiniPlayer(navController = navController!!)
+
+        } // End of main content Column
+    } // End of if/else
+}
+
+// -----------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------------------
+// TrendingSongSection.kt
+
+package com.example.adbpurrytify.ui.screens
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import com.example.adbpurrytify.data.model.SongEntity
+import com.example.adbpurrytify.ui.components.HorizontalSongsList
+import com.example.adbpurrytify.ui.navigation.Screen
+import com.example.adbpurrytify.ui.theme.Green
+import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
+import com.example.adbpurrytify.ui.viewmodels.SongViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+
+@Composable
+fun TrendingSongsSection(
+    navController: NavController?,
+    viewModel: HomeViewModel,
+    songViewModel: SongViewModel = hiltViewModel()
+) {
+    val scope = rememberCoroutineScope()
+
+    val trendingGlobalSongs by viewModel.trendingGlobalSongs.observeAsState()
+    val trendingCountrySongs by viewModel.trendingCountrySongs.observeAsState()
+    val isTrendingGlobalLoading by viewModel.isTrendingGlobalLoading.observeAsState(initial = false)
+    val isTrendingCountryLoading by viewModel.isTrendingCountryLoading.observeAsState(initial = false)
+
+    val userId = viewModel.getUserId()
+    val userCountry = viewModel.getUserLocation()
+
+    val supportedCountries = listOf("ID", "MY", "US", "GB", "CH", "DE", "BR")
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        SongsSection(
+            "Trending Global",
+            null,
+            null,
+            isTrendingGlobalLoading,
+            trendingGlobalSongs,
+            scope,
+            songViewModel,
+            userId,
+            navController
+        )
+
+        SongsSection(
+            "Trending in Your Country",
+            userCountry,
+            supportedCountries,
+            isTrendingCountryLoading,
+            trendingCountrySongs,
+            scope,
+            songViewModel,
+            userId,
+            navController
+        )
+    }
+}
+
+@Composable
+fun SongsSection(
+    text: String,
+    userCountry: String?,
+    supportedCountries: List<String>?,
+    isLoading: Boolean,
+    songsList: List<SongEntity>?,
+    scope: CoroutineScope,
+    songViewModel: SongViewModel,
+    userId: Long?,
+    navController: NavController?
+) {
+    Text(
+        text = text,
+        color = Color.White,
+        fontSize = 24.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp)
+    )
+    if ((supportedCountries != null) && !supportedCountries.contains(userCountry)) {
+        Box(
+            modifier = Modifier
+                .height(150.dp)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Text(
+                text = "Trending songs for your country are not available.",
+                color = Color.Gray,
+                modifier = Modifier.padding(start = 16.dp)
+            )
+        }
+    } else if (isLoading || songsList == null) {
+        Box(
+            modifier = Modifier
+                .height(170.dp)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = Green)
+        }
+    } else {
+        HorizontalSongsList(
+            songs = songsList,
+            showBorder = false,
+            onSongClick = { song ->
+                scope.launch {
+                    if (songViewModel.getSongById(song.id) == null) {
+                        songViewModel.insert(song)
+                    }
+
+                    // Update the song's metadata manually
+                    val updatedSong: SongEntity = song.copy(
+                        userId = userId ?: 0,
+                        lastPlayedTimestamp = System.currentTimeMillis(),
+                        lastPlayedPositionMs = 0
+                    )
+                    songViewModel.update(updatedSong)
+                }
+                navController?.navigate("${Screen.Player.route}/${song.id}")
+            }
+        )
+    }
+}
+
+// -----------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------------------
+// SplashScreen.kt
+
+package com.example.adbpurrytify.ui.screens
+
+import android.util.Log
+import android.view.animation.OvershootInterpolator
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.example.adbpurrytify.R
+import com.example.adbpurrytify.ui.navigation.Screen
+import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
+import com.example.adbpurrytify.ui.viewmodels.AuthViewModel
+import com.example.adbpurrytify.worker.JwtExpiryWorker
+import kotlinx.coroutines.delay
+import java.util.concurrent.TimeUnit
+
+@Composable
+fun SplashScreen(
+    navController: NavController,
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
+    val scale = remember { Animatable(1f) }
+    val context = LocalContext.current
+
+    // State to hold the login status after checking
+    var loginStatusDetermined by remember { mutableStateOf<Boolean?>(null) }
+
+    // Effect to check login status ONCE
+    LaunchedEffect(key1 = Unit) {
+        Log.d("SplashScreen", "Checking authentication status...")
+
+        try {
+            // Check if the user is authenticated using AuthViewModel
+            val isAuthenticated = authViewModel.checkAuthStatus()
+            loginStatusDetermined = isAuthenticated
+
+            Log.d("SplashScreen", "Authentication check complete. Logged in: $loginStatusDetermined")
+        } catch (e: Exception) {
+            Log.e("SplashScreen", "Error checking login status", e)
+            loginStatusDetermined = false
+        }
+    }
+
+    // Effect for animation and navigation, triggers when loginStatusDetermined changes from null
+    LaunchedEffect(key1 = loginStatusDetermined) {
+        // Only proceed if the login status has been determined (is not null)
+        if (loginStatusDetermined != null) {
+            Log.d("SplashScreen", "Login status determined ($loginStatusDetermined). Starting animation and navigation...")
+
+            // Animate the logo
+            scale.animateTo(
+                targetValue = 1.3f,
+                animationSpec = tween(
+                    durationMillis = 500,
+                    easing = { OvershootInterpolator(2f).getInterpolation(it) }
+                )
+            )
+
+            // Delay after animation completes
+            delay(1500L)
+
+            // Navigate based on the determined status
+            val destination = if (loginStatusDetermined == true) {
+                // Schedule token refresh worker if logged in
+                val workManager = WorkManager.getInstance(context.applicationContext)
+                val firstWork = OneTimeWorkRequestBuilder<JwtExpiryWorker>()
+                    .setInitialDelay(0, TimeUnit.SECONDS)
+                    .setConstraints(
+                        Constraints.Builder()
+                            .setRequiredNetworkType(NetworkType.CONNECTED)
+                            .build()
+                    )
+                    .build()
+
+                workManager.enqueue(firstWork)
+                Screen.Home.route
+            } else {
+                Screen.Login.route
+            }
+
+            Log.d("SplashScreen", "Navigating to $destination")
+            navController.navigate(destination) {
+                // Remove Splash screen from the back stack
+                popUpTo(Screen.Splash.route) { inclusive = true }
+            }
+        } else {
+            Log.d("SplashScreen", "Login status not determined yet. Waiting...")
+        }
+    }
+
+    // UI for the Splash Screen
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BLACK_BACKGROUND)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.logo_purrytify),
+            contentDescription = "Logo",
+            modifier = Modifier.scale(scale.value)
+        )
+    }
+}
+
+// -----------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------------------
+// SongPlayerScreen.kt
+
+package com.example.adbpurrytify.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowLeft
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowRight
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import coil3.compose.AsyncImage
+import com.example.adbpurrytify.R
+import com.example.adbpurrytify.data.model.SongEntity
+import com.example.adbpurrytify.ui.navigation.Screen
+import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
+import com.example.adbpurrytify.ui.theme.Green
+import com.example.adbpurrytify.ui.viewmodels.SongViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+
+@Composable
+fun SongPlayerScreen(
+    navController: NavController,
+    songId: Long,
+    viewModel: SongViewModel = hiltViewModel()
+) {
+    var song by remember { mutableStateOf<SongEntity?>(null) }
+    var isLiked by remember { mutableStateOf(false) }
+    var isPlaying by remember { mutableStateOf(false) }
+    var sliderPosition by remember { mutableStateOf(0L) }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    var prevId by remember { mutableStateOf(-1L) }
+    var nextId by remember { mutableStateOf(-1L) }
+
+    var playerReady by remember { mutableStateOf(false) }
+
+    LaunchedEffect(songId) {
+        // Load user data first to ensure userId is available
+        viewModel.loadUserData()
+        // Wait until currentUserId is set
+        while(viewModel.getCurrentUserId() == null) {
+            delay(50)
+        }
+        // Now get navigation IDs
+        prevId = viewModel.getPrevSongId(songId)
+        nextId = viewModel.getNextSongId(songId)
+
+        // Get song details
+        song = runBlocking { viewModel.getSongById(songId) }
+        song?.let {
+            // Update last played timestamp
+            viewModel.updateSongTimestamp(it)
+
+            // Initialize liked state
+            isLiked = it.isLiked
+
+            // Handle player initialization
+            if (!SongPlayer.songLoaded || (SongPlayer.songLoaded && SongPlayer.curLoadedSongId != songId)) {
+                SongPlayer.release()
+                SongPlayer.loadSong(it.audioUri, context, it.id)
+
+                // Wait for player to be ready
+                while (SongPlayer.getDuration() <= 0) {
+                    delay(100)
+                }
+                playerReady = true
+                isPlaying = true
+            } else { // Same song
+                isPlaying = SongPlayer.isPlaying()
+                sliderPosition = SongPlayer.getProgress()
+                playerReady = true
+            }
+        }
+    }
+
+    // Update slider position every second
+    LaunchedEffect(isPlaying) {
+        while (isPlaying) {
+            sliderPosition = SongPlayer.getProgress()
+            delay(1000L)
+
+            // Auto-navigate to next song when current song ends
+            if (sliderPosition >= SongPlayer.getDuration()) {
+                if (nextId > -1) {
+                    navController.navigate("${Screen.Player.route}/${nextId}")
+                } else {
+                    isPlaying = false
+                }
+            }
+        }
+    }
+
+    // UI
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BLACK_BACKGROUND)
+            .padding(16.dp)
+    ) {
+        // Top Bar
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { navController.navigate(Screen.Home.route) }) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Go back",
+                    tint = Color.White
+                )
+            }
+
+            Text(
+                text = "Now Playing",
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.width(48.dp))
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Song info and art
+        song?.let { currentSong ->
+            // Album Art
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .align(Alignment.CenterHorizontally),
+                contentAlignment = Alignment.Center
+            ) {
+                val art = if (currentSong.artUri.isNotEmpty()) currentSong.artUri else R.drawable.remembering_sunday
+                AsyncImage(
+                    model = art,
+                    contentDescription = "Album art",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Song Title + Author and Like Button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(currentSong.title, color = Color.White, style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(currentSong.author, color = Color.LightGray, style = MaterialTheme.typography.bodyLarge)
+                }
+
+                // Like Button - Using the separate isLiked state for UI
+                IconButton(
+                    onClick = {
+                        // Immediately update UI (optimistic)
+                        isLiked = !isLiked
+
+                        // Update in background
+                        coroutineScope.launch {
+                            // Create an updated version of the song with new like status
+                            val updatedSong = currentSong.copy(isLiked = isLiked)
+                            viewModel.update(updatedSong)
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = if (isLiked) "Unlike song" else "Like song",
+                        tint = if (isLiked) Green else Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Slider section
+            if (playerReady) {
+                // Slider
+                Slider(
+                    value = sliderPosition.toFloat(),
+                    onValueChange = { sliderPosition = it.toLong() },
+                    onValueChangeFinished = {
+                        SongPlayer.seekTo(sliderPosition)
+                    },
+                    valueRange = 0f..(SongPlayer.getDuration().toFloat()),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Time display
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(formatTime(SongPlayer.getProgress()), color = Color.White)
+                    Text(formatTime(SongPlayer.getDuration()), color = Color.White)
+                }
+            } else {
+                // Show loading indicator for slider
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Green, modifier = Modifier.size(24.dp))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Play/Pause and navigation buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (prevId > -1)
+                    IconButton(
+                        onClick = {
+                            navController.navigate("${Screen.Player.route}/${prevId}")
+                        },
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Green, shape = RoundedCornerShape(50))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardDoubleArrowLeft,
+                            contentDescription = "Previous song",
+                            tint = Color.Black,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                Spacer(modifier = Modifier.width(32.dp))
+
+                IconButton(
+                    onClick = {
+                        if (isPlaying) {
+                            SongPlayer.pause()
+                        } else {
+                            SongPlayer.play()
+                        }
+                        isPlaying = !isPlaying
+                    },
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(Green, shape = RoundedCornerShape(50))
+                ) {
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = if (isPlaying) "Pause" else "Play",
+                        tint = Color.Black,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(32.dp))
+
+                if (nextId > -1)
+                    IconButton(
+                        onClick = {
+                            navController.navigate("${Screen.Player.route}/${nextId}")
+                        },
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Green, shape = RoundedCornerShape(50))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardDoubleArrowRight,
+                            contentDescription = "Next song",
+                            tint = Color.Black,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+            }
+        } ?: run {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Green)
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------------------
+// ProfileScreen.kt
+
+package com.example.adbpurrytify.ui.screens
+
+import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import coil3.compose.SubcomposeAsyncImage
+import com.example.adbpurrytify.R
+import com.example.adbpurrytify.data.TokenManager
+import com.example.adbpurrytify.data.model.User
+import com.example.adbpurrytify.data.model.UserStats
+import com.example.adbpurrytify.ui.components.MiniPlayer
+import com.example.adbpurrytify.ui.navigation.Screen
+import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
+import com.example.adbpurrytify.ui.viewmodels.MockProfileViewModel
+import com.example.adbpurrytify.ui.viewmodels.ProfileViewModel
+
+@Composable
+fun ProfileScreen(
+    viewModel: ProfileViewModel = viewModel(),
+    navController: NavHostController
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    ADBPurrytifyTheme {
+        Surface {
+            when (val state = uiState) {
+                is ProfileViewModel.ProfileUiState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                is ProfileViewModel.ProfileUiState.Success -> {
+                    ProfileContent(
+                        user = state.user,
+                        stats = state.stats,
+                        navController = navController
+                    )
+                }
+                is ProfileViewModel.ProfileUiState.Error -> {
+                    ErrorContent(message = state.message, onRetry = { viewModel.loadProfile() })
+                }
+            }
+        }
+    }
+}
+@Composable
+private fun ProfileContent(user: User,
+                           stats: UserStats, navController: NavHostController) {
+    val padding = 8.dp
+    val columnFillHeight = 70.dp
+
+    // For debugging - print the image URL to Logcat
+    val imageUrl = if (!user.image.isBlank()) {
+        "http://34.101.226.132:3000/uploads/profile-picture/${user.image}"
+    } else null
+
+    // Log the URL for debugging
+    Log.d("ProfileScreen", "Image URL: $imageUrl")
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Spacer(modifier = Modifier.padding(padding * 2))
+        Row(modifier = Modifier.padding(all = padding)) {
+            // Improved image loading with placeholders and error handling
+            Box(
+                modifier = Modifier
+                    .size(150.dp)
+                    .clip(CircleShape)
+            ) {
+                if (user.image.isBlank()) {
+                    // If no image URL, just show a default image
+                    Image(
+                        painter = painterResource(R.drawable.remembering_sunday),
+                        contentDescription = "Default Profile Picture",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    // Try directly with Coil's SubcomposeAsyncImage for better state handling
+                    SubcomposeAsyncImage (
+                        model = imageUrl,
+                        contentDescription = "User Profile Picture",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+
+                        loading = {
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.align(Alignment.Center)
+                                )
+                            }
+                        },
+                        error = {
+
+                            Log.e("Error", "${it}" )
+
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Image(
+                                    painter = painterResource(R.drawable.navbar_home),
+                                    contentDescription = "Error Loading Image",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                                // Display a tiny error indicator
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .align(Alignment.End)
+                                        .background(Color.Red, CircleShape)
+                                ) {
+                                    Text(
+                                        "!",
+                                        color = Color.White,
+                                        modifier = Modifier.align(Alignment.Center)
+                                    )
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.padding(padding * 1/2f))
+        Text(text = user.userName)
+        Spacer(modifier = Modifier.padding(padding * 1/8f))
+        Text(text = user.location)
+        Spacer(modifier = Modifier.padding(padding * 1/2f))
+
+        // Styled logout button
+        Button(
+            onClick = { logout(navController) },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Red,
+                contentColor = Color.White
+            ),
+            modifier = Modifier.padding(vertical = 8.dp)
+        ) {
+            Text("LOGOUT")
+        }
+
+
+        Spacer(modifier = Modifier.padding(padding * 1 / 2))
+        Row {
+            Column(
+                modifier = Modifier
+                    .clickable(true, onClick = {})
+                    .fillMaxHeight()
+                    .fillMaxWidth(1 / 3f)
+                    .requiredHeight(columnFillHeight),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("${stats.songCount}")
+                Text("Songs")
+            }
+            Column(
+                modifier = Modifier
+                    .clickable(true, onClick = {})
+                    .fillMaxHeight()
+                    .fillMaxWidth(1 / 2f)
+                    .requiredHeight(columnFillHeight),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("${stats.likedCount}")
+                Text("Liked")
+            }
+            Column(
+                modifier = Modifier
+                    .clickable(true, onClick = {})
+                    .fillMaxHeight()
+                    .fillMaxWidth(1f)
+                    .requiredHeight(columnFillHeight),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("${stats.listenedCount}")
+                Text("Listened")
+            }
+        }
+        Spacer(modifier = Modifier.padding(vertical = 200.dp))
+        MiniPlayer(navController = navController)
+    }
+
+
+}
+
+@Composable
+private fun ErrorContent(message: String, onRetry: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Error loading profile: $message")
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onRetry) {
+            Text("Retry")
+        }
+    }
+}
+
+fun logout(navController: NavHostController) {
+    TokenManager.clearTokens()
+    navController.navigate(Screen.Login.route) {
+        if (SongPlayer.isPlaying()) {
+            SongPlayer.stop()
+            SongPlayer.release()
+        }
+        // Clear the back stack so user can't go back to profile after logout
+        popUpTo(Screen.Login.route) { inclusive = true }
+    }
+}
+
+@Preview
+@Composable
+fun PreviewProfileScreen() {
+    val mockViewModel = MockProfileViewModel()
+    val navController = rememberNavController()
+
+    ADBPurrytifyTheme {
+        Surface {
+            val state by mockViewModel.uiState.collectAsState()
+
+            when (val uiState = state) {
+                is ProfileViewModel.ProfileUiState.Success -> {
+                    ProfileContent(
+                        user = uiState.user,
+                        stats = uiState.stats,
+                        navController = navController
+                    )
+                }
+                else -> {
+                    // This won't be called in preview since we're using a mock viewmodel
+                }
+            }
+        }
+    }
+}
+
+
+// -----------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------------------
+// LibraryScreen.kt
+
+package com.example.adbpurrytify.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.example.adbpurrytify.ui.components.MiniPlayer
+import com.example.adbpurrytify.ui.components.RecyclerSongsList
+import com.example.adbpurrytify.ui.navigation.Screen
+import com.example.adbpurrytify.ui.viewmodels.SongViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LibraryScreen(
+    navController: NavController,
+    viewModel: SongViewModel
+) {
+    var showAddSongSheet by remember { mutableStateOf(false) }
+
+    val backgroundColor = Color(0xFF121212)
+    val tabBackgroundColor = Color(0xFF282828)
+    val activeTabColor = Color(0xFF1ED760) // Spotify green
+
+    // Observe songs and loading state from LiveData
+    val allSongs by viewModel.allSongs.observeAsState(emptyList())
+    val isLoading by viewModel.isLoading.observeAsState(false) // Observe loading state
+
+    // Load user data
+    LaunchedEffect(key1 = Unit) {
+        viewModel.loadUserData()
+    }
+
+    // Filter songs based on selected tab
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    val tabs = listOf("All", "Liked")
+
+    // When tab changes, update the songs list
+    LaunchedEffect(selectedTabIndex) {
+        viewModel.loadSongsForTab(selectedTabIndex)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundColor)
+    ) {
+        // Top bar with title and add button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Your Library",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+
+            IconButton(
+                onClick = {
+                    showAddSongSheet = true
+                },
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(Color.Transparent)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Song",
+                    tint = Color.White
+                )
+            }
+        }
+
+        // Tabs
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+        ) {
+            tabs.forEachIndexed { index, tab ->
+                Box(
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(
+                            if (selectedTabIndex == index) activeTabColor
+                            else tabBackgroundColor
+                        )
+                        .clickable { selectedTabIndex = index }
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = tab,
+                        color = if (selectedTabIndex == index) Color.Black else Color.White
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- Content Area: Loading / Empty / List ---
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(), // Ensure Box takes full width for centering
+            contentAlignment = Alignment.Center // Center content by default
+        ) {
+            when {
+                // 1. Show Loading Indicator
+                isLoading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(48.dp),
+                        color = activeTabColor // Use an accent color
+                    )
+                }
+                // 2. Show Empty State (only if not loading)
+                allSongs.isEmpty() -> {
+                    Text(
+                        text = if (selectedTabIndex == 0) "Add songs to your library" else "Like songs to see them here",
+                        color = Color.Gray, // Use a less prominent color
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+                // 3. Show Songs List (only if not loading and not empty)
+                else -> {
+                    RecyclerSongsList(
+                        songs = allSongs,
+                        showBorder = false,
+                        onSongClick = { song ->
+                            navController.navigate("${Screen.Player.route}/${song.id}")
+                        }
+                    )
+                }
+            }
+        }
+        MiniPlayer(navController = navController)
+        // --- End Content Area ---
+    }
+
+
+    // Conditionally show the bottom sheet
+    if (showAddSongSheet) {
+        AddSong(
+            show = showAddSongSheet,
+            onDismiss = { showAddSongSheet = false }
+        )
+    }
+}
+
+// -----------------------------------------------------------------------------------
+

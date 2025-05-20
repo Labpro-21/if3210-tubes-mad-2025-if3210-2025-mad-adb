@@ -55,6 +55,8 @@ import com.example.adbpurrytify.R
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
 import com.example.adbpurrytify.ui.theme.Green
+import com.example.adbpurrytify.ui.theme.SpotifyGreen
+import com.example.adbpurrytify.ui.theme.SpotifyLightBlack
 import com.example.adbpurrytify.ui.theme.TEXT_FIELD_BACKGROUND
 import com.example.adbpurrytify.ui.theme.TEXT_FIELD_TEXT
 import com.example.adbpurrytify.ui.viewmodels.AuthViewModel
@@ -100,12 +102,12 @@ fun PurritifyTextField(
                 .height(56.dp),
             placeholder = { Text(placeholder, color = Color.Gray) },
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = TEXT_FIELD_BACKGROUND,
-                focusedContainerColor = TEXT_FIELD_BACKGROUND,
-                unfocusedTextColor = TEXT_FIELD_TEXT,
-                focusedTextColor = TEXT_FIELD_TEXT,
-                unfocusedBorderColor = TEXT_FIELD_BACKGROUND,
-                focusedBorderColor = TEXT_FIELD_BACKGROUND
+                unfocusedContainerColor = SpotifyLightBlack,
+                focusedContainerColor = SpotifyLightBlack,
+                unfocusedTextColor = Color.White,
+                focusedTextColor = Color.White,
+                unfocusedBorderColor = SpotifyLightBlack,
+                focusedBorderColor = SpotifyGreen
             ),
             singleLine = true,
             shape = RoundedCornerShape(4.dp),
@@ -141,15 +143,15 @@ fun PurritifyButton(
         modifier = modifier
             .fillMaxWidth()
             .height(50.dp),
-        shape = RoundedCornerShape(50),
+        shape = RoundedCornerShape(50), // Keep the pill shape
         colors = ButtonDefaults.buttonColors(
-            containerColor = Green,
-            disabledContainerColor = Green.copy(alpha = 0.6f)
+            containerColor = SpotifyGreen,
+            disabledContainerColor = SpotifyGreen.copy(alpha = 0.6f)
         ),
         enabled = enabled
     ) {
         Text(
-            text = text,
+            text = text.uppercase(), // Spotify often uses uppercase
             color = Color.Black,
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp

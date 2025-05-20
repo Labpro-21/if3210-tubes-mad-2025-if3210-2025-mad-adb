@@ -25,10 +25,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -42,8 +45,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -52,6 +57,11 @@ import coil3.compose.rememberAsyncImagePainter
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
+import com.example.adbpurrytify.ui.theme.SpotifyBlack
+import com.example.adbpurrytify.ui.theme.SpotifyButtonShape
+import com.example.adbpurrytify.ui.theme.SpotifyGray
+import com.example.adbpurrytify.ui.theme.SpotifyGreen
+import com.example.adbpurrytify.ui.theme.SpotifyLightBlack
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 import kotlinx.coroutines.launch
 import java.io.File
@@ -153,7 +163,9 @@ fun AddSong(
         Surface {
             ModalBottomSheet(
                 onDismissRequest = { onDismiss() },
-                sheetState = sheetState
+                sheetState = sheetState,
+                containerColor = SpotifyBlack, // Spotify's dark background
+                dragHandle = { /* Custom handle with Spotify coloring */ }
             ) {
                 Column(
                     modifier = Modifier
@@ -162,9 +174,13 @@ fun AddSong(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Row(
-                        horizontalArrangement = Arrangement.Center
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(vertical = 16.dp)
                     ) {
-                        Text("Upload Song")
+                        Text("Upload Song",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold)
                     }
                     Row {
                         Box(
@@ -215,6 +231,14 @@ fun AddSong(
                         horizontalArrangement = Arrangement.Start,
                     ) {
                         OutlinedTextField(
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedContainerColor = SpotifyLightBlack,
+                                focusedContainerColor = SpotifyLightBlack,
+                                unfocusedTextColor = Color.White,
+                                focusedTextColor = Color.White,
+                                unfocusedBorderColor = SpotifyGray,
+                                focusedBorderColor = SpotifyGreen
+                            ),
                             value = titleText,
                             onValueChange = { titleText = it },
                             modifier = Modifier
@@ -324,6 +348,11 @@ fun AddSong(
                                     onDismiss()
                                 }
                             },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = SpotifyGreen,
+                                contentColor = Color.Black
+                            ),
+                            shape = SpotifyButtonShape,
                             modifier = Modifier
                                 .fillMaxHeight()
                                 .fillMaxWidth(1f)

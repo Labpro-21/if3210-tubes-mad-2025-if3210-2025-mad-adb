@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -27,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,10 +53,14 @@ import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
 import com.example.adbpurrytify.ui.theme.Green
+import com.example.adbpurrytify.ui.theme.SpotifyGreen
+import com.example.adbpurrytify.ui.theme.SpotifyLightGray
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+
+
 
 @Composable
 fun SongPlayerScreen(
@@ -231,13 +237,15 @@ fun SongPlayerScreen(
                 Slider(
                     value = sliderPosition.toFloat(),
                     onValueChange = { sliderPosition = it.toLong() },
-                    onValueChangeFinished = {
-                        SongPlayer.seekTo(sliderPosition)
-                    },
+                    onValueChangeFinished = { SongPlayer.seekTo(sliderPosition) },
                     valueRange = 0f..(SongPlayer.getDuration().toFloat()),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = SliderDefaults.colors(
+                        thumbColor = SpotifyGreen,
+                        activeTrackColor = SpotifyGreen,
+                        inactiveTrackColor = SpotifyLightGray.copy(alpha = 0.3f)
+                    )
                 )
-
                 // Time display
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -295,15 +303,16 @@ fun SongPlayerScreen(
                     },
                     modifier = Modifier
                         .size(64.dp)
-                        .background(Green, shape = RoundedCornerShape(50))
+                        .background(SpotifyGreen, CircleShape)
                 ) {
                     Icon(
                         imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                         contentDescription = if (isPlaying) "Pause" else "Play",
-                        tint = Color.Black,
+                        tint = Color.Black, // Black icon on green background for contrast
                         modifier = Modifier.size(32.dp)
                     )
                 }
+
                 Spacer(modifier = Modifier.width(32.dp))
 
                 if (nextId > -1)

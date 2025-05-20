@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -38,6 +39,8 @@ import androidx.navigation.NavController
 import com.example.adbpurrytify.ui.components.MiniPlayer
 import com.example.adbpurrytify.ui.components.RecyclerSongsList
 import com.example.adbpurrytify.ui.navigation.Screen
+import com.example.adbpurrytify.ui.theme.SpotifyGreen
+import com.example.adbpurrytify.ui.theme.SpotifyLightBlack
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,17 +94,15 @@ fun LibraryScreen(
             )
 
             IconButton(
-                onClick = {
-                    showAddSongSheet = true
-                },
+                onClick = { showAddSongSheet = true },
                 modifier = Modifier
                     .size(40.dp)
-                    .background(Color.Transparent)
+                    .background(SpotifyGreen, CircleShape)
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Add Song",
-                    tint = Color.White
+                    tint = Color.Black  // Black icon on green for better contrast
                 )
             }
         }
@@ -117,15 +118,16 @@ fun LibraryScreen(
                         .padding(end = 8.dp)
                         .clip(RoundedCornerShape(20.dp))
                         .background(
-                            if (selectedTabIndex == index) activeTabColor
-                            else tabBackgroundColor
+                            if (selectedTabIndex == index) SpotifyGreen
+                            else SpotifyLightBlack
                         )
                         .clickable { selectedTabIndex = index }
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
                         text = tab,
-                        color = if (selectedTabIndex == index) Color.Black else Color.White
+                        color = if (selectedTabIndex == index) Color.Black else Color.White,
+                        fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal
                     )
                 }
             }
