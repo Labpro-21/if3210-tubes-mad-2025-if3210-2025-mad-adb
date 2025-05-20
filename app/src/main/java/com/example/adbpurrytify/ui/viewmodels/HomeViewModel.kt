@@ -3,16 +3,20 @@ package com.example.adbpurrytify.ui.viewmodels
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.adbpurrytify.api.RetrofitClient
-import com.example.adbpurrytify.data.local.SongDao
+import com.example.adbpurrytify.data.AuthRepository
+import com.example.adbpurrytify.data.SongRepository
 import com.example.adbpurrytify.data.model.SongEntity
-import com.example.adbpurrytify.data.model.toSongEntity
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class HomeViewModel(private val songDao: SongDao) : ViewModel() {
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val songRepository: SongRepository,
+    private val authRepository: AuthRepository
+) : ViewModel() {
     // New songs LiveData
     private val _newSongs = MutableLiveData<List<SongEntity>>()
     val newSongs: LiveData<List<SongEntity>> = _newSongs
@@ -56,20 +60,26 @@ class HomeViewModel(private val songDao: SongDao) : ViewModel() {
     private val _currentlyPlayingSong = MutableLiveData<SongEntity?>(null)
     val currentlyPlayingSong: LiveData<SongEntity?> = _currentlyPlayingSong
 
-    // Set the current user ID and trigger data loading
-    fun setCurrentUser(userId: Long) {
-        if (userId != currentUserId) {
-            currentUserId = userId
-            loadNewSongs(userId)
-            loadRecentlyPlayedSongs(userId)
-        }
-    }
+    // Load user data and trigger data loading
+    fun loadUserData() {
+        viewModelScope.launch {
+            val userResult = authRepository.getCurrentUser()
+            if (userResult.isSuccess) {
+                val userProfile = userResult.getOrThrow()
+                val userId = userProfile.id
+                val userLocation = userProfile.location
 
-    // Set the current user location and load trending song
-    fun setCurrentUser(location: String) {
-        if (location != currentLocation) {
-            currentLocation = location
-            loadTrendingSongs()
+                if (userId != currentUserId) {
+                    currentUserId = userId
+                    loadNewSongs(userId)
+                    loadRecentlyPlayedSongs(userId)
+                }
+
+                if (userLocation != currentLocation) {
+                    currentLocation = userLocation
+                    loadTrendingSongs()
+                }
+            }
         }
     }
 
@@ -85,7 +95,7 @@ class HomeViewModel(private val songDao: SongDao) : ViewModel() {
 
     // Get song by ID
     suspend fun getSongById(songId: Long): SongEntity? {
-        return songDao.getSongById(songId)
+        return songRepository.getSongById(songId)
     }
 
     // Play a song
@@ -94,11 +104,7 @@ class HomeViewModel(private val songDao: SongDao) : ViewModel() {
 
         // Also update last played info in database
         viewModelScope.launch {
-            val updatedSong = song.copy(
-                lastPlayedTimestamp = System.currentTimeMillis(),
-                lastPlayedPositionMs = 0 // Start from beginning
-            )
-            songDao.update(updatedSong)
+            songRepository.updateSongPlaybackTime(song.id, 0)
         }
     }
 
@@ -108,7 +114,7 @@ class HomeViewModel(private val songDao: SongDao) : ViewModel() {
         _error.postValue(null)
         viewModelScope.launch {
             var isFirstEmission = true
-            songDao.getAllSongs(userId)
+            songRepository.getAllSongs(userId)
                 .catch { e ->
                     _error.postValue("Failed to load new songs: ${e.message}")
                     _isNewSongsLoading.postValue(false)
@@ -129,7 +135,7 @@ class HomeViewModel(private val songDao: SongDao) : ViewModel() {
         _error.postValue(null)
         viewModelScope.launch {
             var isFirstEmission = true
-            songDao.getRecentlyPlayedSongs(userId)
+            songRepository.getRecentlyPlayedSongs(userId)
                 .catch { e ->
                     _error.postValue("Failed to load recently played songs: ${e.message}")
                     _isRecentlyPlayedLoading.postValue(false)
@@ -147,16 +153,10 @@ class HomeViewModel(private val songDao: SongDao) : ViewModel() {
     // Load online trending songs (global and local if it is supported)
     fun loadTrendingSongs() {
         viewModelScope.launch {
-            _isTrendingGlobalLoading.postValue(true) // postValue because it's background task
+            _isTrendingGlobalLoading.postValue(true)
             try {
-                val response = RetrofitClient.instance.getTopGlobalSongs()
-                if (response.isSuccessful) {
-                    val trendingDTOs = response.body() ?: emptyList()
-                    val mapped = trendingDTOs.map { it.toSongEntity() }
-                    _trendingGlobalSongs.postValue(mapped)
-                } else {
-                    _trendingGlobalSongs.postValue(emptyList())
-                }
+                val songs = songRepository.getTopGlobalSongs()
+                _trendingGlobalSongs.postValue(songs)
             } catch (e: Exception) {
                 _trendingGlobalSongs.postValue(emptyList())
             } finally {
@@ -164,20 +164,14 @@ class HomeViewModel(private val songDao: SongDao) : ViewModel() {
             }
         }
 
-        val supportedCountries = listOf("ID", "MY", "US", "GB", "CH", "DE", "BR") // hardcoded, I know
+        val supportedCountries = listOf("ID", "MY", "US", "GB", "CH", "DE", "BR")
         viewModelScope.launch {
-            _isTrendingCountryLoading.postValue(true) // postValue because it's background task
+            _isTrendingCountryLoading.postValue(true)
             try {
                 val country = currentLocation?.takeIf { it.uppercase() in supportedCountries }?.uppercase()
                 if (country != null) {
-                    val response = RetrofitClient.instance.getTopCountrySongs(country)
-                    if (response.isSuccessful) {
-                        val trendingDTOs = response.body() ?: emptyList()
-                        val mapped = trendingDTOs.map { it.toSongEntity() }
-                        _trendingCountrySongs.postValue(mapped)
-                    } else {
-                        _trendingCountrySongs.postValue(emptyList())
-                    }
+                    val songs = songRepository.getTopCountrySongs(country)
+                    _trendingCountrySongs.postValue(songs)
                 } else {
                     _trendingCountrySongs.postValue(emptyList())
                 }
@@ -186,17 +180,6 @@ class HomeViewModel(private val songDao: SongDao) : ViewModel() {
             } finally {
                 _isTrendingCountryLoading.postValue(false)
             }
-        }
-    }
-
-    // Factory for creating the ViewModel with dependencies
-    class Factory(private val songDao: SongDao) : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return HomeViewModel(songDao) as T
-            }
-            throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
 }

@@ -47,11 +47,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.rememberAsyncImagePainter
 import com.example.adbpurrytify.R
-import com.example.adbpurrytify.api.RetrofitClient
-import com.example.adbpurrytify.data.AuthRepository
-import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
@@ -94,7 +92,8 @@ fun copyUriToInternalStorage(context: Context, uri: Uri): String? {
 @Composable
 fun AddSong(
     show: Boolean,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    viewModel: SongViewModel = hiltViewModel()
 ) {
     if (!show) return
     val padding = 32.dp
@@ -135,17 +134,19 @@ fun AddSong(
             retriever.release()
         }
     }
-    val authRepository = AuthRepository(RetrofitClient.instance)
 
-// State to hold current user ID
+    // State to hold current user ID
     var currentUserId by rememberSaveable { mutableStateOf(-1L) }
 
-// Load current user when composable launches
+    // Load current user when composable launches
     LaunchedEffect(Unit) {
-        val userProfile = authRepository.currentUser()
-
-        // Set user ID or default to -1
-        currentUserId = userProfile?.id ?: -1L
+        // Use the ViewModel's loadUserData method to get the user data
+        viewModel.loadUserData()
+        // Wait for the user ID to be available
+        val id = viewModel.getCurrentUserId()
+        if (id != null) {
+            currentUserId = id
+        }
     }
 
     ADBPurrytifyTheme {
@@ -177,7 +178,6 @@ fun AddSong(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .clickable(
-                                        true,
                                         onClick = {
                                             pickMedia.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
                                         }
@@ -194,7 +194,7 @@ fun AddSong(
                                 contentDescription = "Upload File",
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .clickable(true, onClick = {
+                                    .clickable(onClick = {
                                         pickAudio.launch("audio/*")
                                     })
                             )
@@ -318,10 +318,8 @@ fun AddSong(
                                 )
 
                                 scope.launch {
-                                    val db = AppDatabase.getDatabase(context)
-                                    val songDao = db.songDao()
-                                    val songViewModel = SongViewModel(songDao)
-                                    songViewModel.insert(song)
+                                    // Use the injected viewModel to insert the song
+                                    viewModel.insert(song)
                                     sheetState.hide()
                                     onDismiss()
                                 }

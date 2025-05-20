@@ -19,45 +19,39 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.work.Constraints
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.adbpurrytify.R
-import com.example.adbpurrytify.api.RetrofitClient
-import com.example.adbpurrytify.data.AuthRepository
-import com.example.adbpurrytify.data.TokenManager
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
+import com.example.adbpurrytify.ui.viewmodels.AuthViewModel
 import com.example.adbpurrytify.worker.JwtExpiryWorker
 import kotlinx.coroutines.delay
 import java.util.concurrent.TimeUnit
 
 @Composable
-fun SplashScreen(navController: NavController) {
+fun SplashScreen(
+    navController: NavController,
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
     val scale = remember { Animatable(1f) }
-    val context = LocalContext.current // Get context for TokenManager initialization
+    val context = LocalContext.current
 
     // State to hold the login status after checking
-    // Start as null to indicate the check hasn't completed yet.
     var loginStatusDetermined by remember { mutableStateOf<Boolean?>(null) }
 
-    // Effect to initialize TokenManager and check login status ONCE
+    // Effect to check login status ONCE
     LaunchedEffect(key1 = Unit) {
-        TokenManager.initialize(context)
-        Log.d("SplashScreen", "Initializing TokenManager and checking token...")
-        try {
-            val authRepository = AuthRepository(RetrofitClient.instance)
+        Log.d("SplashScreen", "Checking authentication status...")
 
-            // First check if we have tokens
-            if (TokenManager.hasTokens()) {
-                // Try to validate or refresh tokens
-                loginStatusDetermined = authRepository.validateAndRefreshTokenIfNeeded()
-            } else {
-                // No tokens stored, user needs to log in
-                loginStatusDetermined = false
-            }
+        try {
+            // Check if the user is authenticated using AuthViewModel
+            val isAuthenticated = authViewModel.checkAuthStatus()
+            loginStatusDetermined = isAuthenticated
 
             Log.d("SplashScreen", "Authentication check complete. Logged in: $loginStatusDetermined")
         } catch (e: Exception) {
@@ -71,6 +65,8 @@ fun SplashScreen(navController: NavController) {
         // Only proceed if the login status has been determined (is not null)
         if (loginStatusDetermined != null) {
             Log.d("SplashScreen", "Login status determined ($loginStatusDetermined). Starting animation and navigation...")
+
+            // Animate the logo
             scale.animateTo(
                 targetValue = 1.3f,
                 animationSpec = tween(
@@ -78,14 +74,13 @@ fun SplashScreen(navController: NavController) {
                     easing = { OvershootInterpolator(2f).getInterpolation(it) }
                 )
             )
-            // Delay after animation completes - adjust as needed for UX
+
+            // Delay after animation completes
             delay(1500L)
 
             // Navigate based on the determined status
-            var destination = Screen.Home.route
-            if (loginStatusDetermined == false) {
-                destination = Screen.Login.route
-            } else {
+            val destination = if (loginStatusDetermined == true) {
+                // Schedule token refresh worker if logged in
                 val workManager = WorkManager.getInstance(context.applicationContext)
                 val firstWork = OneTimeWorkRequestBuilder<JwtExpiryWorker>()
                     .setInitialDelay(0, TimeUnit.SECONDS)
@@ -97,7 +92,11 @@ fun SplashScreen(navController: NavController) {
                     .build()
 
                 workManager.enqueue(firstWork)
+                Screen.Home.route
+            } else {
+                Screen.Login.route
             }
+
             Log.d("SplashScreen", "Navigating to $destination")
             navController.navigate(destination) {
                 // Remove Splash screen from the back stack
@@ -111,7 +110,9 @@ fun SplashScreen(navController: NavController) {
     // UI for the Splash Screen
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.fillMaxSize().background(BLACK_BACKGROUND)
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BLACK_BACKGROUND)
     ) {
         Image(
             painter = painterResource(id = R.drawable.logo_purrytify),

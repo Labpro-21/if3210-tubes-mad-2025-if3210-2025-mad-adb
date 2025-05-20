@@ -9,7 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -18,9 +18,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
-import com.example.adbpurrytify.api.RetrofitClient
-import com.example.adbpurrytify.data.AuthRepository
-import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.ui.screens.HomeScreen
 import com.example.adbpurrytify.ui.screens.LibraryScreen
 import com.example.adbpurrytify.ui.screens.LoginScreen
@@ -28,8 +25,8 @@ import com.example.adbpurrytify.ui.screens.NetworkSensingSnackbar
 import com.example.adbpurrytify.ui.screens.ProfileScreen
 import com.example.adbpurrytify.ui.screens.SongPlayerScreen
 import com.example.adbpurrytify.ui.screens.SplashScreen
+import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
 import com.example.adbpurrytify.ui.viewmodels.ProfileViewModel
-import com.example.adbpurrytify.ui.viewmodels.ProfileViewModelFactory
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 
 @Composable
@@ -46,11 +43,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     val currentRoute = navBackStackEntry?.destination?.route
     val showBottomBar = currentRoute in mainRoutes
 
-    // Instantiate dependencies once
+    // Local context for snackbar
     val context = LocalContext.current
-    val database = AppDatabase.getDatabase(context)
-    val songDao = database.songDao()
-    val authRepository = AuthRepository(RetrofitClient.instance)
     val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
@@ -79,26 +73,23 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             }
 
             composable(Screen.Home.route) {
-                // Using your existing HomeScreen function signature
-                HomeScreen(navController, authRepository)
+                // Using Hilt to get ViewModel
+                val homeViewModel = hiltViewModel<HomeViewModel>()
+                HomeScreen(navController, homeViewModel)
             }
 
             composable(Screen.Library.route) {
-                val songViewModel: SongViewModel = viewModel(
-                    factory = SongViewModel.Factory(songDao)
-                )
-
+                // Using Hilt to get ViewModel
+                val songViewModel = hiltViewModel<SongViewModel>()
                 LibraryScreen(
                     navController = navController,
-                    viewModel = songViewModel,
-                    authRepository = authRepository
+                    viewModel = songViewModel
                 )
             }
 
             composable(Screen.Profile.route) {
-                val viewModelFactory = ProfileViewModelFactory(RetrofitClient.instance, songDao, authRepository)
-                val viewModel: ProfileViewModel = viewModel(factory = viewModelFactory)
-
+                // Using Hilt to get ViewModel
+                val viewModel = hiltViewModel<ProfileViewModel>()
                 ProfileScreen(viewModel = viewModel, navController = navController)
             }
 
@@ -111,8 +102,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             ) { backStackEntry ->
                 val songId = backStackEntry.arguments?.getLong("songId") ?: -1L
 
-                val songViewModel = SongViewModel(songDao)
-
+                // Using Hilt to get ViewModel
+                val songViewModel = hiltViewModel<SongViewModel>()
                 SongPlayerScreen(
                     navController = navController,
                     songId = songId,
@@ -125,11 +116,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 route = "song/{songId}",
                 deepLinks = listOf(navDeepLink { uriPattern = "myapp://song/{songId}" })
             ) {
-//                backStackEntry ->
-//                val songId = backStackEntry.arguments?.getString("songId")
-//                SongScreen(songId)
+                // Placeholder for deep link handling
             }
         }
     }
 }
-

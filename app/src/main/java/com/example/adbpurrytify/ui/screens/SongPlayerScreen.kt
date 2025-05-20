@@ -43,12 +43,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.adbpurrytify.R
-import com.example.adbpurrytify.api.RetrofitClient
-import com.example.adbpurrytify.data.AuthRepository
-import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
@@ -62,14 +60,8 @@ import kotlinx.coroutines.runBlocking
 fun SongPlayerScreen(
     navController: NavController,
     songId: Long,
-    viewModel: SongViewModel = SongViewModel(
-        AppDatabase.getDatabase(LocalContext.current).songDao()
-    ),
-    authRepository: AuthRepository = remember {
-        AuthRepository(RetrofitClient.instance)
-    }
+    viewModel: SongViewModel = hiltViewModel()
 ) {
-
     var song by remember { mutableStateOf<SongEntity?>(null) }
     var isLiked by remember { mutableStateOf(false) }
     var isPlaying by remember { mutableStateOf(false) }
@@ -84,34 +76,37 @@ fun SongPlayerScreen(
     var playerReady by remember { mutableStateOf(false) }
 
     LaunchedEffect(songId) {
-        val userProfile = authRepository.currentUser()
-        val userId = userProfile?.id ?: -1L
-        if (userId != -1L) {
-            viewModel.setCurrentUser(userId)
+        // Load user data first to ensure userId is available
+        viewModel.loadUserData()
+        // Wait until currentUserId is set
+        while(viewModel.getCurrentUserId() == null) {
+            delay(50)
         }
-
+        // Now get navigation IDs
         prevId = viewModel.getPrevSongId(songId)
         nextId = viewModel.getNextSongId(songId)
 
+        // Get song details
         song = runBlocking { viewModel.getSongById(songId) }
-        viewModel.updateSongTimestamp(song!!)
         song?.let {
-            // Initialize the liked state
+            // Update last played timestamp
+            viewModel.updateSongTimestamp(it)
+
+            // Initialize liked state
             isLiked = it.isLiked
 
-            if (SongPlayer.songLoaded == false
-                or ((SongPlayer.songLoaded) and (SongPlayer.curLoadedSongId != songId))) {
-
+            // Handle player initialization
+            if (!SongPlayer.songLoaded || (SongPlayer.songLoaded && SongPlayer.curLoadedSongId != songId)) {
                 SongPlayer.release()
                 SongPlayer.loadSong(it.audioUri, context, it.id)
-                // Wait for the player to be ready
+
+                // Wait for player to be ready
                 while (SongPlayer.getDuration() <= 0) {
                     delay(100)
                 }
                 playerReady = true
                 isPlaying = true
-            }
-            else { // same song
+            } else { // Same song
                 isPlaying = SongPlayer.isPlaying()
                 sliderPosition = SongPlayer.getProgress()
                 playerReady = true
@@ -123,15 +118,15 @@ fun SongPlayerScreen(
     LaunchedEffect(isPlaying) {
         while (isPlaying) {
             sliderPosition = SongPlayer.getProgress()
-            // Commented out because it's adding noise to logcat
-//            Log.d("sliderPosition", sliderPosition.toString())
             delay(1000L)
 
+            // Auto-navigate to next song when current song ends
             if (sliderPosition >= SongPlayer.getDuration()) {
-                if (nextId > -1)
+                if (nextId > -1) {
                     navController.navigate("${Screen.Player.route}/${nextId}")
-                else
+                } else {
                     isPlaying = false
+                }
             }
         }
     }
@@ -216,7 +211,6 @@ fun SongPlayerScreen(
                             // Create an updated version of the song with new like status
                             val updatedSong = currentSong.copy(isLiked = isLiked)
                             viewModel.update(updatedSong)
-                            // No need to refresh the song from DB since we're using optimistic UI
                         }
                     }
                 ) {
@@ -275,7 +269,7 @@ fun SongPlayerScreen(
                 if (prevId > -1)
                     IconButton(
                         onClick = {
-                            navController?.navigate("${Screen.Player.route}/${prevId}")
+                            navController.navigate("${Screen.Player.route}/${prevId}")
                         },
                         modifier = Modifier
                             .size(40.dp)
@@ -315,7 +309,7 @@ fun SongPlayerScreen(
                 if (nextId > -1)
                     IconButton(
                         onClick = {
-                            navController?.navigate("${Screen.Player.route}/${nextId}")
+                            navController.navigate("${Screen.Player.route}/${nextId}")
                         },
                         modifier = Modifier
                             .size(40.dp)
