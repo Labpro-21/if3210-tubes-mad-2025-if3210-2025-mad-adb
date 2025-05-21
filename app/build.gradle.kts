@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
-    id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
 }
 
@@ -46,16 +45,11 @@ android {
     }
 }
 
-// Configure kapt to correctly process Hilt annotations
-kapt {
-    correctErrorTypes = true
-}
-
 dependencies {
     // Hilt dependencies
-    implementation("com.google.dagger:hilt-android:2.48")
-    kapt("com.google.dagger:hilt-android-compiler:2.48")
-    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+    implementation("com.google.dagger:hilt-android:2.56.2")
+    ksp("com.google.dagger:hilt-android-compiler:2.56.2")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
     // live data
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
