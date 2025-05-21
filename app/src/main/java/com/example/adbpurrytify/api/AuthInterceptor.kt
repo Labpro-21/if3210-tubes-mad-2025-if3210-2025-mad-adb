@@ -3,10 +3,13 @@ package com.example.adbpurrytify.api
 import com.example.adbpurrytify.data.TokenManager
 import okhttp3.Interceptor
 import okhttp3.Response
+import javax.inject.Inject
 
-class AuthInterceptor : Interceptor {
+class AuthInterceptor @Inject constructor(
+    private val tokenManager: TokenManager
+) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
-        val token = TokenManager.getAuthToken() // Retrieve token
+        val token = tokenManager.getAuthToken() // Retrieve token
         val originalRequest = chain.request()
 
         if (token != null && originalRequest.header("Authorization") == null) {

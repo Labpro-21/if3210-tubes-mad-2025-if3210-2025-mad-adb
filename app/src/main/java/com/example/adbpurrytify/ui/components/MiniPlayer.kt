@@ -1,6 +1,5 @@
 package com.example.adbpurrytify.ui.components
 
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,12 +34,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.adbpurrytify.R
-import com.example.adbpurrytify.api.RetrofitClient
-import com.example.adbpurrytify.data.AuthRepository
-import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.screens.SongPlayer
@@ -50,15 +47,9 @@ import kotlinx.coroutines.runBlocking
 
 @Composable
 fun MiniPlayer(
-    viewModel: SongViewModel = SongViewModel(
-        AppDatabase.getDatabase(LocalContext.current).songDao()
-    ),
-    authRepository: AuthRepository = remember {
-        AuthRepository(RetrofitClient.instance) // Use corrected import
-    },
+    viewModel: SongViewModel = hiltViewModel(),
     navController: NavController
 ) {
-
     if (!SongPlayer.songLoaded) return
     var songId by remember { mutableStateOf(SongPlayer.curLoadedSongId) }
     var sliderPosition by remember { mutableStateOf(SongPlayer.getProgress()) }
@@ -67,22 +58,17 @@ fun MiniPlayer(
     var playerReady by remember { mutableStateOf(false) }
 
     val accentColor = Color(0xFF1ED760)
-
     val context = LocalContext.current
 
     LaunchedEffect(songId) {
+        // Load user data to ensure we have the current user ID
+        viewModel.loadUserData()
 
-        val userProfile = authRepository.currentUser()
-        val userId = userProfile?.id ?: -1L
-        if (userId != -1L) {
-            viewModel.setCurrentUser(userId)
-        }
-
+        // Get song information
         song = runBlocking { viewModel.getSongById(songId) }
         song?.let {
-
             if (SongPlayer.songLoaded == false
-                or ((SongPlayer.songLoaded) and (SongPlayer.curLoadedSongId != songId))) {
+                || (SongPlayer.songLoaded && SongPlayer.curLoadedSongId != songId)) {
 
                 SongPlayer.release()
                 SongPlayer.loadSong(it.audioUri, context, it.id)
@@ -92,44 +78,37 @@ fun MiniPlayer(
                 }
                 playerReady = true
                 isPlaying = true
-            }
-
-            else { //lagu yg sama
+            } else { // Same song
                 isPlaying = SongPlayer.isPlaying()
                 sliderPosition = SongPlayer.getProgress()
                 playerReady = true
             }
-
         }
-
     }
+
     // Update slider position every second
     LaunchedEffect(isPlaying) {
         while (isPlaying) {
             sliderPosition = SongPlayer.getProgress()
-            // Commented out because it's adding noise to logcat
-//            Log.d("sliderPosition", sliderPosition.toString())
             delay(1000L)
         }
     }
 
     // UI
-    // Song info dan art
+    // Song info and artwork
     song?.let { currentSong ->
-
-        Row(verticalAlignment = Alignment.CenterVertically,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(end = 24.dp)
-                .clickable(true, onClick = {
+                .clickable(onClick = {
                     navController.navigate("${Screen.Player.route}/${songId}")
                 })
         ) {
-
             Row {
-
-                Box( // img
+                Box( // Image
                     modifier = Modifier
                         .width(64.dp)
                         .aspectRatio(1f)
@@ -154,19 +133,19 @@ fun MiniPlayer(
 
             Icon(
                 imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                contentDescription = null,
+                contentDescription = if (isPlaying) "Pause" else "Play",
                 tint = Color.White,
-                modifier = Modifier.size(24.dp).clickable(true, onClick = {
-                    if (isPlaying) {
-                        SongPlayer.pause()
-                    } else {
-                        SongPlayer.play()
-                    }
-                    isPlaying = !isPlaying
-                })
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable(onClick = {
+                        if (isPlaying) {
+                            SongPlayer.pause()
+                        } else {
+                            SongPlayer.play()
+                        }
+                        isPlaying = !isPlaying
+                    })
             )
-
-
         }
 
         // Slider section
@@ -190,12 +169,9 @@ fun MiniPlayer(
                 CircularProgressIndicator(color = accentColor, modifier = Modifier.size(24.dp))
             }
         }
-
     } ?: run {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = accentColor)
         }
     }
-
-
 }

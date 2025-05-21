@@ -15,19 +15,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.adbpurrytify.api.RetrofitClient
-import com.example.adbpurrytify.data.AuthRepository
-import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.ui.components.HorizontalSongsList
 import com.example.adbpurrytify.ui.components.MiniPlayer
 import com.example.adbpurrytify.ui.components.RecyclerSongsList
@@ -37,15 +31,8 @@ import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
 @Composable
 fun HomeScreen(
     navController: NavController? = null,
-    authRepository: AuthRepository = remember {
-        AuthRepository(RetrofitClient.instance) // Use corrected import
-    }
+    viewModel: HomeViewModel
 ) {
-    // Get database and create ViewModel
-    val context = LocalContext.current
-    val songDao = AppDatabase.getDatabase(context).songDao()
-    val viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory(songDao))
-
     val backgroundColor = Color(0xFF121212)
     val primaryColor = Color(0xFF1ED760) // Define primary color
 
@@ -58,13 +45,8 @@ fun HomeScreen(
 
     // Get current user ID and load data
     LaunchedEffect(key1 = Unit) {
-        val userProfile = authRepository.currentUser()
-        val userId = userProfile?.id ?: -1L
-        val userLocation = userProfile?.location ?: ""
-        if (userId != -1L) {
-            viewModel.setCurrentUser(userId = userId)
-            viewModel.setCurrentUser(location = userLocation)
-        }
+        // Load user data via the ViewModel
+        viewModel.loadUserData()
     }
 
     val isLoading = isNewSongsLoading || isRecentlyPlayedLoading
