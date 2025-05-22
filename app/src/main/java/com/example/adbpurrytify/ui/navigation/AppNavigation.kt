@@ -107,7 +107,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 SongPlayerScreen(
                     navController = navController,
                     songId = songId,
-                    viewModel = songViewModel
+                    viewModel = songViewModel,
+                    snackBarHostState = snackbarHostState
                 )
             }
 

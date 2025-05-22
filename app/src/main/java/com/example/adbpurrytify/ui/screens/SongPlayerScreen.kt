@@ -13,10 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowLeft
@@ -29,10 +32,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -45,27 +51,32 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.adbpurrytify.R
+import com.example.adbpurrytify.data.download.downloadSong
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
 import com.example.adbpurrytify.ui.theme.Green
 import com.example.adbpurrytify.ui.theme.SpotifyGreen
 import com.example.adbpurrytify.ui.theme.SpotifyLightGray
+import com.example.adbpurrytify.ui.theme.TEXT_FIELD_TEXT
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-
+import java.io.File
 
 
 @Composable
 fun SongPlayerScreen(
     navController: NavController,
     songId: Long,
+    snackBarHostState: SnackbarHostState,
     viewModel: SongViewModel = hiltViewModel()
 ) {
     var song by remember { mutableStateOf<SongEntity?>(null) }
@@ -80,6 +91,9 @@ fun SongPlayerScreen(
     var nextId by remember { mutableStateOf(-1L) }
 
     var playerReady by remember { mutableStateOf(false) }
+
+    var isDownloading by remember { mutableStateOf(false) }
+    var downloadProgress by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(songId) {
         // Load user data first to ensure userId is available
@@ -143,6 +157,7 @@ fun SongPlayerScreen(
             .fillMaxSize()
             .background(BLACK_BACKGROUND)
             .padding(16.dp)
+            .verticalScroll(rememberScrollState()) // How nice, to have this thing existed
     ) {
         // Top Bar
         Row(
@@ -181,7 +196,7 @@ fun SongPlayerScreen(
                     .align(Alignment.CenterHorizontally),
                 contentAlignment = Alignment.Center
             ) {
-                val art = if (currentSong.artUri.isNotEmpty()) currentSong.artUri else R.drawable.remembering_sunday
+                val art = if (currentSong.artUri.isNotEmpty()) currentSong.artUri else R.drawable.song_art_placeholder
                 AsyncImage(
                     model = art,
                     contentDescription = "Album art",
@@ -192,11 +207,61 @@ fun SongPlayerScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Song Title + Author and Like Button
+            // Song Title + Author and Download + Like Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Download button
+                val isTrendingSong = currentSong.audioUri.startsWith("http")
+                // Change the filename pattern if it's changed on DownloadSong
+                val downloadFile =
+                    File(context.filesDir, "${currentSong.author + "-" + currentSong.title}.mp3")
+                if (isTrendingSong && !downloadFile.exists() || isDownloading) {
+                    if (isDownloading) {
+                        CircularProgressIndicator(
+                            progress = { downloadProgress },
+                            modifier = Modifier.size(28.dp),
+                            color = Green
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "${(downloadProgress * 100f).toInt()}%",
+                            color = TEXT_FIELD_TEXT,
+                            fontSize = 16.sp
+                        )
+                    } else {
+                        IconButton(
+                            onClick = {
+                                isDownloading = true
+                                coroutineScope.launch {
+                                    val path = downloadSong(
+                                        currentSong, context, Dispatchers.IO
+                                    ) { progress ->
+                                        coroutineScope.launch(Dispatchers.Main) {
+                                            downloadProgress = progress
+                                        }
+                                    }
+                                    isDownloading = false
+                                    val message = if (path != null) {
+                                        val updatedSong = song!!.copy(audioUri = path)
+                                        viewModel.update(updatedSong)
+                                        "Song download completed!"
+                                    } else "Download error. Please try again."
+                                    snackBarHostState.showSnackbar(
+                                        message, duration = SnackbarDuration.Short
+                                    )
+                                }
+                            }) {
+                            Icon(
+                                imageVector = Icons.Default.Download,
+                                contentDescription = "Download song",
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    }
+                }
+
                 Column(
                     modifier = Modifier.weight(1f),
                     horizontalAlignment = Alignment.CenterHorizontally

@@ -47,8 +47,7 @@ fun TrendingSongsSection(
     val supportedCountries = listOf("ID", "MY", "US", "GB", "CH", "DE", "BR")
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
     ) {
         SongsSection(
             "Trending Global",
@@ -119,24 +118,20 @@ fun SongsSection(
         }
     } else {
         HorizontalSongsList(
-            songs = songsList,
-            showBorder = false,
-            onSongClick = { song ->
+            songs = songsList, showBorder = false, onSongClick = { song ->
                 scope.launch {
-                    if (songViewModel.getSongById(song.id) == null) {
-                        songViewModel.insert(song)
-                    }
-
-                    // Update the song's metadata manually
+                    /** Instead of inserting it and then updating it pointlessly (my own stupidity)
+                     * why not change it's metadata first, and THEN inserting it?
+                     */
                     val updatedSong: SongEntity = song.copy(
-                        userId = userId ?: 0,
+                        // Way cooler than making 2 separate updatedSong
+                        userId = if (songViewModel.getSongById(song.id) == null) userId ?: song.userId else song.userId,
                         lastPlayedTimestamp = System.currentTimeMillis(),
                         lastPlayedPositionMs = 0
                     )
-                    songViewModel.update(updatedSong)
+                    songViewModel.insert(updatedSong)
                 }
                 navController?.navigate("${Screen.Player.route}/${song.id}")
-            }
-        )
+            })
     }
 }
