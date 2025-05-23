@@ -32,8 +32,6 @@ class MusicService : MediaSessionService() {
         mediaSession = MediaSession.Builder(this, player!!)
             .setId("MusicSession")
             .build()
-
-        startForeground(NOTIFICATION_ID, buildNotification())
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
