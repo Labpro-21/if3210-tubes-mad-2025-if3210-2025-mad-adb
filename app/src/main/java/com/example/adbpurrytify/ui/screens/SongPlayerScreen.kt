@@ -123,7 +123,7 @@ fun SongPlayerScreen(
             if (SongPlayer.songLoaded == false
                 or ((SongPlayer.songLoaded) and (SongPlayer.curLoadedSongId != songId))) {
 
-                SongPlayer.loadSong(it.audioUri, context, it.id)
+                SongPlayer.loadSong(it, context, it.id)
 
                 while (SongPlayer.getDuration() <= 0) {
                     delay(100)

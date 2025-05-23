@@ -13,11 +13,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.session.MediaController
+import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.theme.Green
 import java.util.concurrent.TimeUnit
 
@@ -38,16 +40,29 @@ object SongPlayer {
     var curLoadedSongId: Long = -1
 
     @OptIn(UnstableApi::class)
-    fun loadSong(songPath: String, context: Context, songId: Long) {
-        Log.d("path str", songPath)
+    fun loadSong(song: SongEntity, context: Context, songId: Long) {
+        Log.d("path str", song.audioUri)
         if (mediaController == null) {
             Log.d("LOAD CALLED", "NULL")
             return
         }
-        var uriparseres = Uri.parse(songPath)
+        var uriparseres = Uri.parse(song.audioUri)
         Log.d("URI Parse Res", uriparseres.toString())
 
-        val mediaItem = MediaItem.fromUri(uriparseres)
+//        val mediaItem = MediaItem.fromUri(uriparseres)
+        val mediaItem =
+            MediaItem.Builder()
+                .setMediaId("998244353")
+                .setUri(uriparseres)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setArtist(song.author)
+                        .setTitle(song.title)
+                        .setArtworkUri(Uri.parse(song.artUri))
+                        .build()
+                )
+                .build()
+
         Log.d("Media Id", mediaItem.mediaId)
 
         mediaController!!.setMediaItem(mediaItem)
