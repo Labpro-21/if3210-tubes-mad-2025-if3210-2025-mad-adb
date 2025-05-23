@@ -3,22 +3,26 @@ package com.example.adbpurrytify.ui.viewmodels
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.adbpurrytify.data.local.SongDao
+import com.example.adbpurrytify.data.AuthRepository
+import com.example.adbpurrytify.data.SongRepository
 import com.example.adbpurrytify.data.model.SongEntity
-import kotlinx.coroutines.Dispatchers
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import java.util.Date
+import javax.inject.Inject
 
-class SongViewModel(private val songDao: SongDao) : ViewModel() {
+@HiltViewModel
+class SongViewModel @Inject constructor(
+    private val songRepository: SongRepository,
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
     // All songs LiveData - used in the UI
     private val _allSongs = MutableLiveData<List<SongEntity>>()
     val allSongs: LiveData<List<SongEntity>> = _allSongs
 
-    // Loading state LiveData - Initialize it!
+    // Loading state LiveData
     private val _isLoading = MutableLiveData<Boolean>(false)
     val isLoading: LiveData<Boolean> = _isLoading
 
@@ -32,8 +36,29 @@ class SongViewModel(private val songDao: SongDao) : ViewModel() {
     // Keep track of the last loaded tab index
     private var lastLoadedTabIndex: Int = 0
 
+    // Function to get the current user ID (added for AddSong component)
+    fun getCurrentUserId(): Long? {
+        return currentUserId
+    }
+
+    // Load user data from the API
+    fun loadUserData() {
+        viewModelScope.launch {
+            _isLoading.postValue(true)
+            val userResult = authRepository.getCurrentUser()
+            if (userResult.isSuccess) {
+                val userProfile = userResult.getOrThrow()
+                currentUserId = userProfile.id
+                loadSongsForTab(lastLoadedTabIndex)
+            } else {
+                _error.postValue("Failed to load user data")
+                _isLoading.postValue(false)
+            }
+        }
+    }
+
     suspend fun getSongById(songId: Long): SongEntity? {
-        return songDao.getSongById(songId)
+        return songRepository.getSongById(songId)
     }
 
     // Set the current user ID and trigger the initial load
@@ -65,7 +90,7 @@ class SongViewModel(private val songDao: SongDao) : ViewModel() {
         _error.postValue(null)
         viewModelScope.launch {
             var isFirstEmission = true
-            songDao.getLikedSongs(userId)
+            songRepository.getLikedSongs(userId)
                 .catch { e ->
                     _error.postValue("Failed to load liked songs: ${e.message}")
                     _isLoading.postValue(false) // Stop loading on error
@@ -88,7 +113,7 @@ class SongViewModel(private val songDao: SongDao) : ViewModel() {
         viewModelScope.launch {
             var isFirstEmission = true
 
-            songDao.getSongsByUser(userId)
+            songRepository.getSongsByUser(userId)
                 .catch { e ->
                     _error.postValue("Failed to load all songs: ${e.message}")
                     _isLoading.postValue(false)
@@ -103,12 +128,11 @@ class SongViewModel(private val songDao: SongDao) : ViewModel() {
         }
     }
 
-
     // Insert a new song
     fun insert(song: SongEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             try {
-                songDao.insert(song)
+                songRepository.insertSong(song)
                 // No explicit refresh needed, Flow should update the list automatically
             } catch (e: Exception) {
                 _error.postValue("Failed to add song: ${e.message}")
@@ -118,9 +142,9 @@ class SongViewModel(private val songDao: SongDao) : ViewModel() {
 
     // Update a song (e.g., when liking/unliking)
     fun update(song: SongEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             try {
-                songDao.update(song)
+                songRepository.updateSong(song)
                 // No explicit refresh needed, Flow should update the list automatically
             } catch (e: Exception) {
                 _error.postValue("Failed to update song: ${e.message}")
@@ -129,18 +153,19 @@ class SongViewModel(private val songDao: SongDao) : ViewModel() {
     }
 
     suspend fun getPrevSongId(songId: Long): Long {
-        var prevSong = songDao.getPreviousSong(currentUserId!!, songId)
-        if (prevSong == null) {
-            return -1L
+        currentUserId?.let {
+            val prevSong = songRepository.getPreviousSong(it, songId)
+            return prevSong?.id ?: -1L
         }
-        return prevSong.id
+        return -1L
     }
+
     suspend fun getNextSongId(songId: Long): Long {
-        var nextSong = songDao.getNextSong(currentUserId!!, songId)
-        if (nextSong == null) {
-            return -1L
+        currentUserId?.let {
+            val nextSong = songRepository.getNextSong(it, songId)
+            return nextSong?.id ?: -1L
         }
-        return nextSong.id
+        return -1L
     }
 
     // Toggle like status of a song
@@ -151,18 +176,7 @@ class SongViewModel(private val songDao: SongDao) : ViewModel() {
 
     // Update LastPlayedTimestamp
     fun updateSongTimestamp(song: SongEntity) {
-        val updatedSong = song.copy(lastPlayedTimestamp = Date().time)
+        val updatedSong = song.copy(lastPlayedTimestamp = System.currentTimeMillis())
         update(updatedSong)
-    }
-
-    // --- Factory ---
-    class Factory(private val songDao: SongDao) : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(SongViewModel::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return SongViewModel(songDao) as T
-            }
-            throw IllegalArgumentException("Unknown ViewModel class")
-        }
     }
 }

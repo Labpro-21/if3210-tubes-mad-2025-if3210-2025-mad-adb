@@ -14,12 +14,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.components.HorizontalSongsList
 import com.example.adbpurrytify.ui.navigation.Screen
@@ -32,13 +31,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun TrendingSongsSection(
     navController: NavController?,
-    viewModel: HomeViewModel
+    viewModel: HomeViewModel,
+    songViewModel: SongViewModel = hiltViewModel()
 ) {
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val db = AppDatabase.getDatabase(context)
-    val songDao = db.songDao()
-    val songViewModel = SongViewModel(songDao)
 
     val trendingGlobalSongs by viewModel.trendingGlobalSongs.observeAsState()
     val trendingCountrySongs by viewModel.trendingCountrySongs.observeAsState()
@@ -50,21 +46,47 @@ fun TrendingSongsSection(
 
     val supportedCountries = listOf("ID", "MY", "US", "GB", "CH", "DE", "BR")
 
-//    LaunchedEffect(trendingGlobalSongs) {
-//        Log.d("TrendingSongs", "Trending Global Songs updated: $trendingGlobalSongs")
-//    }
-
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
     ) {
-        SongsSection("Trending Global", null, null, isTrendingGlobalLoading, trendingGlobalSongs, scope, songViewModel, userId, navController)
-        SongsSection("Trending in Your Country", userCountry, supportedCountries, isTrendingCountryLoading, trendingCountrySongs, scope, songViewModel, userId, navController)
+        SongsSection(
+            "Trending Global",
+            null,
+            null,
+            isTrendingGlobalLoading,
+            trendingGlobalSongs,
+            scope,
+            songViewModel,
+            userId,
+            navController
+        )
+
+        SongsSection(
+            "Trending in Your Country",
+            userCountry,
+            supportedCountries,
+            isTrendingCountryLoading,
+            trendingCountrySongs,
+            scope,
+            songViewModel,
+            userId,
+            navController
+        )
     }
 }
 
 @Composable
-fun SongsSection(text: String, userCountry: String?, supportedCountries: List<String>?, isLoading: Boolean, songsList: List<SongEntity>?, scope: CoroutineScope, songViewModel: SongViewModel, userId: Long?, navController: NavController?) {
+fun SongsSection(
+    text: String,
+    userCountry: String?,
+    supportedCountries: List<String>?,
+    isLoading: Boolean,
+    songsList: List<SongEntity>?,
+    scope: CoroutineScope,
+    songViewModel: SongViewModel,
+    userId: Long?,
+    navController: NavController?
+) {
     Text(
         text = text,
         color = Color.White,
@@ -96,24 +118,20 @@ fun SongsSection(text: String, userCountry: String?, supportedCountries: List<St
         }
     } else {
         HorizontalSongsList(
-            songs = songsList,
-            showBorder = false,
-            onSongClick = { song ->
+            songs = songsList, showBorder = false, onSongClick = { song ->
                 scope.launch {
-                    if (songViewModel.getSongById(song.id) == null) {
-                        songViewModel.insert(song)
-                    }
-
-                    // Update the song's metadata manually >_<
+                    /** Instead of inserting it and then updating it pointlessly (my own stupidity)
+                     * why not change it's metadata first, and THEN inserting it?
+                     */
                     val updatedSong: SongEntity = song.copy(
-                        userId = userId ?: 0, // Cursed Long? type handling
+                        // Way cooler than making 2 separate updatedSong
+                        userId = if (songViewModel.getSongById(song.id) == null) userId ?: song.userId else song.userId,
                         lastPlayedTimestamp = System.currentTimeMillis(),
                         lastPlayedPositionMs = 0
                     )
-                    songViewModel.update(updatedSong)
+                    songViewModel.insert(updatedSong)
                 }
                 navController?.navigate("${Screen.Player.route}/${song.id}")
-            }
-        )
+            })
     }
 }

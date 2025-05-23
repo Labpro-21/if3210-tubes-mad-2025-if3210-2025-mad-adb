@@ -1,78 +1,63 @@
-package com.example.adbpurrytify.ui.components
+package com.example.adbpurrytify.ui.adapters
 
-import android.content.Context
+import android.graphics.Rect
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import coil3.ImageLoader
-import coil3.request.ImageRequest
+import coil3.load
 import coil3.request.crossfade
-import coil3.request.error
 import coil3.request.placeholder
-import coil3.request.target
+import coil3.request.error
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.model.SongEntity
 
 class SongAdapter(
     private var songs: List<SongEntity>,
-    private val context: Context,
-    private val onSongClick: (SongEntity) -> Unit = {}
+    private val onSongClick: (SongEntity) -> Unit
 ) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
 
-    inner class SongViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val songImage: ImageView = view.findViewById(R.id.song_image)
-        val songTitle: TextView = view.findViewById(R.id.song_title)
-        val songAuthor: TextView = view.findViewById(R.id.song_author)
-
-        // Set up click listener in the view holder
-        init {
-            view.setOnClickListener {
-                val position = adapterPosition
-                if (position != RecyclerView.NO_POSITION) {
-                    onSongClick(songs[position])
-                }
-            }
-        }
-    }
-
-    fun updateData(newSongs: List<SongEntity>) {
-        this.songs = newSongs
-        notifyDataSetChanged()
+    class SongViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val albumArt: ImageView = view.findViewById(R.id.iv_album_art)
+        val songTitle: TextView = view.findViewById(R.id.tv_song_title)
+        val artistName: TextView = view.findViewById(R.id.tv_artist_name)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_song_row, parent, false)
+            .inflate(R.layout.item_song_spotify, parent, false)
         return SongViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: SongViewHolder, position: Int) {
         val song = songs[position]
+
         holder.songTitle.text = song.title
-        holder.songAuthor.text = song.author
+        holder.artistName.text = song.author
 
-        // If artUri is a valid URL or file path
+        // Load image with Coil3 - Updated syntax
         if (song.artUri.isNotEmpty()) {
-            val imageLoader = ImageLoader.Builder(context)
-                .crossfade(true)
-                .build()
-
-            val request = ImageRequest.Builder(context)
-                .data(song.artUri)
-                .target(holder.songImage)
-                .placeholder(R.drawable.song_art_placeholder)
-                .error(R.drawable.song_art_placeholder)
-                .build()
-
-            imageLoader.enqueue(request)
+            holder.albumArt.load(song.artUri) {
+                placeholder(R.drawable.song_art_placeholder)
+                error(R.drawable.song_art_placeholder)
+                crossfade(true)
+            }
         } else {
-            // Use default image
-            holder.songImage.setImageResource(R.drawable.song_art_placeholder)
+            holder.albumArt.setImageResource(R.drawable.song_art_placeholder)
+        }
+
+        holder.itemView.setOnClickListener {
+            onSongClick(song)
         }
     }
 
     override fun getItemCount() = songs.size
+
+    fun updateSongs(newSongs: List<SongEntity>) {
+        songs = newSongs
+        notifyDataSetChanged()
+    }
 }
+

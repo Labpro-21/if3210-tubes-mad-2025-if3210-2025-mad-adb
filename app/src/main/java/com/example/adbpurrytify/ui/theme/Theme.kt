@@ -1,13 +1,16 @@
 package com.example.adbpurrytify.ui.theme
 
 import android.os.Build
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 private val DarkColorScheme = darkColorScheme(
@@ -15,6 +18,18 @@ private val DarkColorScheme = darkColorScheme(
     secondary = LightGrey,
     tertiary = DarkGrey
 )
+
+// Add these to your theme.kt file
+val SpotifyBlack = Color(0xFF121212)
+val SpotifyGreen = Color(0xFF1DB954)
+val SpotifyLightBlack = Color(0xFF282828)
+val SpotifyGray = Color(0xFF535353)
+val SpotifyLightGray = Color(0xFFB3B3B3)
+
+val SpotifyRoundedCornerShape = RoundedCornerShape(8.dp)
+val SpotifyCardShape = RoundedCornerShape(4.dp)
+val SpotifyButtonShape = RoundedCornerShape(50.dp)
+
 
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,
@@ -57,7 +72,7 @@ fun ADBPurrytifyTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = SpotifyTypography,
         content = content
     )
 }

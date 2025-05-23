@@ -10,26 +10,30 @@ import okhttp3.Request
 import okio.IOException
 import java.io.File
 
+/**
+ * Why no file checking?
+ * I delegated this checking to the SongPlayerScreen
+ */
 suspend fun downloadSong(
     song: SongEntity, context: Context, dispatcher: CoroutineDispatcher = Dispatchers.IO,
     // onProgress: Float => Unit = _ => ()
     onProgress: (Float) -> Unit = {}
-) {
-    withContext(dispatcher) {
+): String? {
+    return withContext(dispatcher) {
         try {
             val client = OkHttpClient()
             val request = Request.Builder().url(song.audioUri).build()
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
                     throw IOException("Unexpected code $response")
-                    return@withContext false
+                    return@withContext null
                 }
 
-                val body = response.body ?: (return@withContext false)
+                val body = response.body ?: return@withContext null
                 val totalBytes = body.contentLength()
                 val inputStream = body.byteStream()
 
-                val file = File(context.filesDir, "${song.id}.mp3")
+                val file = File(context.filesDir, "${song.author + "-" + song.title}.mp3")
                 file.outputStream().use { outputStream ->
                     val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
                     var bytesCopied = 0L
@@ -45,11 +49,11 @@ suspend fun downloadSong(
                         read = inputStream.read(buffer)
                     }
                 }
-                return@withContext true
+                return@withContext file.path
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            return@withContext false
+            return@withContext null
         }
     }
 }

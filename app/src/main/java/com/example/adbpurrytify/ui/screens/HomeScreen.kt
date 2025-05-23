@@ -1,33 +1,42 @@
 package com.example.adbpurrytify.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.adbpurrytify.api.RetrofitClient
-import com.example.adbpurrytify.data.AuthRepository
-import com.example.adbpurrytify.data.local.AppDatabase
+import com.example.adbpurrytify.R
 import com.example.adbpurrytify.ui.components.HorizontalSongsList
 import com.example.adbpurrytify.ui.components.MiniPlayer
 import com.example.adbpurrytify.ui.components.RecyclerSongsList
@@ -37,20 +46,12 @@ import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
 @Composable
 fun HomeScreen(
     navController: NavController? = null,
-    authRepository: AuthRepository = remember {
-        AuthRepository(RetrofitClient.instance) // Use corrected import
-    }
+    viewModel: HomeViewModel
 ) {
-    // Get database and create ViewModel
-    val context = LocalContext.current
-    val songDao = AppDatabase.getDatabase(context).songDao()
-    val viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory(songDao))
-
     val backgroundColor = Color(0xFF121212)
-    val primaryColor = Color(0xFF1ED760) // Define primary color
+    val primaryColor = Color(0xFF1ED760)
 
     // Observe data from ViewModel
-    // Default the loading states to true initially to show the loader first
     val newSongs by viewModel.newSongs.observeAsState(emptyList())
     val recentlyPlayed by viewModel.recentlyPlayed.observeAsState(emptyList())
     val isNewSongsLoading by viewModel.isNewSongsLoading.observeAsState(true)
@@ -58,18 +59,11 @@ fun HomeScreen(
 
     // Get current user ID and load data
     LaunchedEffect(key1 = Unit) {
-        val userProfile = authRepository.currentUser()
-        val userId = userProfile?.id ?: -1L
-        val userLocation = userProfile?.location ?: ""
-        if (userId != -1L) {
-            viewModel.setCurrentUser(userId = userId)
-            viewModel.setCurrentUser(location = userLocation)
-        }
+        viewModel.loadUserData()
     }
 
     val isLoading = isNewSongsLoading || isRecentlyPlayedLoading
 
-    // Show a full-screen loader if isLoading is true
     if (isLoading) {
         Box(
             modifier = Modifier
@@ -92,19 +86,26 @@ fun HomeScreen(
                     .padding(top = 16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
+                // Charts Section
+                ChartsSection(navController)
+
+                Spacer(modifier = Modifier.height(20.dp)) // Reduced from 32.dp
+
+                // New Songs Section
                 Text(
                     text = "New songs",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp
+                    ),
                     color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 16.dp)
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp) // Reduced bottom padding
                 )
-
 
                 if (isNewSongsLoading) {
                     Box(
                         modifier = Modifier
-                            .height(170.dp)
+                            .height(180.dp) // Reduced height
                             .fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
@@ -126,17 +127,19 @@ fun HomeScreen(
                 // Recently Played Section
                 Text(
                     text = "Recently played",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp
+                    ),
                     color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp)
+                    modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp) // Reduced spacing
                 )
 
-                if (isRecentlyPlayedLoading) { // This will likely be false here
+                if (isRecentlyPlayedLoading) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 50.dp),
+                            .padding(vertical = 24.dp), // Reduced padding
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(color = primaryColor)
@@ -150,10 +153,137 @@ fun HomeScreen(
                         }
                     )
                 }
-            } // End of scrollable content Column
+
+                // Add some bottom padding for the mini player
+                Spacer(modifier = Modifier.height(80.dp))
+            }
 
             MiniPlayer(navController = navController!!)
+        }
+    }
+}
 
-        } // End of main content Column
-    } // End of if/else
+@Composable
+fun ChartsSection(navController: NavController?) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Charts",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp
+                ),
+                color = Color.White
+            )
+
+            // Yellow circle with "B" (like in Figma)
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(Color(0xFFFFD700), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "B",
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Top 50 Global Card
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(120.dp)
+                    .clickable { /* Navigate to global charts */ },
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.Transparent
+                ),
+                shape = RoundedCornerShape(8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.top_50_global),
+                        contentDescription = "Top 50 Global",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    // Optional: Add a gradient overlay for better text readability
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.3f)
+                                    )
+                                )
+                            )
+                    )
+
+                }
+            }
+
+            // Top 10 Your Country Card
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(120.dp)
+                    .clickable { /* Navigate to country charts */ },
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.Transparent
+                ),
+                shape = RoundedCornerShape(8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.top_10_yourcountry),
+                        contentDescription = "Top 10 Your Country",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    // Optional: Add a gradient overlay for better text readability
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.3f)
+                                    )
+                                )
+                            )
+                    )
+
+
+                }
+            }
+        }
+    }
 }

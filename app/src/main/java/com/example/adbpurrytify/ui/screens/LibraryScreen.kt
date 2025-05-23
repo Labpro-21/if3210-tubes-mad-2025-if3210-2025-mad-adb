@@ -1,6 +1,5 @@
 package com.example.adbpurrytify.ui.screens
 
-//import com.example.adbpurrytify.ui.components.CurrentlyPlayingBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -36,173 +36,128 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.adbpurrytify.data.AuthRepository
-import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.components.MiniPlayer
 import com.example.adbpurrytify.ui.components.RecyclerSongsList
 import com.example.adbpurrytify.ui.navigation.Screen
+import com.example.adbpurrytify.ui.theme.SpotifyGreen
+import com.example.adbpurrytify.ui.theme.SpotifyLightBlack
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     navController: NavController,
-    viewModel: SongViewModel,
-    authRepository: AuthRepository
+    viewModel: SongViewModel
 ) {
     var showAddSongSheet by remember { mutableStateOf(false) }
 
     val backgroundColor = Color(0xFF121212)
-    val tabBackgroundColor = Color(0xFF282828)
     val activeTabColor = Color(0xFF1ED760) // Spotify green
 
     // Observe songs and loading state from LiveData
     val allSongs by viewModel.allSongs.observeAsState(emptyList())
-    val isLoading by viewModel.isLoading.observeAsState(false) // Observe loading state
+    val isLoading by viewModel.isLoading.observeAsState(false)
 
-    // Track user ID for adding songs
-    var currentUserId by remember { mutableStateOf(-1L) }
-
-    // Get current user ID
-    LaunchedEffect(key1 = Unit) { // Use Unit for one-time effect
-        val userProfile = authRepository.currentUser()
-        val fetchedUserId = userProfile?.id ?: -1L
-        if (fetchedUserId != -1L) {
-            // Set the user ID in the ViewModel *once* it's fetched
-            viewModel.setCurrentUser(fetchedUserId)
-            currentUserId = fetchedUserId // Update local state for LaunchedEffect below
-        }
-        // If userProfile is null, currentUserId remains -1L, preventing loads
+    // Load user data
+    LaunchedEffect(key1 = Unit) {
+        viewModel.loadUserData()
     }
 
     // Filter songs based on selected tab
     var selectedTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf("All", "Liked")
 
-    // When tab changes OR userId becomes valid, update the songs list
-    LaunchedEffect(selectedTabIndex, currentUserId) {
-        // Only load if we have a valid user ID
-        if (currentUserId != -1L) {
-            when (selectedTabIndex) {
-                0 -> viewModel.loadAllSongs(currentUserId)
-                1 -> viewModel.loadLikedSongs(currentUserId)
-            }
-        } else {
-            // If user ID is not valid yet, maybe clear the list or show specific state
-            // For now, the loading functions handle the -1L case internally
-        }
+    // When tab changes, update the songs list
+    LaunchedEffect(selectedTabIndex) {
+        viewModel.loadSongsForTab(selectedTabIndex)
     }
-
-    // Keep track of currently playing song
-    var currentlyPlayingSong by remember { mutableStateOf<SongEntity?>(null) }
-
-    // When songs list changes, update currently playing song if needed
-    // This logic might need refinement depending on playback requirements
-    LaunchedEffect(allSongs) {
-        if (currentlyPlayingSong == null && allSongs.isNotEmpty()) {
-            // Maybe only set if nothing was playing before?
-            // Or maybe don't auto-select the first song? Depends on desired UX.
-            // currentlyPlayingSong = allSongs[0]
-        }
-        // Handle case where the currently playing song is removed from the list
-        if (currentlyPlayingSong != null && !allSongs.contains(currentlyPlayingSong)) {
-            currentlyPlayingSong = null // Stop playing if song disappears
-        }
-    }
-
-    // For the Add Song bottom sheet
-    // val sheetState = rememberModalBottomSheetState() // Not used currently
-    // val scope = rememberCoroutineScope() // Not used currently
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor)
     ) {
-        // Top bar with title and add button
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        // Fixed header content that won't scroll
+        Column(
+            modifier = Modifier.background(backgroundColor) // Ensure background consistency
         ) {
-            Text(
-                text = "Your Library",
-                style = MaterialTheme.typography.titleLarge,
-                color = Color.White,
-                fontWeight = FontWeight.Bold
-            )
-
-            IconButton(
-                onClick = {
-                    // Only allow adding if user is valid
-                    if (currentUserId != -1L) {
-                        showAddSongSheet = true
-                    } else {
-                        // Optional: Show a message that user needs to be loaded/logged in
-                    }
-                },
+            // Top bar with title and add button
+            Row(
                 modifier = Modifier
-                    .size(40.dp)
-                    .background(Color.Transparent)
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add Song", // Improved description
-                    tint = Color.White
+                Text(
+                    text = "Your Library",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
                 )
-            }
-        }
 
-        // Tabs
-        Row(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-        ) {
-            tabs.forEachIndexed { index, tab ->
-                Box(
+                IconButton(
+                    onClick = { showAddSongSheet = true },
                     modifier = Modifier
-                        .padding(end = 8.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(
-                            if (selectedTabIndex == index) activeTabColor
-                            else tabBackgroundColor
-                        )
-                        .clickable { selectedTabIndex = index }
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .size(40.dp)
+                        .background(SpotifyGreen, CircleShape)
                 ) {
-                    Text(
-                        text = tab,
-                        color = if (selectedTabIndex == index) Color.Black else Color.White
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Song",
+                        tint = Color.Black
                     )
+                }
+            }
+
+            // Tabs
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp) // Add bottom padding
+            ) {
+                tabs.forEachIndexed { index, tab ->
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(
+                                if (selectedTabIndex == index) SpotifyGreen
+                                else SpotifyLightBlack
+                            )
+                            .clickable { selectedTabIndex = index }
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = tab,
+                            color = if (selectedTabIndex == index) Color.Black else Color.White,
+                            fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // --- Content Area: Loading / Empty / List ---
+        // Scrollable content area
         Box(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth(), // Ensure Box takes full width for centering
-            contentAlignment = Alignment.Center // Center content by default
+                .fillMaxWidth()
+                .background(backgroundColor), // Ensure consistent background
+            contentAlignment = if (isLoading || allSongs.isEmpty()) Alignment.Center else Alignment.TopStart
         ) {
             when {
                 // 1. Show Loading Indicator
                 isLoading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.size(48.dp),
-                        color = activeTabColor // Use an accent color
+                        color = activeTabColor
                     )
                 }
                 // 2. Show Empty State (only if not loading)
                 allSongs.isEmpty() -> {
                     Text(
                         text = if (selectedTabIndex == 0) "Add songs to your library" else "Like songs to see them here",
-                        color = Color.Gray, // Use a less prominent color
+                        color = Color.Gray,
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
@@ -211,31 +166,23 @@ fun LibraryScreen(
                     RecyclerSongsList(
                         songs = allSongs,
                         showBorder = false,
-                        // --- Re-enable these when implementing the actions ---
-                         onSongClick = { song ->
-                             navController.navigate("${Screen.Player.route}/${song.id}")
-                         },
-                        // onLikeClick = { song ->
-                        //     viewModel.toggleLikeSong(song)
-                        // }
-                        // --- ---
+                        onSongClick = { song ->
+                            navController.navigate("${Screen.Player.route}/${song.id}")
+                        }
                     )
                 }
             }
         }
-        MiniPlayer(navController = navController)
-        // --- End Content Area ---
-    }
 
+        // Fixed bottom mini player
+        MiniPlayer(navController = navController)
+    }
 
     // Conditionally show the bottom sheet
     if (showAddSongSheet) {
         AddSong(
-            show = showAddSongSheet, // Pass the state
+            show = showAddSongSheet,
             onDismiss = { showAddSongSheet = false }
-            // TODO: Pass necessary ViewModel functions or user ID to AddSong
         )
     }
 }
-
-

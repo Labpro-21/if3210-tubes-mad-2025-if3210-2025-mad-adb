@@ -24,7 +24,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,24 +45,23 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.work.Constraints
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.adbpurrytify.R
-import com.example.adbpurrytify.api.LoginRequest
-import com.example.adbpurrytify.api.RetrofitClient
-import com.example.adbpurrytify.data.TokenManager
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
 import com.example.adbpurrytify.ui.theme.Green
+import com.example.adbpurrytify.ui.theme.SpotifyGreen
+import com.example.adbpurrytify.ui.theme.SpotifyLightBlack
 import com.example.adbpurrytify.ui.theme.TEXT_FIELD_BACKGROUND
 import com.example.adbpurrytify.ui.theme.TEXT_FIELD_TEXT
+import com.example.adbpurrytify.ui.viewmodels.AuthViewModel
 import com.example.adbpurrytify.worker.JwtExpiryWorker
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 
@@ -104,12 +102,12 @@ fun PurritifyTextField(
                 .height(56.dp),
             placeholder = { Text(placeholder, color = Color.Gray) },
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = TEXT_FIELD_BACKGROUND,
-                focusedContainerColor = TEXT_FIELD_BACKGROUND,
-                unfocusedTextColor = TEXT_FIELD_TEXT,
-                focusedTextColor = TEXT_FIELD_TEXT,
-                unfocusedBorderColor = TEXT_FIELD_BACKGROUND,
-                focusedBorderColor = TEXT_FIELD_BACKGROUND
+                unfocusedContainerColor = SpotifyLightBlack,
+                focusedContainerColor = SpotifyLightBlack,
+                unfocusedTextColor = Color.White,
+                focusedTextColor = Color.White,
+                unfocusedBorderColor = SpotifyLightBlack,
+                focusedBorderColor = SpotifyGreen
             ),
             singleLine = true,
             shape = RoundedCornerShape(4.dp),
@@ -137,20 +135,23 @@ fun PurritifyTextField(
 fun PurritifyButton(
     text: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
     Button(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
             .height(50.dp),
-        shape = RoundedCornerShape(50),
+        shape = RoundedCornerShape(50), // Keep the pill shape
         colors = ButtonDefaults.buttonColors(
-            containerColor = Green
-        )
+            containerColor = SpotifyGreen,
+            disabledContainerColor = SpotifyGreen.copy(alpha = 0.6f)
+        ),
+        enabled = enabled
     ) {
         Text(
-            text = text,
+            text = text.uppercase(), // Spotify often uses uppercase
             color = Color.Black,
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp
@@ -159,16 +160,15 @@ fun PurritifyButton(
 }
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(
+    navController: NavController,
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) } // Add loading state
+    var isLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current // Get context
-
-    LaunchedEffect(Unit) {
-        TokenManager.initialize(context.applicationContext)
-    }
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -240,18 +240,10 @@ fun LoginScreen(navController: NavController) {
                     isLoading = true
                     scope.launch {
                         try {
-                            val response = RetrofitClient.instance.login(
-                                LoginRequest(email = email, password = password)
-                            )
-
-                            if (response.isSuccessful && response.body() != null) {
-                                val loginResponse = response.body()!!
-                                TokenManager.saveAuthToken(loginResponse.accessToken)
-                                TokenManager.saveRefreshToken(loginResponse.refreshToken)
-
-
-                                // --- Schedule Background JWT Check ---
-                                Log.i("LoginScreen", "Tokens saved successfully. Scheduling background worker.")
+                            val result = authViewModel.login(email, password)
+                            if (result.isSuccess) {
+                                // Schedule Background JWT Check
+                                Log.i("LoginScreen", "Login successful. Scheduling background worker.")
                                 val workManager = WorkManager.getInstance(context.applicationContext)
                                 val firstWork = OneTimeWorkRequestBuilder<JwtExpiryWorker>()
                                     .setInitialDelay(0, TimeUnit.MINUTES)
@@ -264,43 +256,27 @@ fun LoginScreen(navController: NavController) {
 
                                 workManager.enqueue(firstWork)
 
-                                // --- Navigate to Home ---
-                                // Only navigate if tokens were successfully saved (or if refresh token is optional)
+                                // Navigate to Home
                                 navController.navigate(Screen.Home.route) {
                                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
                                     launchSingleTop = true
                                 }
                                 Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
                             } else {
-                                // Handle unsuccessful login (e.g., wrong credentials)
-                                val errorMsg = "Wrong Credentials"
-                                Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
-                                Log.i("401", "Invalid credentials")
+                                Toast.makeText(context, result.exceptionOrNull()?.message ?: "Login failed", Toast.LENGTH_LONG).show()
                             }
-
-
-                        } catch (e: IOException) {
-                            // Handle network errors
-                            Log.e("LoginScreen", "Network error during login", e) // Log network error
-                            Toast.makeText(context, "Network error: ${e.message}", Toast.LENGTH_LONG).show()
-                        } catch (e: HttpException) {
-                            // Handle HTTP errors (non-2xx responses)
-                            Log.e("LoginScreen", "HTTP error during login: ${e.code()}", e) // Log HTTP error
-                            Toast.makeText(context, "HTTP error: ${e.message}", Toast.LENGTH_LONG).show()
                         } catch (e: Exception) {
-                            // Handle other unexpected errors
-                            Log.e("LoginScreen", "Unexpected error during login", e) // Log general error
-                            Toast.makeText(context, "An unexpected error occurred: ${e.message}", Toast.LENGTH_LONG).show()
+                            Log.e("LoginScreen", "Error during login", e)
+                            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                         } finally {
-                            // This block always executes, regardless of success or failure
-                            isLoading = false // Reset loading state
+                            isLoading = false
                         }
                     }
                 },
                 // Disable button while loading
-                modifier = Modifier.then(if (isLoading) Modifier.alpha(0.6f) else Modifier)
+                modifier = Modifier.then(if (isLoading) Modifier.alpha(0.6f) else Modifier),
+                enabled = !isLoading
             )
         }
     }
 }
-

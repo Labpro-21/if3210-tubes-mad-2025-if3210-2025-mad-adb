@@ -26,10 +26,14 @@ import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.ui.navigation.AppNavigation
 import com.example.adbpurrytify.ui.screens.SongPlayer
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
-import com.example.adbpurrytify.ui.viewmodels.SongViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
-
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var tokenManager: TokenManager
 
     private val readExternal = READ_EXTERNAL_STORAGE
     private val readImages = READ_MEDIA_IMAGES
@@ -40,14 +44,12 @@ class MainActivity : ComponentActivity() {
     private lateinit var songViewModel: SongViewModel
     private lateinit var appDatabase: AppDatabase
 
-    override fun onCreate(savedInstanceState: Bundle?) {
 
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val intent = Intent(this, MusicService::class.java)
-        startService(intent)
-        TokenManager.initialize(this)
-        appDatabase = AppDatabase.getDatabase(applicationContext)
-        songViewModel = SongViewModel(appDatabase.songDao())
+
+        // Request permissions before setting content
+        requestPermissions()
 
         if (SongPlayer.mediaController == null)
         {
@@ -58,9 +60,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ADBPurrytifyTheme {
-//                TestPlayer("https://storage.googleapis.com/mad-public-bucket/mp3/Alex%20Warren%20-%20Ordinary%20(Official%20Lyric%20Video).mp3")
                 AppNavigation()
-                requestPermissions() // ini maybe just leave it here,
             }
         }
     }
@@ -110,71 +110,77 @@ class MainActivity : ComponentActivity() {
      *
      * */
     private fun requestPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val notGrantedPermissions = permissions.filterNot { permission ->
-                ContextCompat.checkSelfPermission(
-                    this,
-                    permission
-                ) == PackageManager.PERMISSION_GRANTED
-            }
-            if (notGrantedPermissions.isNotEmpty()) {
-                val showRationale = notGrantedPermissions.any { permission ->
-                    shouldShowRequestPermissionRationale(permission)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                val notGrantedPermissions = permissions.filterNot { permission ->
+                    ContextCompat.checkSelfPermission(
+                        this,
+                        permission
+                    ) == PackageManager.PERMISSION_GRANTED
                 }
-                if (showRationale) {
-                    AlertDialog.Builder(this)
-                        .setTitle("Storage Permission")
-                        .setMessage("Storage permission is needed in order to play and upload songs!")
-                        .setNegativeButton("Cancel") { dialog, _ ->
-                            Toast.makeText(
-                                this,
-                                "Read media storage permission denied!",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            dialog.dismiss()
-                        }
-                        .setPositiveButton("OK") { _, _ ->
-                            videoImagesPermission.launch(notGrantedPermissions.toTypedArray())
-                        }
-                        .show()
+                if (notGrantedPermissions.isNotEmpty()) {
+                    val showRationale = notGrantedPermissions.any { permission ->
+                        shouldShowRequestPermissionRationale(permission)
+                    }
+                    if (showRationale) {
+                        AlertDialog.Builder(this)
+                            .setTitle("Storage Permission")
+                            .setMessage("Storage permission is needed in order to play and upload songs!")
+                            .setNegativeButton("Cancel") { dialog, _ ->
+                                Toast.makeText(
+                                    this,
+                                    "Read media storage permission denied!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                dialog.dismiss()
+                            }
+                            .setPositiveButton("OK") { _, _ ->
+                                videoImagesPermission.launch(notGrantedPermissions.toTypedArray())
+                            }
+                            .show()
+                    } else {
+                        videoImagesPermission.launch(notGrantedPermissions.toTypedArray())
+                    }
                 } else {
-                    videoImagesPermission.launch(notGrantedPermissions.toTypedArray())
+                    Toast.makeText(this, "Read media storage permission granted", Toast.LENGTH_SHORT)
+                        .show()
                 }
             } else {
-                Toast.makeText(this, "Read media storage permission granted", Toast.LENGTH_SHORT)
-                    .show()
-            }
-        } else {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    readExternal
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                Toast.makeText(this, "Read external storage permission granted", Toast.LENGTH_SHORT)
-                    .show()
-            } else {
-                if (shouldShowRequestPermissionRationale(readExternal)) {
-                    AlertDialog.Builder(this)
-                        .setTitle("Storage Permission")
-                        .setMessage("Storage permission is needed in order to play and upload songs!")
-                        .setNegativeButton("Cancel") { dialog, _ ->
-                            Toast.makeText(
-                                this,
-                                "Read external storage permission denied!",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            dialog.dismiss()
-                        }
-                        .setPositiveButton("OK") { _, _ ->
-                            readExternalPermission.launch(readExternal)
-                        }
+                if (ContextCompat.checkSelfPermission(
+                        this,
+                        readExternal
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    Toast.makeText(this, "Read external storage permission granted", Toast.LENGTH_SHORT)
                         .show()
                 } else {
-                    readExternalPermission.launch(readExternal)
+                    if (shouldShowRequestPermissionRationale(readExternal)) {
+                        AlertDialog.Builder(this)
+                            .setTitle("Storage Permission")
+                            .setMessage("Storage permission is needed in order to play and upload songs!")
+                            .setNegativeButton("Cancel") { dialog, _ ->
+                                Toast.makeText(
+                                    this,
+                                    "Read external storage permission denied!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                dialog.dismiss()
+                            }
+                            .setPositiveButton("OK") { _, _ ->
+                                readExternalPermission.launch(readExternal)
+                            }
+                            .show()
+                    } else {
+                        readExternalPermission.launch(readExternal)
+                    }
                 }
             }
+        } catch (e: Exception) {
+            // Add error handling to prevent crashes
+            e.printStackTrace()
         }
     }
+
     private val videoImagesPermission=registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){permissionMap->
         if (permissionMap.all { it.value }){
             Toast.makeText(this, "Media permissions granted", Toast.LENGTH_SHORT).show()
@@ -190,8 +196,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-
-
-
-
