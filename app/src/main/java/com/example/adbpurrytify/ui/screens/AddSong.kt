@@ -10,18 +10,23 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -45,7 +50,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -106,13 +113,13 @@ fun AddSong(
     viewModel: SongViewModel = hiltViewModel()
 ) {
     if (!show) return
-    val padding = 32.dp
+    val padding = 24.dp
 
     // ModalBottomSheet params
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
 
-    // Remember user input, even when the screen is rotated :(
+    // Remember user input, even when the screen is rotated
     var titleText by rememberSaveable { mutableStateOf("") }
     var artistText by rememberSaveable { mutableStateOf("") }
     var photoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
@@ -150,9 +157,7 @@ fun AddSong(
 
     // Load current user when composable launches
     LaunchedEffect(Unit) {
-        // Use the ViewModel's loadUserData method to get the user data
         viewModel.loadUserData()
-        // Wait for the user ID to be available
         val id = viewModel.getCurrentUserId()
         if (id != null) {
             currentUserId = id
@@ -164,72 +169,151 @@ fun AddSong(
             ModalBottomSheet(
                 onDismissRequest = { onDismiss() },
                 sheetState = sheetState,
-                containerColor = SpotifyBlack, // Spotify's dark background
-                dragHandle = { /* Custom handle with Spotify coloring */ }
+                containerColor = SpotifyBlack,
+                dragHandle = {
+                    Box(
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                            .background(
+                                SpotifyGray,
+                                RoundedCornerShape(2.dp)
+                            )
+                            .size(width = 32.dp, height = 4.dp)
+                    )
+                }
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = padding),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
+                    // Title
+                    Text(
+                        text = "Upload Song",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 24.dp)
+                    )
+
+                    // Image and Audio Upload Section
                     Row(
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.padding(vertical = 16.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Text("Upload Song",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold)
-                    }
-                    Row {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(1 / 2f)
-                                .padding(start = padding, top = padding, end = padding)
+                        // Album Art Upload
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Image(
-                                painter = if(photoUri == null) painterResource(R.drawable.upload_file) else rememberAsyncImagePainter(photoUri),
-                                contentDescription = "Upload Photo",
+                            Text(
+                                text = "Album Art",
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+
+                            Box(
                                 modifier = Modifier
-                                    .fillMaxSize()
-                                    .clickable(
-                                        onClick = {
-                                            pickMedia.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
-                                        }
+                                    .aspectRatio(1f) // Force square aspect ratio
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(SpotifyLightBlack)
+                                    .clickable {
+                                        pickMedia.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (photoUri == null) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Image(
+                                            painter = painterResource(R.drawable.upload_file),
+                                            contentDescription = "Upload Photo",
+                                            modifier = Modifier.size(48.dp),
+                                            alpha = 0.7f
+                                        )
+                                        Text(
+                                            text = "Tap to upload",
+                                            color = Color.Gray,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            modifier = Modifier.padding(top = 8.dp)
+                                        )
+                                    }
+                                } else {
+                                    Image(
+                                        painter = rememberAsyncImagePainter(photoUri),
+                                        contentDescription = "Selected Photo",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop // This ensures the image fills the square container
                                     )
-                            )
+                                }
+                            }
                         }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(1f)
-                                .padding(start = padding, top = padding, end = padding)
+
+                        // Audio File Upload
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Image(
-                                painter = if (fileUri != null) painterResource(R.drawable.song_art_placeholder) else painterResource(R.drawable.upload_file),
-                                contentDescription = "Upload File",
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clickable(onClick = {
-                                        pickAudio.launch("audio/*")
-                                    })
+                            Text(
+                                text = "Audio File",
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
                             )
+
+                            Box(
+                                modifier = Modifier
+                                    .aspectRatio(1f) // Force square aspect ratio
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(SpotifyLightBlack)
+                                    .clickable {
+                                        pickAudio.launch("audio/*")
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Image(
+                                        painter = if (fileUri != null)
+                                            painterResource(R.drawable.song_art_placeholder)
+                                        else
+                                            painterResource(R.drawable.upload_file),
+                                        contentDescription = "Upload Audio",
+                                        modifier = Modifier.size(48.dp),
+                                        alpha = if (fileUri != null) 1f else 0.7f
+                                    )
+                                    Text(
+                                        text = if (fileUri != null) "Audio selected" else "Tap to upload",
+                                        color = if (fileUri != null) SpotifyGreen else Color.Gray,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.padding(top = 8.dp)
+                                    )
+                                }
+                            }
                         }
                     }
-                    Row(
+
+                    // Title Input
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = padding * 1 / 2f, vertical = padding * 1 / 4f),
-                        horizontalArrangement = Arrangement.Start
+                            .padding(bottom = 16.dp)
                     ) {
-                        Text("Title")
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = padding * 1 / 2f),
-                        horizontalArrangement = Arrangement.Start,
-                    ) {
+                        Text(
+                            text = "Title",
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
                         OutlinedTextField(
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedContainerColor = SpotifyLightBlack,
@@ -237,53 +321,63 @@ fun AddSong(
                                 unfocusedTextColor = Color.White,
                                 focusedTextColor = Color.White,
                                 unfocusedBorderColor = SpotifyGray,
-                                focusedBorderColor = SpotifyGreen
+                                focusedBorderColor = SpotifyGreen,
+                                unfocusedPlaceholderColor = Color.Gray,
+                                focusedPlaceholderColor = Color.Gray
                             ),
                             value = titleText,
                             onValueChange = { titleText = it },
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            placeholder = { Text("Title") },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = { Text("Enter song title") },
                             keyboardOptions = KeyboardOptions(
                                 imeAction = ImeAction.Next
                             ),
-                            maxLines = 1
+                            maxLines = 1,
+                            shape = RoundedCornerShape(8.dp)
                         )
                     }
-                    Spacer(Modifier.padding(padding * 1/4f))
-                    Row(
+
+                    // Artist Input
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = padding * 1 / 2f, vertical = padding * 1 / 4f),
-                        horizontalArrangement = Arrangement.Start
+                            .padding(bottom = 32.dp)
                     ) {
-                        Text("Artist")
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = padding * 1 / 2f),
-                        horizontalArrangement = Arrangement.Start
-                    ) {
+                        Text(
+                            text = "Artist",
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
                         OutlinedTextField(
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedContainerColor = SpotifyLightBlack,
+                                focusedContainerColor = SpotifyLightBlack,
+                                unfocusedTextColor = Color.White,
+                                focusedTextColor = Color.White,
+                                unfocusedBorderColor = SpotifyGray,
+                                focusedBorderColor = SpotifyGreen,
+                                unfocusedPlaceholderColor = Color.Gray,
+                                focusedPlaceholderColor = Color.Gray
+                            ),
                             value = artistText,
                             onValueChange = { artistText = it },
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            placeholder = { Text("Artist") },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = { Text("Enter artist name") },
                             keyboardOptions = KeyboardOptions(
                                 imeAction = ImeAction.Done
                             ),
-                            maxLines = 1
+                            maxLines = 1,
+                            shape = RoundedCornerShape(8.dp)
                         )
                     }
-                    Spacer(Modifier.padding(padding * 1/2f))
+
+                    // Action Buttons
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .requiredHeight(padding * 1.3f)
-                            .padding(horizontal = padding * 1 / 2f),
-                        horizontalArrangement = Arrangement.Center
+                            .padding(bottom = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         FilledTonalButton(
                             onClick = {
@@ -292,12 +386,17 @@ fun AddSong(
                                 }
                             },
                             modifier = Modifier
-                                .fillMaxHeight()
-                                .fillMaxWidth(1 / 2f)
-                                .padding(horizontal = padding * 1 / 4f),
+                                .weight(1f)
+                                .height(48.dp),
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = SpotifyLightBlack,
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(24.dp)
                         ) {
-                            Text("Cancel")
+                            Text("Cancel", fontWeight = FontWeight.Medium)
                         }
+
                         Button(
                             onClick = {
                                 val title = titleText
@@ -305,7 +404,6 @@ fun AddSong(
                                 var audioUri = fileUri.toString()
                                 var artUri = photoUri.toString()
 
-                                // Get current timestamp for lastPlayedTimestamp
                                 val currentTimestamp = java.time.Instant.now().toEpochMilli()
 
                                 try {
@@ -326,7 +424,6 @@ fun AddSong(
                                 } catch (e: Exception) {
                                     Toast.makeText(context, "Failed to read/copy the audio file", Toast.LENGTH_SHORT).show()
                                     Log.d("File Copy Err", e.message!!)
-                                    artUri = ""
                                     return@Button
                                 }
 
@@ -342,7 +439,6 @@ fun AddSong(
                                 )
 
                                 scope.launch {
-                                    // Use the injected viewModel to insert the song
                                     viewModel.insert(song)
                                     sheetState.hide()
                                     onDismiss()
@@ -350,20 +446,21 @@ fun AddSong(
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = SpotifyGreen,
-                                contentColor = Color.Black
+                                contentColor = Color.Black,
+                                disabledContainerColor = SpotifyGreen.copy(alpha = 0.5f),
+                                disabledContentColor = Color.Black.copy(alpha = 0.5f)
                             ),
-                            shape = SpotifyButtonShape,
+                            shape = RoundedCornerShape(24.dp),
                             modifier = Modifier
-                                .fillMaxHeight()
-                                .fillMaxWidth(1f)
-                                .padding(horizontal = padding * 1 / 4f),
+                                .weight(1f)
+                                .height(48.dp),
                             enabled = titleText.isNotEmpty() &&
                                     artistText.isNotEmpty() &&
                                     photoUri != null &&
                                     fileUri != null &&
                                     currentUserId != -1L
                         ) {
-                            Text("Save")
+                            Text("Save", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
