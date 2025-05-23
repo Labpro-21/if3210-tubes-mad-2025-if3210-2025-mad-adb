@@ -16,6 +16,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
+import androidx.media3.session.MediaController
 import com.example.adbpurrytify.ui.theme.Green
 import java.util.concurrent.TimeUnit
 
@@ -28,74 +29,73 @@ fun formatTime(millis: Long): String {
 
 
 object SongPlayer {
-    private var player: ExoPlayer? = null
 
+    // is this bad code? maybe
+    // but at least it works :v
+    var mediaController: MediaController? = null
     var songLoaded: Boolean = false
     var curLoadedSongId: Long = -1
 
     @OptIn(UnstableApi::class)
     fun loadSong(songPath: String, context: Context, songId: Long) {
         Log.d("path str", songPath)
-        if (player == null) {
-            player = ExoPlayer.Builder(context).build()
-        }
+        assert (mediaController != null)
         var uriparseres = Uri.parse(songPath)
         Log.d("URI Parse Res", uriparseres.toString())
 
         val mediaItem = MediaItem.fromUri(uriparseres)
         Log.d("Media Id", mediaItem.mediaId)
 
-        player!!.setMediaItem(mediaItem)
-        player!!.prepare()
-        player!!.playWhenReady = true
-        player!!.setSeekParameters(SeekParameters.CLOSEST_SYNC)
+        mediaController!!.setMediaItem(mediaItem)
+        mediaController!!.prepare()
+        mediaController!!.playWhenReady = true
 
         songLoaded = true
         curLoadedSongId = songId
     }
 
     fun isPlaying(): Boolean {
-        return player?.isPlaying == true
+        return mediaController?.isPlaying == true
     }
 
     fun play() {
-        player!!.play()
+        mediaController!!.play()
     }
 
     fun pause() {
-        player!!.playWhenReady = false
+        mediaController!!.playWhenReady = false
     }
 
     fun stop() {
-        player!!.stop()
+        mediaController!!.stop()
     }
 
     fun seekTo(position: Long) {
-        var wasPlaying = player!!.playWhenReady
-        if (player!!.playWhenReady)
-            player!!.playWhenReady = false
+        var wasPlaying = mediaController!!.playWhenReady
+        if (mediaController!!.playWhenReady)
+            mediaController!!.playWhenReady = false
 
-        player!!.seekTo(position)
+        mediaController!!.seekTo(position)
 
         if (wasPlaying)
-            player!!.playWhenReady = true
+            mediaController!!.playWhenReady = true
     }
 
     fun release() {
-        player?.release()
-        player = null
+        mediaController?.release()
+        mediaController = null
     }
 
     fun getDuration(): Long {
-        return player?.duration ?: 0L
+        return mediaController?.duration ?: 0L
     }
 
     fun getProgress(): Long {
-        return player?.currentPosition ?: 0L
+        return mediaController?.currentPosition ?: 0L
     }
 
     fun isPrepared(): Boolean {
-        val playerState = player?.playbackState
+        val playerState = mediaController?.playbackState
         return playerState != null && playerState != ExoPlayer.STATE_IDLE && playerState != ExoPlayer.STATE_ENDED
     }
 }

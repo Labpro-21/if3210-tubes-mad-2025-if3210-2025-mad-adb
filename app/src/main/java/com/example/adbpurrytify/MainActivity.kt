@@ -24,8 +24,8 @@ import com.example.adbpurrytify.api.MusicService
 import com.example.adbpurrytify.data.TokenManager
 import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.ui.navigation.AppNavigation
+import com.example.adbpurrytify.ui.screens.SongPlayer
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
-import com.example.adbpurrytify.ui.viewmodels.PlayerViewModel
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 
 
@@ -39,7 +39,6 @@ class MainActivity : ComponentActivity() {
     )
     private lateinit var songViewModel: SongViewModel
     private lateinit var appDatabase: AppDatabase
-    private var mediaController: MediaController? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -55,6 +54,7 @@ class MainActivity : ComponentActivity() {
         val sessionToken = SessionToken(this, ComponentName(this, MusicService::class.java))
         val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
 
+
         controllerFuture.addListener({
             try {
                 var controller = controllerFuture.get()
@@ -63,10 +63,7 @@ class MainActivity : ComponentActivity() {
                         Log.d("Controller", "Playing: $isPlaying")
                     }
                 })
-                mediaController = controller
-                var vm = ViewModelProvider(this)[PlayerViewModel::class.java]
-                vm.connect(controller)
-
+                SongPlayer.mediaController = controller
             } catch (e: Exception) {
                 Log.e("Controller", "Failed to connect", e)
             }
@@ -84,8 +81,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        mediaController?.release()
-        mediaController = null
+        SongPlayer.release()
     }
 
     /**
