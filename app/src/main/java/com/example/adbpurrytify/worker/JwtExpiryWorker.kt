@@ -24,72 +24,37 @@ class JwtExpiryWorker(appContext: Context, workerParams: WorkerParameters) :
     companion object {
         const val WORK_NAME = "JwtExpiryCheckWork"
         private const val TAG = "JwtExpiryWorker"
+        private const val REFRESH_INTERVAL_MINUTES = 5L
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        Log.d(TAG, "JwtExpiryWorker is doing some work...")
+        Log.d(TAG, "JwtExpiryWorker is performing periodic token refresh...")
 
-        val currentToken = TokenManager.getAuthToken()
         val refreshToken = TokenManager.getRefreshToken()
 
-        if (currentToken == null) {
-            Log.d(TAG, "No auth token found, stopping work.")
+        if (refreshToken == null) {
+            Log.d(TAG, "No refresh token found, stopping work.")
             return@withContext Result.success()
         }
 
         try {
-            Log.d(TAG, "Verifying token...")
-            val verifyResponse = RetrofitClient.instance.verifyTokenWithAuth("Bearer $currentToken")
+            val result = attemptTokenRefresh(refreshToken)
 
+            // Schedule next refresh regardless of current result
+            scheduleNextWorker(applicationContext)
 
-            if (verifyResponse.isSuccessful) {
-                Log.d(TAG, "Token is still valid.")
-                scheduleNextWorker(applicationContext)
-                return@withContext Result.success()
-            } else {
-                Log.w(TAG, "Token verification failed with code: ${verifyResponse.code()}")
-            }
+            return@withContext result
 
-        } catch (e: HttpException) {
-            if (e.code() == 401) {
-                Log.w(TAG, "Token verification returned 403 (likely expired). Attempting refresh.")
-                if (refreshToken != null) {
-                    val result = attemptTokenRefresh(refreshToken)
-
-                    scheduleNextWorker(applicationContext)
-
-                    return@withContext result
-                } else {
-                    Log.e(TAG, "Token expired, but no refresh token available. Logging out.")
-                    performLogout()
-                    return@withContext Result.success()
-                }
-            } else {
-                Log.e(TAG, "HTTP error during token verification: ${e.code()}", e)
-                return@withContext Result.retry()
-            }
-        } catch (e: IOException) {
-            Log.e(TAG, "Network error during token verification", e)
-            return@withContext Result.retry()
         } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error during token verification", e)
-            return@withContext Result.failure()
-        }
-
-
-        Log.w(TAG, "Token verification failed unexpectedly. Attempting refresh if possible.")
-        if (refreshToken != null) {
-            return@withContext attemptTokenRefresh(refreshToken)
-        } else {
-            Log.e(TAG, "Token invalid, no refresh token. Logging out.")
-            performLogout()
-            return@withContext Result.success()
+            Log.e(TAG, "Unexpected error during periodic token refresh", e)
+            scheduleNextWorker(applicationContext)
+            return@withContext Result.retry()
         }
     }
 
     private suspend fun attemptTokenRefresh(refreshToken: String): Result {
         try {
-            Log.d(TAG, "Attempting token refresh...")
+            Log.d(TAG, "Attempting periodic token refresh...")
             val refreshResponse = RetrofitClient.instance.refreshToken(
                 RefreshTokenRequest(refreshToken)
             )
@@ -99,24 +64,31 @@ class JwtExpiryWorker(appContext: Context, workerParams: WorkerParameters) :
                 TokenManager.saveAuthToken(newTokens.accessToken)
                 TokenManager.saveRefreshToken(newTokens.refreshToken)
 
-                Log.i(TAG, "Token refresh successful!")
+                Log.i(TAG, "Periodic token refresh successful!")
                 Log.i(TAG, "New access token is $newTokens")
 
                 return Result.success()
             } else {
-                Log.e(TAG, "Token refresh failed with code: ${refreshResponse.code()}. Logging out.")
+                Log.e(
+                    TAG,
+                    "Periodic token refresh failed with code: ${refreshResponse.code()}. Logging out."
+                )
                 performLogout()
                 return Result.success()
             }
         } catch (e: HttpException) {
-            Log.e(TAG, "HTTP error during token refresh: ${e.code()}. Logging out.", e)
+            Log.e(
+                TAG,
+                "HTTP error during periodic token refresh: ${e.code()}. Logging out.",
+                e
+            )
             performLogout()
             return Result.success()
         } catch (e: IOException) {
-            Log.e(TAG, "Network error during token refresh.", e)
+            Log.e(TAG, "Network error during periodic token refresh.", e)
             return Result.retry()
         } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error during token refresh. Logging out.", e)
+            Log.e(TAG, "Unexpected error during periodic token refresh. Logging out.", e)
             performLogout()
             return Result.failure()
         }
@@ -129,7 +101,7 @@ class JwtExpiryWorker(appContext: Context, workerParams: WorkerParameters) :
 
     private fun scheduleNextWorker(context: Context) {
         val nextWork = OneTimeWorkRequestBuilder<JwtExpiryWorker>()
-            .setInitialDelay(16, TimeUnit.SECONDS)
+            .setInitialDelay(REFRESH_INTERVAL_MINUTES, TimeUnit.MINUTES)
             .setConstraints(
                 Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -138,5 +110,6 @@ class JwtExpiryWorker(appContext: Context, workerParams: WorkerParameters) :
             .build()
 
         WorkManager.getInstance(context).enqueue(nextWork)
+        Log.d(TAG, "Scheduled next token refresh in $REFRESH_INTERVAL_MINUTES minutes")
     }
 }
