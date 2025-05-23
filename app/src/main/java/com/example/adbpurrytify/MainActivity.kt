@@ -16,7 +16,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import androidx.media3.common.Player
+import androidx.lifecycle.ViewModelProvider
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.adbpurrytify.api.MusicService
@@ -24,6 +24,7 @@ import com.example.adbpurrytify.data.TokenManager
 import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.ui.navigation.AppNavigation
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
+import com.example.adbpurrytify.ui.viewmodels.PlayerViewModel
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 
 
@@ -48,22 +49,25 @@ class MainActivity : ComponentActivity() {
         TokenManager.initialize(this)
         appDatabase = AppDatabase.getDatabase(applicationContext)
         songViewModel = SongViewModel(appDatabase.songDao())
+
+
         val sessionToken = SessionToken(this, ComponentName(this, MusicService::class.java))
         val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
-
         controllerFuture.addListener({
             try {
                 mediaController = controllerFuture.get()
-                mediaController?.play()
-                mediaController?.addListener(object : Player.Listener {
-                    override fun onIsPlayingChanged(isPlaying: Boolean) {
-                        Log.d("Controller", "Playing: $isPlaying")
-                    }
-                })
+                var vm = ViewModelProvider(this)[PlayerViewModel::class.java]
+                vm.connect(mediaController!!)
                 Log.d("Controller", "Connected!")
+//                mediaController?.play()
+//                mediaController?.addListener(object : Player.Listener {
+//                    override fun onIsPlayingChanged(isPlaying: Boolean) {
+//                        Log.d("Controller", "Playing: $isPlaying")
+//                    }
+//                })
 
             } catch (e: Exception) {
-                Log.e("Kontol", "Failed to connect", e)
+                Log.e("Controller", "Failed to connect", e)
             }
         }, ContextCompat.getMainExecutor(this))
 
