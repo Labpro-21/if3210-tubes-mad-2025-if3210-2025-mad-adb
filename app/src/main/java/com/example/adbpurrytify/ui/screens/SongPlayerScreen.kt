@@ -148,6 +148,7 @@ fun SongPlayerScreen(
     LaunchedEffect(isPlaying) {
         while (isPlaying) {
             sliderPosition = SongPlayer.getProgress()
+            isPlaying = SongPlayer.isPlaying()
             // Commented out because it's adding noise to logcat
 //            Log.d("sliderPosition", sliderPosition.toString())
             delay(500L)
@@ -162,6 +163,7 @@ fun SongPlayerScreen(
                 && SongPlayer.curLoadedSongId == nextSong?.id)
             { // detect perubahan dari listener player (ini keknya horrible tp idk)
                 // go next
+                playerReady = false
                 song = nextSong
             }
         }
