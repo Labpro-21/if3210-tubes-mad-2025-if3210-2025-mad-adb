@@ -152,20 +152,20 @@ class SongViewModel @Inject constructor(
         }
     }
 
-    suspend fun getPrevSongId(songId: Long): Long {
+    suspend fun getPrevSong(songId: Long): SongEntity? {
         currentUserId?.let {
             val prevSong = songRepository.getPreviousSong(it, songId)
-            return prevSong?.id ?: -1L
+            return prevSong
         }
-        return -1L
+        return null
     }
 
-    suspend fun getNextSongId(songId: Long): Long {
+    suspend fun getNextSong(songId: Long): SongEntity? {
         currentUserId?.let {
             val nextSong = songRepository.getNextSong(it, songId)
-            return nextSong?.id ?: -1L
+            return nextSong
         }
-        return -1L
+        return null
     }
 
     // Toggle like status of a song
