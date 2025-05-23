@@ -72,6 +72,7 @@ import java.io.File
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.layout.ContentScale
+import androidx.media3.common.Player
 import coil3.compose.AsyncImage
 import com.example.adbpurrytify.ui.utils.DynamicColorExtractor
 
@@ -83,7 +84,11 @@ fun SongPlayerScreen(
     snackBarHostState: SnackbarHostState,
     viewModel: SongViewModel = hiltViewModel()
 ) {
-    var song by remember { mutableStateOf<SongEntity?>(null) }
+    var firstsong = runBlocking { viewModel.getSongById(songId) }
+    var song by remember { mutableStateOf<SongEntity?>(firstsong) }
+    var prevSong by remember { mutableStateOf<SongEntity?>(null) }
+    var nextSong by remember { mutableStateOf<SongEntity?>(null) }
+
     var isLiked by remember { mutableStateOf(false) }
     var isPlaying by remember { mutableStateOf(false) }
     var sliderPosition by remember { mutableStateOf(0L) }
@@ -92,23 +97,22 @@ fun SongPlayerScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    var prevId by remember { mutableStateOf(-1L) }
-    var nextId by remember { mutableStateOf(-1L) }
     var playerReady by remember { mutableStateOf(false) }
     var isDownloading by remember { mutableStateOf(false) }
     var downloadProgress by remember { mutableFloatStateOf(0f) }
 
-    LaunchedEffect(songId) {
+    LaunchedEffect(song) {
         viewModel.loadUserData()
         while(viewModel.getCurrentUserId() == null) {
             delay(50)
         }
+        SongPlayer.curUserId = viewModel.getCurrentUserId()!!
 
-        prevId = viewModel.getPrevSongId(songId)
-        nextId = viewModel.getNextSongId(songId)
-
-        song = runBlocking { viewModel.getSongById(songId) }
         song?.let {
+
+            prevSong = viewModel.getPrevSong(it.id)
+            nextSong = viewModel.getNextSong(it.id)
+
             // Extract dominant color
             val imageUrl = if (it.artUri.isNotEmpty()) it.artUri else R.drawable.song_art_placeholder
             dominantColor = DynamicColorExtractor.extractDominantColor(
@@ -121,8 +125,9 @@ fun SongPlayerScreen(
             isLiked = it.isLiked
 
             if (SongPlayer.songLoaded == false
-                or ((SongPlayer.songLoaded) and (SongPlayer.curLoadedSongId != songId))) {
+                or ((SongPlayer.songLoaded) and (SongPlayer.curLoadedSongId != it.id))) {
 
+                playerReady = false
                 SongPlayer.loadSong(it, context, it.id)
 
                 while (SongPlayer.getDuration() <= 0) {
@@ -145,14 +150,19 @@ fun SongPlayerScreen(
             sliderPosition = SongPlayer.getProgress()
             // Commented out because it's adding noise to logcat
 //            Log.d("sliderPosition", sliderPosition.toString())
-            delay(1000L)
+            delay(500L)
 
-            if (SongPlayer.mediaController != null && sliderPosition >= SongPlayer.getDuration()) {
-                if (nextId > -1) {
-                    navController.navigate("${Screen.Player.route}/${nextId}")
-                }
-                else
-                    isPlaying = false
+            if (nextSong == null &&
+                SongPlayer.mediaController?.playbackState == Player.STATE_ENDED)
+            { // ini udh nyampe akhir artinya
+                isPlaying = false
+            }
+
+            else if (nextSong != null && SongPlayer.mediaController != null
+                && SongPlayer.curLoadedSongId == nextSong?.id)
+            { // detect perubahan dari listener player (ini keknya horrible tp idk)
+                // go next
+                song = nextSong
             }
         }
     }
@@ -368,10 +378,11 @@ fun SongPlayerScreen(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (prevId > -1)
+                    if (prevSong != null)
                         IconButton(
                             onClick = {
-                                navController.navigate("${Screen.Player.route}/${prevId}")
+                                // TODO: implement
+                                song = prevSong
                             },
                             modifier = Modifier
                                 .size(40.dp)
@@ -409,10 +420,10 @@ fun SongPlayerScreen(
 
                     Spacer(modifier = Modifier.width(32.dp))
 
-                    if (nextId > -1)
+                    if (nextSong != null)
                         IconButton(
                             onClick = {
-                                navController.navigate("${Screen.Player.route}/${nextId}")
+                                song = nextSong // TODO
                             },
                             modifier = Modifier
                                 .size(40.dp)

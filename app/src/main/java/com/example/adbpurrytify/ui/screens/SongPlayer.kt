@@ -38,6 +38,7 @@ object SongPlayer {
     var mediaController: MediaController? = null
     var songLoaded: Boolean = false
     var curLoadedSongId: Long = -1
+    var curUserId: Long = -1
 
     @OptIn(UnstableApi::class)
     fun loadSong(song: SongEntity, context: Context, songId: Long) {

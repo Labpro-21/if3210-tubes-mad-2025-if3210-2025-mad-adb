@@ -73,6 +73,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+
         if (SongPlayer.mediaController == null) connectMusicPlayer()
         Log.d("RESUME", "Hiii :3")
     }
