@@ -63,7 +63,7 @@ fun MiniPlayer(
     val context = LocalContext.current
 
     // Update current song and playing state
-    LaunchedEffect(SongPlayer.curLoadedSongId) {
+    LaunchedEffect(currentSong) {
         if (SongPlayer.curLoadedSongId != -1L) {
             currentSong = viewModel.getSongById(SongPlayer.curLoadedSongId)
             currentSong?.let { song ->
@@ -81,11 +81,12 @@ fun MiniPlayer(
     // Update playing state and progress
     LaunchedEffect(Unit) {
         while (true) {
+            delay(200L)
             isPlaying = SongPlayer.isPlaying()
+            if (currentSong?.id != SongPlayer.curLoadedSongId) currentSong = null
             if (SongPlayer.getDuration() > 0) {
                 progress = SongPlayer.getProgress().toFloat() / SongPlayer.getDuration().toFloat()
             }
-            delay(1000L)
         }
     }
 

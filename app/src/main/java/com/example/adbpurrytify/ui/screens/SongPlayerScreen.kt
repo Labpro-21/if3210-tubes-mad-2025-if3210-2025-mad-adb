@@ -344,7 +344,6 @@ fun SongPlayerScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // Slider section
-                if (playerReady) {
                     // Slider
                     Slider(
                         value = sliderPosition.toFloat(),
@@ -358,6 +357,8 @@ fun SongPlayerScreen(
                             inactiveTrackColor = SpotifyLightGray.copy(alpha = 0.3f)
                         )
                     )
+
+                if (playerReady) {
                     // Time display
                     Row(
                         modifier = Modifier.fillMaxWidth(),
