@@ -1,5 +1,6 @@
 package com.example.adbpurrytify.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -126,9 +127,10 @@ fun SongPlayerScreen(
 //            Log.d("sliderPosition", sliderPosition.toString())
             delay(1000L)
 
-            if (sliderPosition >= SongPlayer.getDuration()) {
-                if (nextId > -1)
+            if (SongPlayer.mediaController != null && sliderPosition >= SongPlayer.getDuration()) {
+                if (nextId > -1) {
                     navController.navigate("${Screen.Player.route}/${nextId}")
+                }
                 else
                     isPlaying = false
             }

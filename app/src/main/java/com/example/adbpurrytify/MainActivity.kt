@@ -45,29 +45,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val intent = Intent(this, MusicService::class.java)
         startService(intent)
-//        // Create the AppDatabase instance
         TokenManager.initialize(this)
         appDatabase = AppDatabase.getDatabase(applicationContext)
         songViewModel = SongViewModel(appDatabase.songDao())
 
+        if (SongPlayer.mediaController == null)
+        {
+            Log.d("Controller", "Trying to connect...")
 
-        val sessionToken = SessionToken(this, ComponentName(this, MusicService::class.java))
-        val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
-
-
-        controllerFuture.addListener({
-            try {
-                var controller = controllerFuture.get()
-                controller?.addListener(object : Player.Listener {
-                    override fun onIsPlayingChanged(isPlaying: Boolean) {
-                        Log.d("Controller", "Playing: $isPlaying")
-                    }
-                })
-                SongPlayer.mediaController = controller
-            } catch (e: Exception) {
-                Log.e("Controller", "Failed to connect", e)
-            }
-        }, ContextCompat.getMainExecutor(this))
+        }
 
         enableEdgeToEdge()
         setContent {
@@ -82,6 +68,30 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         SongPlayer.release()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (SongPlayer.mediaController == null) connectMusicPlayer()
+        Log.d("RESUME", "Hiii :3")
+    }
+
+    fun connectMusicPlayer() { // IDEK atp man
+        val sessionToken = SessionToken(this, ComponentName(this, MusicService::class.java))
+        val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
+        controllerFuture.addListener({
+            try {
+                var controller = controllerFuture.get()
+                controller?.addListener(object : Player.Listener {
+                    override fun onIsPlayingChanged(isPlaying: Boolean) {
+                        Log.d("Controller", "Playing: $isPlaying")
+                    }
+                })
+                SongPlayer.mediaController = controller
+            } catch (e: Exception) {
+                Log.e("Controller", "Failed to connect", e)
+            }
+        }, ContextCompat.getMainExecutor(this))
     }
 
     /**

@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
@@ -40,6 +41,7 @@ class MusicService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        Log.d("Service", "RELEASED")
         mediaSession?.release()
         player?.release()
         super.onDestroy()
@@ -48,14 +50,14 @@ class MusicService : MediaSessionService() {
     private fun buildNotification(): Notification {
         val channelId = "music_channel"
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "Music Playback",
-                NotificationManager.IMPORTANCE_LOW
-            )
-            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            val channel = NotificationChannel(
+//                channelId,
+//                "Music Playback",
+//                NotificationManager.IMPORTANCE_LOW
+//            )
+//            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+//        }
 
         return NotificationCompat.Builder(this, channelId)
             .setContentTitle("Music Service")

@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
@@ -39,7 +40,10 @@ object SongPlayer {
     @OptIn(UnstableApi::class)
     fun loadSong(songPath: String, context: Context, songId: Long) {
         Log.d("path str", songPath)
-        assert (mediaController != null)
+        if (mediaController == null) {
+            Log.d("LOAD CALLED", "NULL")
+            return
+        }
         var uriparseres = Uri.parse(songPath)
         Log.d("URI Parse Res", uriparseres.toString())
 
@@ -98,6 +102,7 @@ object SongPlayer {
         val playerState = mediaController?.playbackState
         return playerState != null && playerState != ExoPlayer.STATE_IDLE && playerState != ExoPlayer.STATE_ENDED
     }
+
 }
 
 // I'm going insane, this is for sanity check
