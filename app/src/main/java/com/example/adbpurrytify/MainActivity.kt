@@ -17,6 +17,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.adbpurrytify.api.MusicService
@@ -53,18 +54,18 @@ class MainActivity : ComponentActivity() {
 
         val sessionToken = SessionToken(this, ComponentName(this, MusicService::class.java))
         val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
+
         controllerFuture.addListener({
             try {
-                mediaController = controllerFuture.get()
+                var controller = controllerFuture.get()
+                controller?.addListener(object : Player.Listener {
+                    override fun onIsPlayingChanged(isPlaying: Boolean) {
+                        Log.d("Controller", "Playing: $isPlaying")
+                    }
+                })
+                mediaController = controller
                 var vm = ViewModelProvider(this)[PlayerViewModel::class.java]
-                vm.connect(mediaController!!)
-                Log.d("Controller", "Connected!")
-//                mediaController?.play()
-//                mediaController?.addListener(object : Player.Listener {
-//                    override fun onIsPlayingChanged(isPlaying: Boolean) {
-//                        Log.d("Controller", "Playing: $isPlaying")
-//                    }
-//                })
+                vm.connect(controller)
 
             } catch (e: Exception) {
                 Log.e("Controller", "Failed to connect", e)

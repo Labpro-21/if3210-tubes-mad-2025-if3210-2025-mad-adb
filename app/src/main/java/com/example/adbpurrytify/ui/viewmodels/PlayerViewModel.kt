@@ -40,6 +40,7 @@ class PlayerViewModel : ViewModel() {
     }
 
     fun playPause() {
+        assert (mediaController != null)
         mediaController?.let {
             if (it.isPlaying) it.pause() else it.play()
         }
