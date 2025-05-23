@@ -75,6 +75,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.media3.common.Player
 import coil3.compose.AsyncImage
 import com.example.adbpurrytify.ui.utils.DynamicColorExtractor
+import java.lang.Long.max
 
 // Update the SongPlayerScreen composable
 @Composable
@@ -146,6 +147,10 @@ fun SongPlayerScreen(
 
     // Update slider position every second
     LaunchedEffect(isPlaying) {
+        while (!isPlaying) {
+            isPlaying = SongPlayer.isPlaying()
+            delay(100L)
+        }
         while (isPlaying) {
             sliderPosition = SongPlayer.getProgress()
             isPlaying = SongPlayer.isPlaying()
@@ -163,6 +168,7 @@ fun SongPlayerScreen(
                 && SongPlayer.curLoadedSongId == nextSong?.id)
             { // detect perubahan dari listener player (ini keknya horrible tp idk)
                 // go next
+                isPlaying = false
                 playerReady = false
                 song = nextSong
             }
@@ -344,7 +350,7 @@ fun SongPlayerScreen(
                         value = sliderPosition.toFloat(),
                         onValueChange = { sliderPosition = it.toLong() },
                         onValueChangeFinished = { SongPlayer.seekTo(sliderPosition) },
-                        valueRange = 0f..(SongPlayer.getDuration().toFloat()),
+                        valueRange = 0f..(max(0L, SongPlayer.getDuration()).toFloat()),
                         modifier = Modifier.fillMaxWidth(),
                         colors = SliderDefaults.colors(
                             thumbColor = SpotifyGreen,
