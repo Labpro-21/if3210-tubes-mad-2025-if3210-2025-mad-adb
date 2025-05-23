@@ -72,7 +72,7 @@ fun ADBPurrytifyTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = SpotifyTypography,
         content = content
     )
 }

@@ -51,7 +51,7 @@ dependencies {
     ksp("com.google.dagger:hilt-android-compiler:2.56.2")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
-    // live data
+    // Live data
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
     implementation("androidx.compose.runtime:runtime-livedata:1.7.8")
 
@@ -59,7 +59,10 @@ dependencies {
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.27.0")
     implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
 
-    // "Diajarkan di kelas",
+    // Palette for color extraction - ADD THIS
+    implementation("androidx.palette:palette-ktx:1.0.0")
+
+    // "Diajarkan di kelas"
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
@@ -69,13 +72,11 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp")
     implementation("com.squareup.okhttp3:logging-interceptor")
 
-
     implementation("androidx.work:work-runtime-ktx:2.9.1")
     implementation("androidx.media3:media3-common:1.4.1")
     implementation("io.coil-kt.coil3:coil:3.0.0")
     implementation("io.coil-kt.coil3:coil-compose:3.0.0")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.0-alpha09")
-//    implementation("androidx.media3:media3-ui:1.0")
     implementation("androidx.media3:media3-exoplayer:1.4.1")
     implementation("androidx.navigation:navigation-compose:2.8.9")
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
@@ -96,7 +97,6 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

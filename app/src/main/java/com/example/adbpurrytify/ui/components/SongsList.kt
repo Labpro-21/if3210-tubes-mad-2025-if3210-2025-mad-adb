@@ -1,70 +1,59 @@
 package com.example.adbpurrytify.ui.components
 
-import android.view.ViewGroup
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import android.content.Context
+import android.graphics.Rect
+import android.view.View
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.adbpurrytify.data.model.SongEntity
-import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
-
+import com.example.adbpurrytify.ui.adapters.SongAdapter
 
 @Composable
 fun RecyclerSongsList(
     songs: List<SongEntity>,
-    showBorder: Boolean,
-    onSongClick: (SongEntity) -> Unit = {}
+    showBorder: Boolean = true,
+    onSongClick: (SongEntity) -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .wrapContentHeight()
-            .clip(RectangleShape)
-            .background(BLACK_BACKGROUND)
-    ) {
-        AndroidView(
-            factory = { context ->
-                RecyclerView(context).apply {
-                    layoutManager = LinearLayoutManager(context)
-                    // Pass onSongClick during initial creation
-                    adapter = SongAdapter(songs, context, onSongClick)
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    )
-                    if (showBorder) {
-                        setBackgroundColor(android.graphics.Color.RED)
+    AndroidView(
+        factory = { context ->
+            RecyclerView(context).apply {
+                layoutManager = LinearLayoutManager(context)
+                adapter = SongAdapter(songs) { song ->
+                    onSongClick(song)
+                }
+                // Add tight spacing like Spotify
+                addItemDecoration(object : RecyclerView.ItemDecoration() {
+                    override fun getItemOffsets(
+                        outRect: Rect,
+                        view: View,
+                        parent: RecyclerView,
+                        state: RecyclerView.State
+                    ) {
+                        outRect.bottom = context.dpToPx(4) // Tight spacing
                     }
-                    setPadding(0, 0, 0, 0)
-                    clipToPadding = true
-                    clipChildren = true
-                }
-            },
-            modifier = Modifier
-                .wrapContentHeight()
-                .fillMaxWidth()
-                .background(BLACK_BACKGROUND),
-            update = { recyclerView ->
-                // *** FIX: Pass onSongClick when updating the adapter too! ***
-                // Also, ensure the adapter instance is updated correctly if possible
-                // See improvement suggestion below
-                (recyclerView.adapter as? SongAdapter)?.let { adapter ->
-                    // More efficient: Update data in existing adapter
-                    adapter.updateData(songs)
-                } ?: run {
-                    // Fallback: Create new adapter if it's null or wrong type
-                    recyclerView.adapter = SongAdapter(songs, recyclerView.context, onSongClick)
-                }
-            },
-        )
-    }
+                })
+                setPadding(
+                    context.dpToPx(16), // left
+                    context.dpToPx(8),  // top
+                    context.dpToPx(16), // right
+                    context.dpToPx(8)   // bottom
+                )
+                clipToPadding = false
+                overScrollMode = View.OVER_SCROLL_NEVER // Remove overscroll effect
+            }
+        },
+        update = { recyclerView ->
+            (recyclerView.adapter as? SongAdapter)?.updateSongs(songs)
+        },
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
-
-
+// Extension function to convert dp to px
+fun Context.dpToPx(dp: Int): Int {
+    return (dp * resources.displayMetrics.density).toInt()
+}
