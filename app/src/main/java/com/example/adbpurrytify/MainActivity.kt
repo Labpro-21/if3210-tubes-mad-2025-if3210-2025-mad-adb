@@ -26,6 +26,7 @@ import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.ui.navigation.AppNavigation
 import com.example.adbpurrytify.ui.screens.SongPlayer
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
+import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -50,12 +51,6 @@ class MainActivity : ComponentActivity() {
 
         // Request permissions before setting content
         requestPermissions()
-
-        if (SongPlayer.mediaController == null)
-        {
-            Log.d("Controller", "Trying to connect...")
-
-        }
 
         enableEdgeToEdge()
         setContent {
