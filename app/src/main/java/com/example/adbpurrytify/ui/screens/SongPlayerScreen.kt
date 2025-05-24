@@ -71,8 +71,9 @@ import com.example.adbpurrytify.ui.theme.SpotifyGreen
 import com.example.adbpurrytify.ui.theme.SpotifyLightGray
 import com.example.adbpurrytify.ui.theme.TEXT_FIELD_TEXT
 import com.example.adbpurrytify.ui.utils.DynamicColorExtractor
-import com.example.adbpurrytify.ui.utils.shareSong
+import com.example.adbpurrytify.utils.shareSong
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
+import com.example.adbpurrytify.utils.shareSongQR
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -266,12 +267,22 @@ fun SongPlayerScreen(
                 )
 
                 MinimalDropdownMenu(
+                    /**
+                     * Why artUri instead of songUri?
+                     * Because artUri is guaranteed to have come from the internet
+                     * songUri can be tampered by downloading the song
+                     */
                     onShareViaUrl = {
-                        if (song?.audioUri?.startsWith("http") == true) {
+                        if (song?.artUri?.startsWith("http") == true) {
                             shareSong(context, song!!.id)
                         }
                     },
-                    {})
+                    onShareViaQr = {
+                        if (song?.artUri?.startsWith("http") == true) {
+                            shareSongQR(context, song!!.id)
+                        }
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
