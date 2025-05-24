@@ -3,7 +3,6 @@ package com.example.adbpurrytify.data
 import com.example.adbpurrytify.api.ApiService
 import com.example.adbpurrytify.data.local.SongDao
 import com.example.adbpurrytify.data.model.SongEntity
-import com.example.adbpurrytify.data.model.TrendingSongResponse
 import com.example.adbpurrytify.data.model.toSongEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
