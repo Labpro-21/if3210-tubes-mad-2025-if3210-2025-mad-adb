@@ -19,6 +19,7 @@
             android:id="@+id/song_image"
             android:layout_width="64dp"
             android:layout_height="64dp"
+            android:contentDescription="@string/song_album_cover"
             android:scaleType="centerCrop"
             android:src="@drawable/remembering_sunday"
             android:layout_marginEnd="8dp" />
@@ -33,7 +34,7 @@
                 android:id="@+id/song_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Song Title"
+                android:text="@string/song_title"
                 android:textSize="16sp"
                 android:fontFamily="@font/poppins_regular"
                 android:textColor="@android:color/white" />
@@ -42,7 +43,7 @@
                 android:id="@+id/song_author"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Author"
+                android:text="@string/author"
                 android:textSize="12sp"
                 android:fontFamily="@font/poppins_regular"
                 android:textColor="@android:color/white" />
