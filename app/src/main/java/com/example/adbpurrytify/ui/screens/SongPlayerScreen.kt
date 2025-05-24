@@ -146,16 +146,12 @@ fun SongPlayerScreen(
     }
 
     // Update slider position every second
-    LaunchedEffect(isPlaying) {
-        while (!isPlaying) {
-            isPlaying = SongPlayer.isPlaying()
-            delay(100L)
-        }
-        while (isPlaying) {
+    LaunchedEffect(Unit) {
+        while (true) {
             sliderPosition = SongPlayer.getProgress()
             isPlaying = SongPlayer.isPlaying()
-            // Commented out because it's adding noise to logcat
-//            Log.d("sliderPosition", sliderPosition.toString())
+            if (!isPlaying) {delay(100L) ; continue}
+
             delay(500L)
 
             if (nextSong == null &&
@@ -164,8 +160,7 @@ fun SongPlayerScreen(
                 isPlaying = false
             }
 
-            else if (nextSong != null && SongPlayer.mediaController != null
-                && SongPlayer.curLoadedSongId == nextSong?.id)
+            else if (nextSong != null && SongPlayer.curLoadedSongId == nextSong?.id)
             { // detect maju dari listener player sm dari control notif
                 // (ini keknya horrible tp idk)
 
@@ -175,8 +170,7 @@ fun SongPlayerScreen(
                 song = nextSong
             }
 
-            else if (prevSong != null && SongPlayer.mediaController != null
-                && SongPlayer.curLoadedSongId == prevSong?.id)
+            else if (prevSong != null && SongPlayer.curLoadedSongId == prevSong?.id)
             { // detect mundur dari notif
                 isPlaying = false
                 playerReady = false
@@ -375,7 +369,7 @@ fun SongPlayerScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(formatTime(SongPlayer.getProgress()), color = Color.White)
-                        Text(formatTime(SongPlayer.getDuration()), color = Color.White)
+                        Text(formatTime(max(0L, SongPlayer.getDuration())), color = Color.White)
                     }
                 } else {
                     // Show loading indicator for slider
@@ -429,6 +423,7 @@ fun SongPlayerScreen(
                             .size(64.dp)
                             .background(SpotifyGreen, CircleShape)
                     ) {
+
                         Icon(
                             imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = if (isPlaying) "Pause" else "Play",
