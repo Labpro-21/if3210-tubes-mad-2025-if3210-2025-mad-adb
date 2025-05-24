@@ -2,7 +2,6 @@ package com.example.adbpurrytify.data
 
 import android.util.Log
 import com.example.adbpurrytify.api.ApiService
-import com.example.adbpurrytify.data.analytics.AnalyticsService
 import com.example.adbpurrytify.data.local.AnalyticsDao
 import com.example.adbpurrytify.data.local.SongDao
 import com.example.adbpurrytify.data.model.SongEntity
@@ -120,5 +119,18 @@ class SongRepository @Inject constructor(
     suspend fun markSongAsPlayed(songId: Long) {
         val song = getSongById(songId) ?: return
         updateSong(song.copy(lastPlayedTimestamp = System.currentTimeMillis()))
+    }
+
+    suspend fun getOnlineSong(songId: Long): SongEntity = withContext(Dispatchers.IO) {
+        try {
+            val response = apiService.getOnlineSong(songId)
+            if (response.isSuccessful) {
+                response.body()?.toSongEntity() ?: SongEntity(0, "", "", "", "", 0, false, 0, 0)
+            } else {
+                SongEntity(0, "", "", "", "", 0, false, 0, 0)
+            }
+        } catch (e: Exception) {
+            SongEntity(0, "", "", "", "", 0, false, 0, 0)
+        }
     }
 }

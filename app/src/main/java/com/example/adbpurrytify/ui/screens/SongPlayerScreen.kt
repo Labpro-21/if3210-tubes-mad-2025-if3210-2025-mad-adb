@@ -41,6 +41,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -71,14 +72,12 @@ import com.example.adbpurrytify.ui.theme.SpotifyLightGray
 import com.example.adbpurrytify.ui.theme.TEXT_FIELD_TEXT
 import com.example.adbpurrytify.ui.utils.DynamicColorExtractor
 import com.example.adbpurrytify.ui.utils.shareSong
-import com.example.adbpurrytify.ui.utils.DynamicColorExtractor
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
-import java.lang.Long.max
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
@@ -103,7 +102,7 @@ fun SongPlayerScreen(
 
     var isLiked by remember { mutableStateOf(false) }
     var isPlaying by remember { mutableStateOf(false) }
-    var sliderPosition by remember { mutableStateOf(0L) }
+    var sliderPosition by remember { mutableLongStateOf(0L) }
     var dominantColor by remember { mutableStateOf(Color(0xFF121212)) }
 
     val context = LocalContext.current

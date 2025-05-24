@@ -58,7 +58,11 @@ class SongViewModel @Inject constructor(
     }
 
     suspend fun getSongById(songId: Long): SongEntity? {
-        return songRepository.getSongById(songId)
+        return if (songRepository.getSongById(songId) != null) {
+            songRepository.getSongById(songId)
+        } else {
+            songRepository.getOnlineSong(songId)
+        }
     }
 
     // Set the current user ID and trigger the initial load

@@ -83,8 +83,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="purrytify"
-                    android:host="song"
-                    android:pathPattern="/.*" />
+                    android:host="song" />
             </intent-filter>
         </activity>
 
