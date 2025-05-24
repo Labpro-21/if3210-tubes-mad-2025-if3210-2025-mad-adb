@@ -64,24 +64,22 @@ import com.example.adbpurrytify.R
 import com.example.adbpurrytify.api.MusicService
 import com.example.adbpurrytify.data.download.downloadSong
 import com.example.adbpurrytify.data.model.SongEntity
-import com.example.adbpurrytify.ui.components.MinimalDropdownMenu
 import com.example.adbpurrytify.ui.components.AudioDeviceSelect
+import com.example.adbpurrytify.ui.components.MinimalDropdownMenu
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.theme.Green
 import com.example.adbpurrytify.ui.theme.SpotifyGreen
 import com.example.adbpurrytify.ui.theme.SpotifyLightGray
 import com.example.adbpurrytify.ui.theme.TEXT_FIELD_TEXT
 import com.example.adbpurrytify.ui.utils.DynamicColorExtractor
-import com.example.adbpurrytify.ui.utils.DynamicColorExtractor
-import com.example.adbpurrytify.utils.shareSong
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
+import com.example.adbpurrytify.utils.shareSong
 import com.example.adbpurrytify.utils.shareSongQR
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
-import java.lang.Long.max
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 

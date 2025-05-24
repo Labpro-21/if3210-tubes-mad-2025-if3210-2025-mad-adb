@@ -2,11 +2,11 @@ package com.example.adbpurrytify.api
 
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.annotation.OptIn
-import androidx.core.app.NotificationCompat
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -20,17 +20,22 @@ import androidx.media3.session.MediaSession.ConnectionResult.AcceptedResultBuild
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
-import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.AnalyticsRepository
 import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.SongRepository
-import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.screens.SongPlayer
 import com.example.adbpurrytify.ui.screens.globalPlayer
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 const val NEXT_SONG = "next song"
