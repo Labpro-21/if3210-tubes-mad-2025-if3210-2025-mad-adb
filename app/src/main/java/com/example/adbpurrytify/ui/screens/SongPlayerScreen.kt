@@ -19,7 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -46,36 +46,35 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.media3.common.Player
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.download.downloadSong
 import com.example.adbpurrytify.data.model.SongEntity
+import com.example.adbpurrytify.ui.components.MinimalDropdownMenu
 import com.example.adbpurrytify.ui.navigation.Screen
-import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
 import com.example.adbpurrytify.ui.theme.Green
 import com.example.adbpurrytify.ui.theme.SpotifyGreen
 import com.example.adbpurrytify.ui.theme.SpotifyLightGray
 import com.example.adbpurrytify.ui.theme.TEXT_FIELD_TEXT
+import com.example.adbpurrytify.ui.utils.DynamicColorExtractor
+import com.example.adbpurrytify.ui.utils.shareSong
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
-import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.layout.ContentScale
-import androidx.media3.common.Player
-import coil3.compose.AsyncImage
-import com.example.adbpurrytify.ui.utils.DynamicColorExtractor
 import java.lang.Long.max
 
 // Update the SongPlayerScreen composable
@@ -227,7 +226,7 @@ fun SongPlayerScreen(
             ) {
                 IconButton(onClick = { navController.navigate(Screen.Home.route) }) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Go back",
                         tint = Color.White
                     )
@@ -241,7 +240,13 @@ fun SongPlayerScreen(
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.width(48.dp))
+                MinimalDropdownMenu(
+                    onShareViaUrl = {
+                        if (song?.audioUri?.startsWith("http") == true) {
+                            shareSong(context, song!!.id)
+                        }
+                    },
+                    {})
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -469,5 +474,3 @@ fun SongPlayerScreen(
         }
     }
 }
-
-
