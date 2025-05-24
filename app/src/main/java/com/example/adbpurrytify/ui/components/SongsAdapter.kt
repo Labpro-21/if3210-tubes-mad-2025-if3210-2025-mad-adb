@@ -1,11 +1,11 @@
 package com.example.adbpurrytify.ui.adapters
 
-import android.graphics.Rect
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.compose.ui.platform.ComposeView
 import androidx.recyclerview.widget.RecyclerView
 import coil3.load
 import coil3.request.crossfade
@@ -13,6 +13,9 @@ import coil3.request.placeholder
 import coil3.request.error
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.model.SongEntity
+import com.example.adbpurrytify.ui.components.MinimalDropdownMenu
+import com.example.adbpurrytify.utils.shareSong
+import com.example.adbpurrytify.utils.shareSongQR
 
 class SongAdapter(
     private var songs: List<SongEntity>,
@@ -50,6 +53,22 @@ class SongAdapter(
 
         holder.itemView.setOnClickListener {
             onSongClick(song)
+        }
+
+        val composeOverflowView = holder.itemView.findViewById<ComposeView>(R.id.compose_overflow_menu)
+        composeOverflowView.setContent {
+            MinimalDropdownMenu(
+                onShareViaUrl = {
+                    if (song.audioUri.startsWith("http")) {
+                        shareSong(holder.itemView.context, song.id)
+                    }
+                },
+                onShareViaQr = {
+                    if (song.audioUri.startsWith("http")) {
+                        shareSongQR(holder.itemView.context, song.id)
+                    }
+                }
+            )
         }
     }
 

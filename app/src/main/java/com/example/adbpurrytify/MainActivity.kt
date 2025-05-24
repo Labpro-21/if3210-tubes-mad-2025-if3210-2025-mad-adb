@@ -15,10 +15,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import androidx.navigation.compose.rememberNavController
 import com.example.adbpurrytify.api.MusicService
 import com.example.adbpurrytify.data.TokenManager
 import com.example.adbpurrytify.data.local.AppDatabase
@@ -54,7 +56,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ADBPurrytifyTheme {
-                AppNavigation()
+                val navController = rememberNavController()
+
+                LaunchedEffect(Unit) {
+                    navController.handleDeepLink(intent)
+                }
+
+                AppNavigation(navController)
             }
         }
     }

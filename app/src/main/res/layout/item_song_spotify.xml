@@ -59,4 +59,9 @@
 
     </LinearLayout>
 
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/compose_overflow_menu"
+        android:layout_width="32dp"
+        android:layout_height="match_parent" />
+
 </LinearLayout>

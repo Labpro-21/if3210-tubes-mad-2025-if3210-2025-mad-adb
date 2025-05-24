@@ -1,6 +1,6 @@
 package com.example.adbpurrytify.api
 
-import com.example.adbpurrytify.data.model.TrendingSongResponse
+import com.example.adbpurrytify.data.model.OnlineSong
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -60,8 +60,11 @@ interface ApiService {
     ): Response<Unit>
 
     @GET("api/top-songs/global")
-    suspend fun getTopGlobalSongs(): Response<List<TrendingSongResponse>>
+    suspend fun getTopGlobalSongs(): Response<List<OnlineSong>>
 
     @GET("api/top-songs/{country_code}")
-    suspend fun getTopCountrySongs(@Path("country_code") countryCode: String): Response<List<TrendingSongResponse>>
+    suspend fun getTopCountrySongs(@Path("country_code") countryCode: String): Response<List<OnlineSong>>
+
+    @GET("api/songs/{song_id}")
+    suspend fun getOnlineSong(@Path("song_id") songId: Long): Response<OnlineSong>
 }

@@ -1,6 +1,6 @@
 package com.example.adbpurrytify.data.model
 
-data class TrendingSongResponse(
+data class OnlineSong(
     val id: Long,
     val title: String,
     val artist: String,
@@ -13,7 +13,7 @@ data class TrendingSongResponse(
     val updatedAt: String
 )
 
-fun TrendingSongResponse.toSongEntity(): SongEntity {
+fun OnlineSong.toSongEntity(): SongEntity {
     return SongEntity(
         id = this.id,
         title = this.title,
