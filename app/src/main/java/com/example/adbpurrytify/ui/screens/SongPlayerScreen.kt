@@ -1,5 +1,6 @@
 package com.example.adbpurrytify.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -85,6 +86,7 @@ fun SongPlayerScreen(
     snackBarHostState: SnackbarHostState,
     viewModel: SongViewModel = hiltViewModel()
 ) {
+
     var firstsong = runBlocking { viewModel.getSongById(songId) }
     var song by remember { mutableStateOf<SongEntity?>(firstsong) }
     var prevSong by remember { mutableStateOf<SongEntity?>(null) }
@@ -148,11 +150,19 @@ fun SongPlayerScreen(
     // Update slider position every second
     LaunchedEffect(Unit) {
         while (true) {
+
+            if (SongPlayer.curLoadedSongId == -2L) {
+                SongPlayer.curLoadedSongId = -1
+                Log.d("REDIRECT", "going home")
+                navController.navigate(Screen.Home.route)
+                break
+            }
+
             sliderPosition = SongPlayer.getProgress()
             isPlaying = SongPlayer.isPlaying()
             if (!isPlaying) {delay(100L) ; continue}
 
-            delay(500L)
+            delay(250L)
 
             if (nextSong == null &&
                 SongPlayer.mediaController?.playbackState == Player.STATE_ENDED)

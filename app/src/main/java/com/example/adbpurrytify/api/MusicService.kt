@@ -14,6 +14,9 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.ViewModelProvider
@@ -44,10 +47,12 @@ import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.runBlocking
 
 const val NEXT_SONG = "next song"
+const val STOP = "stop"
 
 
 class MusicService : MediaSessionService() {
     private val nextCommand = SessionCommand(NEXT_SONG, Bundle.EMPTY)
+    private val stopCommand = SessionCommand(STOP, Bundle.EMPTY)
     private var mediaSession: MediaSession? = null
     private var player: ExoPlayer? = null
 
@@ -56,18 +61,16 @@ class MusicService : MediaSessionService() {
         super.onCreate()
 
         val iintent = packageManager.getLaunchIntentForPackage(packageName)
-        val intent = Intent().apply {
-
-            setClassName("com.example.adbpurrytify", "com.example.adbpurrytify.MainActivity")
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
-        }
-//        packageManager.getLaunchIntentForPackage()
         val pendingIntent = PendingIntent.getActivity(this, 0, iintent, PendingIntent.FLAG_IMMUTABLE)
-
         val nextButton =
             CommandButton.Builder(CommandButton.ICON_NEXT)
                 .setDisplayName("Next Song")
                 .setSessionCommand(nextCommand)
+                .build()
+        val stopButton =
+            CommandButton.Builder(CommandButton.ICON_STOP)
+                .setDisplayName("Stop")
+                .setSessionCommand(stopCommand)
                 .build()
 
         player = ExoPlayer.Builder(this).build()
@@ -89,7 +92,7 @@ class MusicService : MediaSessionService() {
 
         mediaSession = MediaSession.Builder(this, forwardingPlayer!!)
             .setId("MusicSession")
-            .setCustomLayout(mutableListOf<CommandButton>(nextButton))
+            .setCustomLayout(mutableListOf<CommandButton>(nextButton, stopButton))
             .setCallback(MyCallback(this))
             .setSessionActivity(pendingIntent)
             .build()
@@ -105,7 +108,10 @@ class MusicService : MediaSessionService() {
             // Set available player and session commands.
             return AcceptedResultBuilder(session)
                 .setAvailableSessionCommands(
-                    ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon().add(nextCommand).build()
+                    ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
+                        .add(nextCommand)
+                        .add(stopCommand)
+                        .build()
                 ).build()
         }
 
@@ -116,6 +122,11 @@ class MusicService : MediaSessionService() {
             args: Bundle
         ): ListenableFuture<SessionResult> {
             if (customCommand.customAction == NEXT_SONG) tryToStartNextSong(context, startPreviousInstead = false)
+            else if (customCommand.customAction == STOP) {
+                player?.stop()
+                player?.clearMediaItems()
+                SongPlayer.curLoadedSongId = -2 // set buat pas render songplayerscreeb
+            }
             return super.onCustomCommand(session, controller, customCommand, args)
         }
     }
