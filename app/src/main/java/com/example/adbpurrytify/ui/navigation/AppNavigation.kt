@@ -86,11 +86,11 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 EditProfileScreen(navController = navController)
             }
 
+            // Instead of creating a new handler for deep links, update this instead yeah?
             composable(
                 route = "${Screen.Player.route}/{songId}",
-                arguments = listOf(
-                    navArgument("songId") { type = NavType.LongType }
-                )
+                arguments = listOf(navArgument("songId") { type = NavType.LongType }),
+                deepLinks = listOf(navDeepLink { uriPattern = "purrytify://song/{songId}" })
             ) { backStackEntry ->
                 val songId = backStackEntry.arguments?.getLong("songId") ?: -1L
                 val songViewModel = hiltViewModel<SongViewModel>()
@@ -146,14 +146,6 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     month = month,
                     viewModel = viewModel
                 )
-            }
-
-            // Handle deep links
-            composable(
-                route = "song/{songId}",
-                deepLinks = listOf(navDeepLink { uriPattern = "myapp://song/{songId}" })
-            ) {
-                // Placeholder for deep link handling
             }
         }
     }
