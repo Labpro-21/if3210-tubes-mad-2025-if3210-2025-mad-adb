@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.data.local.SongDao
+import com.example.adbpurrytify.data.local.AnalyticsDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,18 +18,23 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
+    fun provideAppDatabase(@ApplicationContext appContext: Context): AppDatabase {
         return Room.databaseBuilder(
-            context.applicationContext,
+            appContext,
             AppDatabase::class.java,
             "app_database"
         )
-            .fallbackToDestructiveMigration()
+            .fallbackToDestructiveMigration() // Remove in production
             .build()
     }
 
     @Provides
-    fun provideSongDao(database: AppDatabase): SongDao {
-        return database.songDao()
+    fun provideSongDao(appDatabase: AppDatabase): SongDao {
+        return appDatabase.songDao()
+    }
+
+    @Provides
+    fun provideAnalyticsDao(appDatabase: AppDatabase): AnalyticsDao {
+        return appDatabase.analyticsDao()
     }
 }

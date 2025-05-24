@@ -59,7 +59,8 @@
 
         <service
             android:name="com.example.adbpurrytify.api.MusicService"
-            android:exported="true"
+            android:enabled="true"
+            android:exported="false"
             android:foregroundServiceType="mediaPlayback"
             android:permission="android.permission.BIND_MEDIA_SESSION_SERVICE">
             <intent-filter>
@@ -86,6 +87,27 @@
                     android:pathPattern="/.*" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
+
+        <!-- Legacy file provider (keep for backward compatibility) -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
 
         <activity
             android:name=".ui.screens.SimpleLocationPickerActivity"

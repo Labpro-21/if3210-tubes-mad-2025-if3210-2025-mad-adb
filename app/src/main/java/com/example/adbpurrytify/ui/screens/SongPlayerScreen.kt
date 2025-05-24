@@ -37,6 +37,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -46,16 +47,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.media3.common.Player
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.adbpurrytify.R
+import com.example.adbpurrytify.api.MusicService
 import com.example.adbpurrytify.data.download.downloadSong
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.navigation.Screen
@@ -64,21 +69,22 @@ import com.example.adbpurrytify.ui.theme.Green
 import com.example.adbpurrytify.ui.theme.SpotifyGreen
 import com.example.adbpurrytify.ui.theme.SpotifyLightGray
 import com.example.adbpurrytify.ui.theme.TEXT_FIELD_TEXT
+import com.example.adbpurrytify.ui.utils.DynamicColorExtractor
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
-import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.layout.ContentScale
-import androidx.media3.common.Player
-import coil3.compose.AsyncImage
-import com.example.adbpurrytify.ui.utils.DynamicColorExtractor
-import java.lang.Long.max
+import java.util.concurrent.TimeUnit
+import kotlin.math.max
 
-// Update the SongPlayerScreen composable
+fun formatTime(millis: Long): String {
+    val minutes = TimeUnit.MILLISECONDS.toMinutes(millis)
+    val seconds = TimeUnit.MILLISECONDS.toSeconds(millis) % 60
+    return String.format("%02d:%02d", minutes, seconds)
+}
+
 @Composable
 fun SongPlayerScreen(
     navController: NavController,
@@ -109,10 +115,11 @@ fun SongPlayerScreen(
         while(viewModel.getCurrentUserId() == null) {
             delay(50)
         }
-        SongPlayer.curUserId = viewModel.getCurrentUserId()!!
+
+        val userId = viewModel.getCurrentUserId()!!
+        SongPlayer.curUserId = userId
 
         song?.let {
-
             prevSong = viewModel.getPrevSong(it.id)
             nextSong = viewModel.getNextSong(it.id)
 
@@ -131,26 +138,37 @@ fun SongPlayerScreen(
                 or ((SongPlayer.songLoaded) and (SongPlayer.curLoadedSongId != it.id))) {
 
                 playerReady = false
+
+                // Start analytics session through the enhanced music service
+                MusicService.startPlayback(context, it, userId)
+
                 SongPlayer.loadSong(it, context, it.id)
 
                 while (SongPlayer.getDuration() <= 0) {
                     delay(100)
                 }
                 playerReady = true
-                isPlaying = true
+
+                // Properly sync initial playing state
+                isPlaying = SongPlayer.isPlaying()
+                Log.d("SongPlayer", "New song loaded: ${it.title}, playing: $isPlaying")
             }
             else { // same song
+                // Always sync with actual player state
                 isPlaying = SongPlayer.isPlaying()
                 sliderPosition = SongPlayer.getProgress()
                 playerReady = true
+                Log.d("SongPlayer", "Same song, syncing state: playing=$isPlaying")
             }
         }
     }
 
-    // Update slider position every second
+    // Improved state synchronization with stop detection
     LaunchedEffect(Unit) {
         while (true) {
+            delay(200L) // Check more frequently for better UI responsiveness
 
+            // Check for stop command from notification
             if (SongPlayer.curLoadedSongId == -2L) {
                 SongPlayer.curLoadedSongId = -1
                 Log.d("REDIRECT", "going home")
@@ -158,33 +176,37 @@ fun SongPlayerScreen(
                 break
             }
 
-            sliderPosition = SongPlayer.getProgress()
-            isPlaying = SongPlayer.isPlaying()
-            if (!isPlaying) {delay(100L) ; continue}
-
-            delay(250L)
-
-            if (nextSong == null &&
-                SongPlayer.mediaController?.playbackState == Player.STATE_ENDED)
-            { // ini udh nyampe akhir artinya
-                isPlaying = false
+            // Always sync UI state with actual player state
+            val actuallyPlaying = SongPlayer.isPlaying()
+            if (isPlaying != actuallyPlaying) {
+                Log.d("SongPlayer", "UI state mismatch! UI: $isPlaying, Player: $actuallyPlaying - syncing")
+                isPlaying = actuallyPlaying
             }
 
-            else if (nextSong != null && SongPlayer.curLoadedSongId == nextSong?.id)
-            { // detect maju dari listener player sm dari control notif
-                // (ini keknya horrible tp idk)
+            // Update position if player is ready
+            if (playerReady) {
+                sliderPosition = SongPlayer.getProgress()
+            }
 
-                // go next
-                isPlaying = false
+            // Handle song transitions
+            if (nextSong != null && SongPlayer.mediaController != null
+                && SongPlayer.curLoadedSongId == nextSong?.id) {
+                Log.d("SongPlayer", "Detected song change to next song")
                 playerReady = false
                 song = nextSong
+                break // Exit loop to restart with new song
             }
-
-            else if (prevSong != null && SongPlayer.curLoadedSongId == prevSong?.id)
-            { // detect mundur dari notif
-                isPlaying = false
+            else if (prevSong != null && SongPlayer.mediaController != null
+                && SongPlayer.curLoadedSongId == prevSong?.id) {
+                Log.d("SongPlayer", "Detected song change to previous song")
                 playerReady = false
                 song = prevSong
+                break // Exit loop to restart with new song
+            }
+            else if (nextSong == null &&
+                SongPlayer.mediaController?.playbackState == Player.STATE_ENDED) {
+                Log.d("SongPlayer", "Song ended, no next song")
+                isPlaying = false
             }
         }
     }
@@ -220,7 +242,7 @@ fun SongPlayerScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-// Top Bar
+            // Top Bar
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -246,7 +268,7 @@ fun SongPlayerScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-// Song info and art
+            // Song info and art
             song?.let { currentSong ->
                 // Album Art
                 Box(
@@ -275,7 +297,6 @@ fun SongPlayerScreen(
                 ) {
                     // Download button
                     val isTrendingSong = currentSong.audioUri.startsWith("http")
-                    // Change the filename pattern if it's changed on DownloadSong
                     val downloadFile =
                         File(context.filesDir, "${currentSong.author + "-" + currentSong.title}.mp3")
                     if (isTrendingSong && !downloadFile.exists() || isDownloading) {
@@ -332,7 +353,7 @@ fun SongPlayerScreen(
                         Text(currentSong.author, color = Color.LightGray, style = MaterialTheme.typography.bodyLarge)
                     }
 
-                    // Like Button - Using the separate isLiked state for UI
+                    // Like Button
                     IconButton(
                         onClick = {
                             // Immediately update UI (optimistic)
@@ -340,7 +361,6 @@ fun SongPlayerScreen(
 
                             // Update in background
                             coroutineScope.launch {
-                                // Create an updated version of the song with new like status
                                 val updatedSong = currentSong.copy(isLiked = isLiked)
                                 viewModel.update(updatedSong)
                             }
@@ -358,19 +378,32 @@ fun SongPlayerScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // Slider section
-                    // Slider
-                    Slider(
-                        value = sliderPosition.toFloat(),
-                        onValueChange = { sliderPosition = it.toLong() },
-                        onValueChangeFinished = { SongPlayer.seekTo(sliderPosition) },
-                        valueRange = 0f..(max(0L, SongPlayer.getDuration()).toFloat()),
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = SliderDefaults.colors(
-                            thumbColor = SpotifyGreen,
-                            activeTrackColor = SpotifyGreen,
-                            inactiveTrackColor = SpotifyLightGray.copy(alpha = 0.3f)
-                        )
+                Slider(
+                    value = sliderPosition.toFloat(),
+                    onValueChange = { sliderPosition = it.toLong() },
+                    onValueChangeFinished = {
+                        try {
+                            SongPlayer.seekTo(sliderPosition)
+                            Log.d("SongPlayer", "Seeked to position: $sliderPosition")
+
+                            // Ensure UI state remains consistent after seek
+                            coroutineScope.launch {
+                                delay(100)
+                                isPlaying = SongPlayer.isPlaying()
+                                Log.d("SongPlayer", "After seek, playing state: $isPlaying")
+                            }
+                        } catch (e: Exception) {
+                            Log.e("SongPlayer", "Error seeking", e)
+                        }
+                    },
+                    valueRange = 0f..(max(0L, SongPlayer.getDuration()).toFloat()),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = SliderDefaults.colors(
+                        thumbColor = SpotifyGreen,
+                        activeTrackColor = SpotifyGreen,
+                        inactiveTrackColor = SpotifyLightGray.copy(alpha = 0.3f)
                     )
+                )
 
                 if (playerReady) {
                     // Time display
@@ -404,8 +437,17 @@ fun SongPlayerScreen(
                     if (prevSong != null)
                         IconButton(
                             onClick = {
-                                // TODO: implement
-                                song = prevSong
+                                Log.d("SongPlayer", "Previous song clicked")
+                                coroutineScope.launch {
+                                    try {
+                                        song = prevSong
+                                        // Reset states for new song
+                                        playerReady = false
+                                        isPlaying = false
+                                    } catch (e: Exception) {
+                                        Log.e("SongPlayer", "Error switching to previous song", e)
+                                    }
+                                }
                             },
                             modifier = Modifier
                                 .size(40.dp)
@@ -420,14 +462,31 @@ fun SongPlayerScreen(
                         }
                     Spacer(modifier = Modifier.width(32.dp))
 
+                    // Improved Play/Pause button with better state handling
                     IconButton(
                         onClick = {
-                            if (isPlaying) {
-                                SongPlayer.pause()
-                            } else {
-                                SongPlayer.play()
+                            Log.d("SongPlayer", "Play/Pause clicked. Current state - UI: $isPlaying, Player: ${SongPlayer.isPlaying()}")
+
+                            try {
+                                if (isPlaying) {
+                                    SongPlayer.pause()
+                                    Log.d("SongPlayer", "Called SongPlayer.pause()")
+                                } else {
+                                    SongPlayer.play()
+                                    Log.d("SongPlayer", "Called SongPlayer.play()")
+                                }
+
+                                // Give the player a moment to update its state
+                                coroutineScope.launch {
+                                    delay(100) // Small delay to let player state update
+                                    val newState = SongPlayer.isPlaying()
+                                    Log.d("SongPlayer", "After action, player state: $newState")
+                                    isPlaying = newState
+                                }
+
+                            } catch (e: Exception) {
+                                Log.e("SongPlayer", "Error in play/pause", e)
                             }
-                            isPlaying = !isPlaying
                         },
                         modifier = Modifier
                             .size(64.dp)
@@ -437,7 +496,7 @@ fun SongPlayerScreen(
                         Icon(
                             imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = if (isPlaying) "Pause" else "Play",
-                            tint = Color.Black, // Black icon on green background for contrast
+                            tint = Color.Black,
                             modifier = Modifier.size(32.dp)
                         )
                     }
@@ -447,7 +506,17 @@ fun SongPlayerScreen(
                     if (nextSong != null)
                         IconButton(
                             onClick = {
-                                song = nextSong // TODO
+                                Log.d("SongPlayer", "Next song clicked")
+                                coroutineScope.launch {
+                                    try {
+                                        song = nextSong
+                                        // Reset states for new song
+                                        playerReady = false
+                                        isPlaying = false
+                                    } catch (e: Exception) {
+                                        Log.e("SongPlayer", "Error switching to next song", e)
+                                    }
+                                }
                             },
                             modifier = Modifier
                                 .size(40.dp)
@@ -468,6 +537,11 @@ fun SongPlayerScreen(
             }
         }
     }
+
+    // Handle when user leaves the screen
+    DisposableEffect(Unit) {
+        onDispose {
+            Log.d("SongPlayer", "SongPlayerScreen disposed")
+        }
+    }
 }
-
-

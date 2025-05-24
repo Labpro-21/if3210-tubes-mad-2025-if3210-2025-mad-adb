@@ -12,7 +12,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,18 +19,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import coil3.compose.AsyncImage
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.model.SoundCapsule
 import com.example.adbpurrytify.data.model.DayStreak
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.theme.SpotifyGreen
 import com.example.adbpurrytify.ui.theme.SpotifyLightBlack
+import com.example.adbpurrytify.ui.viewmodels.AnalyticsViewModel
+import com.example.adbpurrytify.ui.viewmodels.ProfileViewModel
+import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileWriter
 
 @Composable
 fun MonthSelector(
@@ -102,13 +109,26 @@ fun MonthBadge(
         )
     }
 }
+
 @Composable
 fun TimeListenedSection(
     timeListened: Int,
     month: String, // MM-YYYY format
     navController: NavHostController,
-    modifier: Modifier = Modifier
+    isRealTime: Boolean = false,
+    modifier: Modifier = Modifier,
+    analyticsViewModel: AnalyticsViewModel = hiltViewModel()
 ) {
+    // Real-time listening stats - this will update automatically
+    val realTimeStats by analyticsViewModel.getRealTimeStats(month).collectAsState(initial = null)
+
+    val displayTime = if (isRealTime) {
+        // Always use real-time data for current month, even if starting from 0
+        realTimeStats?.let { (it.totalListeningTime / 60000).toInt() } ?: timeListened
+    } else {
+        timeListened
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -126,15 +146,32 @@ fun TimeListenedSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text(
-                    text = "Time listened",
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Time listened",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                    if (isRealTime && realTimeStats?.isCurrentlyListening == true) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .background(SpotifyGreen, CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "LIVE",
+                            color = SpotifyGreen,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "$timeListened minutes",
-                    color = SpotifyGreen,
+                    text = "$displayTime minutes",
+                    color = if (isRealTime && realTimeStats?.isCurrentlyListening == true) SpotifyGreen else SpotifyGreen,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -161,7 +198,7 @@ fun TopItemCard(
 ) {
     Card(
         modifier = modifier.clickable {
-            val route = if (title.contains("artist")) {
+            val route = if (title.contains("Artist", ignoreCase = true)) {
                 "${Screen.TopArtists.route}/$month"
             } else {
                 "${Screen.TopSongs.route}/$month"
@@ -197,7 +234,7 @@ fun TopItemCard(
 
             Text(
                 text = itemName,
-                color = if (title.contains("artist")) Color(0xFF4A9EFF) else Color(0xFFFFD700),
+                color = if (title.contains("Artist", ignoreCase = true)) Color(0xFF4A9EFF) else Color(0xFFFFD700),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
@@ -209,28 +246,65 @@ fun TopItemCard(
             Box(
                 modifier = Modifier
                     .size(64.dp)
-                    .clip(CircleShape)
+                    .clip(if (title.contains("Artist", ignoreCase = true)) CircleShape else RoundedCornerShape(8.dp))
                     .background(Color.Gray)
             ) {
-                Image(
-                    painter = painterResource(R.drawable.remembering_sunday),
-                    contentDescription = itemName,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+                // Better artwork handling with proper fallbacks
+                if (imageUrl.isNotEmpty()) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = itemName,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        placeholder = painterResource(R.drawable.song_art_placeholder),
+                        error = painterResource(R.drawable.song_art_placeholder)
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(R.drawable.song_art_placeholder),
+                        contentDescription = itemName,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SoundCapsuleCard(
     soundCapsule: SoundCapsule,
     navController: NavHostController,
     onDownloadClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    analyticsViewModel: AnalyticsViewModel = hiltViewModel(),
+    profileViewModel: ProfileViewModel = hiltViewModel() // Add ProfileViewModel for export functionality
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // State for download modal
+    var showFormatDialog by remember { mutableStateOf(false) }
+    var isDownloadAction by remember { mutableStateOf(true) }
+    val exportState by profileViewModel.exportState.collectAsState()
+
+    // Check if this is the current month for real-time updates
+    val isCurrentMonth = remember(soundCapsule.month) {
+        val currentMonth = java.text.SimpleDateFormat("MM-yyyy", java.util.Locale.getDefault())
+            .format(java.util.Date())
+        soundCapsule.month == currentMonth
+    }
+
+    // Real-time stats for current month
+    val realTimeStats by analyticsViewModel.getRealTimeStats(soundCapsule.month).collectAsState(initial = null)
+
+    // Check if we have any real-time data that should override "no data" state
+    val hasRealTimeData = isCurrentMonth && realTimeStats?.totalListeningTime?.let { it > 0 } == true
+    val shouldShowData = soundCapsule.hasData || hasRealTimeData
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -258,7 +332,10 @@ fun SoundCapsuleCard(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     IconButton(
-                        onClick = onDownloadClick,
+                        onClick = {
+                            isDownloadAction = true
+                            showFormatDialog = true
+                        },
                         modifier = Modifier.size(24.dp)
                     ) {
                         Icon(
@@ -270,7 +347,10 @@ fun SoundCapsuleCard(
                     }
 
                     IconButton(
-                        onClick = onShareClick,
+                        onClick = {
+                            isDownloadAction = false
+                            showFormatDialog = true
+                        },
                         modifier = Modifier.size(24.dp)
                     ) {
                         Icon(
@@ -284,7 +364,7 @@ fun SoundCapsuleCard(
             }
 
             Text(
-                text = soundCapsule.displayMonth, // Use displayMonth for UI
+                text = soundCapsule.displayMonth,
                 color = Color.Gray,
                 fontSize = 14.sp,
                 modifier = Modifier.padding(top = 4.dp)
@@ -292,76 +372,231 @@ fun SoundCapsuleCard(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            if (!soundCapsule.hasData) {
+            if (!shouldShowData) {
+                // Empty state
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp),
+                        .height(300.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "📊",
-                            fontSize = 48.sp
+                            text = "🎼",
+                            fontSize = 72.sp,
+                            modifier = Modifier.padding(bottom = 16.dp)
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+
                         Text(
-                            text = "No data available",
-                            color = Color.Gray,
-                            fontSize = 16.sp
+                            text = "No listening data yet",
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Medium
                         )
+
+                        if (isCurrentMonth) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Start playing music to see your personalized analytics!",
+                                color = Color(0xFFB3B3B3),
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(horizontal = 32.dp)
+                            )
+                        }
                     }
                 }
             } else {
-                // Time listened section with navigation (use month in MM-YYYY format)
+                // Time listened section with real-time updates for current month
                 TimeListenedSection(
                     timeListened = soundCapsule.timeListened,
-                    month = soundCapsule.month, // MM-YYYY format
-                    navController = navController
+                    month = soundCapsule.month,
+                    navController = navController,
+                    isRealTime = isCurrentMonth,
+                    analyticsViewModel = analyticsViewModel
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Top artist and top song with navigation
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    soundCapsule.topArtist?.let { artist ->
-                        TopItemCard(
-                            title = "Top artist",
-                            itemName = artist.name,
-                            imageUrl = artist.imageUrl,
-                            month = soundCapsule.month, // MM-YYYY format
-                            navController = navController,
-                            modifier = Modifier.weight(1f)
-                        )
+                // Top artist and top song - show real-time data if available
+                val displayTopArtist = soundCapsule.topArtist
+                val displayTopSong = soundCapsule.topSong
+
+                if (displayTopArtist != null || displayTopSong != null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        displayTopArtist?.let { artist ->
+                            TopItemCard(
+                                title = "Top Artist",
+                                itemName = artist.name,
+                                imageUrl = artist.imageUrl,
+                                month = soundCapsule.month,
+                                navController = navController,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        displayTopSong?.let { song ->
+                            TopItemCard(
+                                title = "Top Song",
+                                itemName = song.title,
+                                imageUrl = song.imageUrl,
+                                month = soundCapsule.month,
+                                navController = navController,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
 
-                    soundCapsule.topSong?.let { song ->
-                        TopItemCard(
-                            title = "Top song",
-                            itemName = song.title,
-                            imageUrl = song.imageUrl,
-                            month = soundCapsule.month, // MM-YYYY format
-                            navController = navController,
-                            modifier = Modifier.weight(1f)
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
+
+                // Day streak section
+                soundCapsule.dayStreak?.let { streak ->
+                    DayStreakCard(
+                        dayStreak = streak
+                    )
+                }
+            }
+
+            // Export state feedback
+            when (exportState) {
+                is ProfileViewModel.ExportState.Loading -> {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = Color(0xFF1DB954)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Processing...",
+                            color = Color.Gray,
+                            fontSize = 12.sp
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                is ProfileViewModel.ExportState.Success -> {
+                    LaunchedEffect(exportState) {
+                        kotlinx.coroutines.delay(2000)
+                        profileViewModel.clearExportState()
+                    }
 
-                soundCapsule.dayStreak?.let { streak ->
-                    DayStreakCard(dayStreak = streak)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "✓ ${(exportState as ProfileViewModel.ExportState.Success).fileName} saved successfully!",
+                        color = Color(0xFF1DB954),
+                        fontSize = 12.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                is ProfileViewModel.ExportState.Error -> {
+                    LaunchedEffect(exportState) {
+                        kotlinx.coroutines.delay(3000)
+                        profileViewModel.clearExportState()
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "✗ Error: ${(exportState as ProfileViewModel.ExportState.Error).message}",
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                ProfileViewModel.ExportState.Idle -> {
+                    // Do nothing
                 }
             }
         }
     }
-}
 
+    // Format selection dialog
+    if (showFormatDialog) {
+        AlertDialog(
+            onDismissRequest = { showFormatDialog = false },
+            title = {
+                Text(
+                    text = if (isDownloadAction) "Choose Download Format" else "Choose Share Format",
+                    color = Color.White
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Select the format for your Sound Capsule:",
+                        color = Color.Gray
+                    )
+                }
+            },
+            confirmButton = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TextButton(
+                        onClick = {
+                            showFormatDialog = false
+                            if (isDownloadAction) {
+                                profileViewModel.exportSoundCapsuleWithPermission(
+                                    context,
+                                    soundCapsule.month,
+                                    ProfileViewModel.ExportFormat.CSV
+                                )
+                            } else {
+                                profileViewModel.shareSoundCapsuleWithPermission(
+                                    context,
+                                    soundCapsule.month,
+                                    ProfileViewModel.ExportFormat.CSV
+                                )
+                            }
+                        }
+                    ) {
+                        Text("CSV", color = Color(0xFF1DB954))
+                    }
+
+                    TextButton(
+                        onClick = {
+                            showFormatDialog = false
+                            if (isDownloadAction) {
+                                profileViewModel.exportSoundCapsuleWithPermission(
+                                    context,
+                                    soundCapsule.month,
+                                    ProfileViewModel.ExportFormat.PDF
+                                )
+                            } else {
+                                profileViewModel.shareSoundCapsuleWithPermission(
+                                    context,
+                                    soundCapsule.month,
+                                    ProfileViewModel.ExportFormat.PDF
+                                )
+                            }
+                        }
+                    ) {
+                        Text("PDF", color = Color(0xFF1DB954))
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showFormatDialog = false }
+                ) {
+                    Text("Cancel", color = Color.Gray)
+                }
+            },
+            containerColor = Color(0xFF1E1E1E)
+        )
+    }
+}
 
 @Composable
 fun DayStreakCard(
@@ -376,7 +611,7 @@ fun DayStreakCard(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Large album art image
+            // Large album art image with better artwork handling
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -384,12 +619,23 @@ fun DayStreakCard(
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.Gray)
             ) {
-                Image(
-                    painter = painterResource(R.drawable.remembering_sunday), // Placeholder
-                    contentDescription = dayStreak.songTitle,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+                if (dayStreak.imageUrl.isNotEmpty()) {
+                    AsyncImage(
+                        model = dayStreak.imageUrl,
+                        contentDescription = dayStreak.songTitle,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        placeholder = painterResource(R.drawable.song_art_placeholder),
+                        error = painterResource(R.drawable.song_art_placeholder)
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(R.drawable.song_art_placeholder),
+                        contentDescription = dayStreak.songTitle,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

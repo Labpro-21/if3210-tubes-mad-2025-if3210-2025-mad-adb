@@ -1,6 +1,9 @@
 package com.example.adbpurrytify.data
 
+import android.util.Log
 import com.example.adbpurrytify.api.ApiService
+import com.example.adbpurrytify.data.analytics.AnalyticsService
+import com.example.adbpurrytify.data.local.AnalyticsDao
 import com.example.adbpurrytify.data.local.SongDao
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.data.model.TrendingSongResponse
@@ -18,7 +21,8 @@ import javax.inject.Singleton
 @Singleton
 class SongRepository @Inject constructor(
     private val songDao: SongDao,
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    private val analyticsDao: AnalyticsDao
 ) {
     // Local data operations
     fun getAllSongs(userId: Long): Flow<List<SongEntity>> {
@@ -72,6 +76,18 @@ class SongRepository @Inject constructor(
             }
         } catch (e: Exception) {
             emptyList()
+        }
+    }
+
+    suspend fun getLastIncompleteSong(userId: Long): SongEntity? {
+        return try {
+            val incompleteSession = analyticsDao.getActiveListeningSession(userId)
+            if (incompleteSession != null) {
+                getSongById(incompleteSession.songId)
+            } else null
+        } catch (e: Exception) {
+            Log.e("SongRepository", "Error getting incomplete song", e)
+            null
         }
     }
 

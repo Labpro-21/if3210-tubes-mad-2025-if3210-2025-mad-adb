@@ -4,6 +4,7 @@ import com.example.adbpurrytify.api.ApiService
 import com.example.adbpurrytify.data.AuthRepository
 import com.example.adbpurrytify.data.SongRepository
 import com.example.adbpurrytify.data.TokenManager
+import com.example.adbpurrytify.data.local.AnalyticsDao
 import com.example.adbpurrytify.data.local.SongDao
 import dagger.Module
 import dagger.Provides
@@ -19,17 +20,21 @@ object RepositoryModule {
     @Singleton
     fun provideAuthRepository(
         apiService: ApiService,
-        tokenManager: TokenManager
+        tokenManager: TokenManager,
+        analyticsDao: AnalyticsDao,
+        songRepository: SongRepository
     ): AuthRepository {
-        return AuthRepository(apiService, tokenManager)
+        return AuthRepository(apiService, tokenManager, analyticsDao, songRepository)
     }
 
     @Provides
     @Singleton
     fun provideSongRepository(
         songDao: SongDao,
-        apiService: ApiService
+        apiService: ApiService,
+        analyticsDao: AnalyticsDao
+
     ): SongRepository {
-        return SongRepository(songDao, apiService)
+        return SongRepository(songDao, apiService, analyticsDao)
     }
 }

@@ -5,6 +5,8 @@ import com.example.adbpurrytify.api.ApiService
 import com.example.adbpurrytify.api.LoginRequest
 import com.example.adbpurrytify.api.RefreshTokenRequest
 import com.example.adbpurrytify.api.UserProfile
+import com.example.adbpurrytify.data.local.AnalyticsDao
+import com.example.adbpurrytify.data.model.SongEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MultipartBody
@@ -20,7 +22,9 @@ import javax.inject.Singleton
 @Singleton
 class AuthRepository @Inject constructor(
     private val apiService: ApiService,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val analyticsDao: AnalyticsDao,
+    private val songRepository: SongRepository
 ) {
     private val TAG = "AuthRepository"
 
@@ -177,4 +181,36 @@ class AuthRepository @Inject constructor(
     fun logout() {
         tokenManager.clearTokens()
     }
+
+    suspend fun checkForAutoResume(userId: Long): AutoResumeData? {
+        return try {
+            val incompleteSession = analyticsDao.getActiveListeningSession(userId)
+            if (incompleteSession != null) {
+                val song = songRepository.getSongById(incompleteSession.songId)
+                if (song != null) {
+                    // Mark the session as completed since we're resuming
+                    val completedSession = incompleteSession.copy(
+                        endTime = System.currentTimeMillis(),
+                        duration = incompleteSession.duration
+                    )
+                    analyticsDao.updateListeningSession(completedSession)
+
+                    AutoResumeData(
+                        song = song,
+                        lastPosition = incompleteSession.duration,
+                        sessionStartTime = incompleteSession.startTime
+                    )
+                } else null
+            } else null
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Error checking auto-resume", e)
+            null
+        }
+    }
 }
+
+data class AutoResumeData(
+    val song: SongEntity,
+    val lastPosition: Long,
+    val sessionStartTime: Long
+)

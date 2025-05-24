@@ -1,6 +1,5 @@
 package com.example.adbpurrytify.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,12 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import coil3.compose.AsyncImage
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.ui.components.MiniPlayer
 import com.example.adbpurrytify.ui.theme.SpotifyGreen
@@ -130,7 +129,7 @@ private fun TopArtistsContent(
         }
 
         itemsIndexed(data.artists) { index, artist ->
-            ArtistListItem(artist = artist)
+            EnhancedArtistListItem(artist = artist)
         }
 
         item {
@@ -140,7 +139,7 @@ private fun TopArtistsContent(
 }
 
 @Composable
-private fun ArtistListItem(
+private fun EnhancedArtistListItem(
     artist: ArtistListeningData,
     modifier: Modifier = Modifier
 ) {
@@ -166,18 +165,26 @@ private fun ArtistListItem(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Artist image
+            // Artist image with better handling
             Box(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(CircleShape)
                     .background(Color.Gray)
             ) {
-                Image(
-                    painter = painterResource(R.drawable.remembering_sunday),
+                AsyncImage(
+                    model = if (artist.imageUrl.isNotEmpty()) {
+                        artist.imageUrl
+                    } else {
+                        R.drawable.song_art_placeholder
+                    },
                     contentDescription = artist.name,
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    onError = {
+                        // Log error for debugging
+                        println("Failed to load artist image: ${artist.imageUrl}")
+                    }
                 )
             }
 
@@ -200,11 +207,21 @@ private fun ArtistListItem(
             }
 
             // Minutes listened
-            Text(
-                text = "${artist.minutesListened} min",
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
+            Column(
+                horizontalAlignment = Alignment.End
+            ) {
+                Text(
+                    text = "${artist.minutesListened}",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "min",
+                    color = Color.Gray,
+                    fontSize = 12.sp
+                )
+            }
         }
     }
 }

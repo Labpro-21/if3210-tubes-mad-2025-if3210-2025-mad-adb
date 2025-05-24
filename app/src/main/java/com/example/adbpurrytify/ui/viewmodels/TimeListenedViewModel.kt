@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.example.adbpurrytify.data.AnalyticsRepository
+import com.example.adbpurrytify.data.AuthRepository
 
 data class DailyListeningData(
     val day: Int,
@@ -32,8 +34,15 @@ data class TimeListenedData(
     val weeklyData: List<WeeklyListeningData>
 )
 
+
+
+
+
 @HiltViewModel
-class TimeListenedViewModel @Inject constructor() : ViewModel() {
+class TimeListenedViewModel @Inject constructor(
+    private val analyticsRepository: AnalyticsRepository,
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow<TimeListenedUiState>(TimeListenedUiState.Loading)
     val uiState: StateFlow<TimeListenedUiState> = _uiState.asStateFlow()
@@ -49,132 +58,21 @@ class TimeListenedViewModel @Inject constructor() : ViewModel() {
             _uiState.value = TimeListenedUiState.Loading
 
             try {
-                // TODO: Replace with actual API call
-                val mockData = generateMockTimeListenedData(monthYear)
-                _uiState.value = TimeListenedUiState.Success(mockData)
+                val userResult = authRepository.getCurrentUser()
+                if (userResult.isSuccess) {
+                    val userId = userResult.getOrThrow().id
+                    val parts = monthYear.split("-")
+                    val month = parts[0].toInt()
+                    val year = parts[1].toInt()
+
+                    val data = analyticsRepository.getTimeListenedData(userId, year, month)
+                    _uiState.value = TimeListenedUiState.Success(data)
+                } else {
+                    _uiState.value = TimeListenedUiState.Error("Failed to get user data")
+                }
             } catch (e: Exception) {
                 _uiState.value = TimeListenedUiState.Error(e.message ?: "Unknown error")
             }
         }
-    }
-
-    private fun generateMockTimeListenedData(monthYear: String): TimeListenedData {
-        val displayMonth = formatMonthYearForDisplay(monthYear)
-        val daysInMonth = getDaysInMonth(monthYear)
-        val monthAbbr = getMonthAbbreviation(monthYear)
-
-        // Generate daily data
-        val dailyData = (1..daysInMonth).map { day ->
-            DailyListeningData(
-                day = day,
-                minutes = (10..120).random(),
-                date = "$monthAbbr $day"
-            )
-        }
-
-        // Aggregate into weekly data
-        val weeklyData = aggregateToWeeklyData(dailyData, monthAbbr)
-
-        val totalMinutes = dailyData.sumOf { it.minutes }
-        val dailyAverage = totalMinutes / dailyData.size
-        val weeklyAverage = totalMinutes / weeklyData.size
-
-        return TimeListenedData(
-            month = monthYear,
-            displayMonth = displayMonth,
-            totalMinutes = totalMinutes,
-            dailyAverage = dailyAverage,
-            weeklyAverage = weeklyAverage,
-            dailyData = dailyData,
-            weeklyData = weeklyData
-        )
-    }
-
-    private fun aggregateToWeeklyData(dailyData: List<DailyListeningData>, monthAbbr: String): List<WeeklyListeningData> {
-        val weeks = mutableListOf<WeeklyListeningData>()
-        val daysPerWeek = 7
-
-        for (weekIndex in 0 until (dailyData.size + daysPerWeek - 1) / daysPerWeek) {
-            val startDay = weekIndex * daysPerWeek
-            val endDay = minOf(startDay + daysPerWeek - 1, dailyData.size - 1)
-
-            val weekDays = dailyData.subList(startDay, endDay + 1)
-            val weekMinutes = weekDays.sumOf { it.minutes }
-
-            val startDate = dailyData[startDay].day
-            val endDate = dailyData[endDay].day
-
-            weeks.add(
-                WeeklyListeningData(
-                    weekNumber = weekIndex + 1,
-                    minutes = weekMinutes,
-                    weekLabel = "Week ${weekIndex + 1}",
-                    dateRange = "$monthAbbr $startDate-$endDate"
-                )
-            )
-        }
-
-        return weeks
-    }
-
-    private fun formatMonthYearForDisplay(monthYear: String): String {
-        return try {
-            val parts = monthYear.split("-")
-            if (parts.size == 2) {
-                val month = parts[0].toInt()
-                val year = parts[1]
-                val monthNames = listOf(
-                    "January", "February", "March", "April", "May", "June",
-                    "July", "August", "September", "October", "November", "December"
-                )
-                "${monthNames[month - 1]} $year"
-            } else {
-                monthYear
-            }
-        } catch (e: Exception) {
-            monthYear
-        }
-    }
-
-    private fun getMonthAbbreviation(monthYear: String): String {
-        return try {
-            val parts = monthYear.split("-")
-            if (parts.size == 2) {
-                val month = parts[0].toInt()
-                val monthAbbreviations = listOf(
-                    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-                )
-                monthAbbreviations[month - 1]
-            } else {
-                "Jan"
-            }
-        } catch (e: Exception) {
-            "Jan"
-        }
-    }
-
-    private fun getDaysInMonth(monthYear: String): Int {
-        return try {
-            val parts = monthYear.split("-")
-            if (parts.size == 2) {
-                val month = parts[0].toInt()
-                val year = parts[1].toInt()
-
-                when (month) {
-                    2 -> if (isLeapYear(year)) 29 else 28
-                    4, 6, 9, 11 -> 30
-                    else -> 31
-                }
-            } else {
-                30
-            }
-        } catch (e: Exception) {
-            30
-        }
-    }
-
-    private fun isLeapYear(year: Int): Boolean {
-        return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
     }
 }
