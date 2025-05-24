@@ -62,6 +62,12 @@ dependencies {
     // Palette for color extraction - ADD THIS
     implementation("androidx.palette:palette-ktx:1.0.0")
 
+    // Google Play Services Location
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+
+    // Google Maps for Android
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+
     // "Diajarkan di kelas"
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
@@ -87,6 +93,10 @@ dependencies {
     implementation("androidx.room:room-ktx:2.7.0")
     implementation("androidx.room:room-runtime:2.7.0")
     ksp("androidx.room:room-compiler:2.7.0")
+
+    implementation("org.osmdroid:osmdroid-android:6.1.17")
+    implementation("org.osmdroid:osmdroid-wms:6.1.17")
+    implementation("org.osmdroid:osmdroid-mapsforge:6.1.17")
 
     // QR generator
     implementation(libs.qrgenerator)

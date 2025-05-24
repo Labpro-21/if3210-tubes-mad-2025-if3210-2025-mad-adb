@@ -18,6 +18,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
+import com.example.adbpurrytify.ui.screens.EditProfileScreen
 import com.example.adbpurrytify.ui.screens.HomeScreen
 import com.example.adbpurrytify.ui.screens.LibraryScreen
 import com.example.adbpurrytify.ui.screens.LoginScreen
@@ -91,6 +92,11 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 // Using Hilt to get ViewModel
                 val viewModel = hiltViewModel<ProfileViewModel>()
                 ProfileScreen(viewModel = viewModel, navController = navController)
+            }
+
+            // Add Edit Profile route
+            composable("edit_profile") {
+                EditProfileScreen(navController = navController)
             }
 
             // Add player route

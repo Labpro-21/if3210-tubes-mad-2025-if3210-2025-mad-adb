@@ -16,12 +16,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +51,8 @@ import com.example.adbpurrytify.data.model.UserStats
 import com.example.adbpurrytify.ui.components.MiniPlayer
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
+import com.example.adbpurrytify.ui.theme.SpotifyGreen
+import com.example.adbpurrytify.ui.theme.SpotifyLightBlack
 import com.example.adbpurrytify.ui.viewmodels.MockProfileViewModel
 import com.example.adbpurrytify.ui.viewmodels.ProfileViewModel
 
@@ -78,6 +85,7 @@ fun ProfileScreen(
         }
     }
 }
+
 @Composable
 private fun ProfileContent(user: User,
                            stats: UserStats, navController: NavHostController) {
@@ -170,18 +178,41 @@ private fun ProfileContent(user: User,
         Text(text = user.location)
         Spacer(modifier = Modifier.padding(padding * 1/2f))
 
-        // Styled logout button
-        Button(
-            onClick = { logout(navController) },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Red,
-                contentColor = Color.White
-            ),
-            modifier = Modifier.padding(vertical = 8.dp)
+        // Action buttons row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
         ) {
-            Text("LOGOUT")
-        }
+            // Edit Profile button
+            OutlinedButton(
+                onClick = { navController.navigate("edit_profile") },
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = SpotifyGreen,
+                    containerColor = Color.Transparent
+                ),
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit Profile",
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("EDIT PROFILE")
+            }
 
+            // Logout button
+            Button(
+                onClick = { logout(navController) },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Red,
+                    contentColor = Color.White
+                ),
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("LOGOUT")
+            }
+        }
 
         Spacer(modifier = Modifier.padding(padding * 1 / 2))
         Row {
@@ -225,8 +256,6 @@ private fun ProfileContent(user: User,
         Spacer(modifier = Modifier.padding(vertical = 200.dp))
         MiniPlayer(navController = navController)
     }
-
-
 }
 
 @Composable
