@@ -9,6 +9,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+
+import com.example.adbpurrytify.data.AnalyticsRepository
+import com.example.adbpurrytify.data.AuthRepository
+
+
+
 data class SongListeningData(
     val id: Long,
     val title: String,
@@ -27,7 +33,10 @@ data class TopSongsData(
 )
 
 @HiltViewModel
-class TopSongsViewModel @Inject constructor() : ViewModel() {
+class TopSongsViewModel @Inject constructor(
+    private val analyticsRepository: AnalyticsRepository,
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow<TopSongsUiState>(TopSongsUiState.Loading)
     val uiState: StateFlow<TopSongsUiState> = _uiState.asStateFlow()
@@ -43,65 +52,21 @@ class TopSongsViewModel @Inject constructor() : ViewModel() {
             _uiState.value = TopSongsUiState.Loading
 
             try {
-                // TODO: Replace with actual API call
-                val mockData = generateMockTopSongsData(monthYear)
-                _uiState.value = TopSongsUiState.Success(mockData)
+                val userResult = authRepository.getCurrentUser()
+                if (userResult.isSuccess) {
+                    val userId = userResult.getOrThrow().id
+                    val parts = monthYear.split("-")
+                    val month = parts[0].toInt()
+                    val year = parts[1].toInt()
+
+                    val data = analyticsRepository.getTopSongsData(userId, year, month)
+                    _uiState.value = TopSongsUiState.Success(data)
+                } else {
+                    _uiState.value = TopSongsUiState.Error("Failed to get user data")
+                }
             } catch (e: Exception) {
                 _uiState.value = TopSongsUiState.Error(e.message ?: "Unknown error")
             }
-        }
-    }
-
-    private fun generateMockTopSongsData(monthYear: String): TopSongsData {
-        val displayMonth = formatMonthYearForDisplay(monthYear)
-
-        val songs = listOf(
-            "Starboy" to "The Weeknd",
-            "Loose" to "Daniel Caesar",
-            "Nights" to "Frank Ocean",
-            "Doomsday" to "MF DOOM",
-            "Good 4 U" to "Olivia Rodrigo",
-            "HUMBLE." to "Kendrick Lamar",
-            "Blinding Lights" to "The Weeknd",
-            "Come Through and Chill" to "Miguel",
-            "Golden" to "Harry Styles",
-            "Levitating" to "Dua Lipa"
-        ).mapIndexed { index, (title, artist) ->
-            SongListeningData(
-                id = index.toLong(),
-                title = title,
-                artist = artist,
-                imageUrl = "",
-                playsCount = (50 - index * 3),
-                minutesListened = (150 - index * 10),
-                rank = index + 1
-            )
-        }
-
-        return TopSongsData(
-            month = monthYear,
-            displayMonth = displayMonth,
-            totalSongs = 203,
-            songs = songs
-        )
-    }
-
-    private fun formatMonthYearForDisplay(monthYear: String): String {
-        return try {
-            val parts = monthYear.split("-")
-            if (parts.size == 2) {
-                val month = parts[0].toInt()
-                val year = parts[1]
-                val monthNames = listOf(
-                    "January", "February", "March", "April", "May", "June",
-                    "July", "August", "September", "October", "November", "December"
-                )
-                "${monthNames[month - 1]} $year"
-            } else {
-                monthYear
-            }
-        } catch (e: Exception) {
-            monthYear
         }
     }
 }

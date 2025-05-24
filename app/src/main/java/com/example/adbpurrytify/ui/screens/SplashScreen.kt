@@ -115,7 +115,8 @@ fun SplashScreen(
             .background(BLACK_BACKGROUND)
     ) {
         Image(
-            painter = painterResource(id = R.drawable.logo_purrytify),
+            painter = painterResource(
+                R.drawable.logo_purrytify),
             contentDescription = "Logo",
             modifier = Modifier.scale(scale.value)
         )

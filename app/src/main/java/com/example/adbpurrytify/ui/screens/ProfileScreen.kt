@@ -1,3 +1,4 @@
+// ui/screens/ProfileScreen.kt
 package com.example.adbpurrytify.ui.screens
 
 import android.util.Log
@@ -84,7 +85,8 @@ fun ProfileScreen(
                         soundCapsules = state.soundCapsules,
                         selectedMonth = selectedMonth,
                         onMonthSelected = viewModel::selectMonth,
-                        navController = navController
+                        navController = navController,
+                        viewModel = viewModel
                     )
                 }
                 is ProfileViewModel.ProfileUiState.Error -> {
@@ -102,7 +104,8 @@ private fun ProfileContent(
     soundCapsules: Map<String, SoundCapsule>,
     selectedMonth: String,
     onMonthSelected: (String) -> Unit,
-    navController: NavHostController
+    navController: NavHostController,
+    viewModel: ProfileViewModel
 ) {
     val padding = 8.dp
     val backgroundColor = Color(0xFF121212)
@@ -267,17 +270,12 @@ private fun ProfileContent(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Sound capsule card
+                // Sound capsule card with integrated download/share functionality
                 soundCapsules[selectedMonth]?.let { capsule ->
                     SoundCapsuleCard(
                         soundCapsule = capsule,
                         navController = navController,
-                        onDownloadClick = {
-                            // TODO: Implement CSV/PDF download functionality
-                        },
-                        onShareClick = {
-                            // TODO: Implement share functionality
-                        }
+                        profileViewModel = viewModel  // Pass the ProfileViewModel
                     )
                 }
             }

@@ -1,6 +1,5 @@
 package com.example.adbpurrytify.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,13 +14,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import coil3.compose.AsyncImage
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.ui.components.MiniPlayer
 import com.example.adbpurrytify.ui.theme.SpotifyGreen
@@ -130,7 +129,7 @@ private fun TopSongsContent(
         }
 
         itemsIndexed(data.songs) { index, song ->
-            SongListItem(song = song)
+            EnhancedSongListItem(song = song)
         }
 
         item {
@@ -140,7 +139,7 @@ private fun TopSongsContent(
 }
 
 @Composable
-private fun SongListItem(
+private fun EnhancedSongListItem(
     song: SongListeningData,
     modifier: Modifier = Modifier
 ) {
@@ -166,18 +165,26 @@ private fun SongListItem(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Song image
+            // Song image with better error handling
             Box(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.Gray)
             ) {
-                Image(
-                    painter = painterResource(R.drawable.remembering_sunday),
+                AsyncImage(
+                    model = if (song.imageUrl.isNotEmpty()) {
+                        song.imageUrl
+                    } else {
+                        R.drawable.song_art_placeholder
+                    },
                     contentDescription = song.title,
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    onError = {
+                        // Log error for debugging
+                        println("Failed to load song image: ${song.imageUrl}")
+                    }
                 )
             }
 
@@ -210,11 +217,21 @@ private fun SongListItem(
             }
 
             // Minutes listened
-            Text(
-                text = "${song.minutesListened} min",
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
+            Column(
+                horizontalAlignment = Alignment.End
+            ) {
+                Text(
+                    text = "${song.minutesListened}",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "min",
+                    color = Color.Gray,
+                    fontSize = 12.sp
+                )
+            }
         }
     }
 }

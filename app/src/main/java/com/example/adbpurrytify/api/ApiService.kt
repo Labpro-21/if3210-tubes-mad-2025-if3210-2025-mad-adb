@@ -66,5 +66,5 @@ interface ApiService {
     suspend fun getTopCountrySongs(@Path("country_code") countryCode: String): Response<List<OnlineSong>>
 
     @GET("api/songs/{song_id}")
-    suspend fun getSong(@Path("song_id") song_id: Long): okhttp3.Response<>
+    suspend fun getSong(@Path("song_id") song_id: Long): Response<OnlineSong>
 }

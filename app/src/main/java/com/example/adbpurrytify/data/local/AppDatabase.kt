@@ -5,10 +5,21 @@ import androidx.room.Database
 import androidx.room.Room.databaseBuilder
 import androidx.room.RoomDatabase
 import com.example.adbpurrytify.data.model.SongEntity
+import com.example.adbpurrytify.data.model.analytics.ListeningSessionEntity
+import com.example.adbpurrytify.data.model.analytics.StreakEntity
 
-@Database(entities = [SongEntity::class], version = 2)
+@Database(
+    entities = [
+        SongEntity::class,
+        ListeningSessionEntity::class,
+        StreakEntity::class
+    ],
+    version = 5,
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun songDao(): SongDao
+    abstract fun analyticsDao(): AnalyticsDao
 
     companion object {
         @Volatile
