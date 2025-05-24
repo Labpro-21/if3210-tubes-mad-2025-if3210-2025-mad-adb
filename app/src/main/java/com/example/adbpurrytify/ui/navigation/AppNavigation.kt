@@ -18,17 +18,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
-import com.example.adbpurrytify.ui.screens.EditProfileScreen
-import com.example.adbpurrytify.ui.screens.HomeScreen
-import com.example.adbpurrytify.ui.screens.LibraryScreen
-import com.example.adbpurrytify.ui.screens.LoginScreen
-import com.example.adbpurrytify.ui.screens.NetworkSensingSnackbar
-import com.example.adbpurrytify.ui.screens.ProfileScreen
-import com.example.adbpurrytify.ui.screens.SongPlayerScreen
-import com.example.adbpurrytify.ui.screens.SplashScreen
-import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
-import com.example.adbpurrytify.ui.viewmodels.ProfileViewModel
-import com.example.adbpurrytify.ui.viewmodels.SongViewModel
+import com.example.adbpurrytify.ui.screens.*
+import com.example.adbpurrytify.ui.viewmodels.*
 
 @Composable
 fun AppNavigation(navController: NavHostController = rememberNavController()) {
@@ -74,13 +65,11 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             }
 
             composable(Screen.Home.route) {
-                // Using Hilt to get ViewModel
                 val homeViewModel = hiltViewModel<HomeViewModel>()
                 HomeScreen(navController, homeViewModel)
             }
 
             composable(Screen.Library.route) {
-                // Using Hilt to get ViewModel
                 val songViewModel = hiltViewModel<SongViewModel>()
                 LibraryScreen(
                     navController = navController,
@@ -89,17 +78,14 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             }
 
             composable(Screen.Profile.route) {
-                // Using Hilt to get ViewModel
                 val viewModel = hiltViewModel<ProfileViewModel>()
                 ProfileScreen(viewModel = viewModel, navController = navController)
             }
 
-            // Add Edit Profile route
-            composable("edit_profile") {
+            composable(Screen.EditProfile.route) {
                 EditProfileScreen(navController = navController)
             }
 
-            // Add player route
             composable(
                 route = "${Screen.Player.route}/{songId}",
                 arguments = listOf(
@@ -107,14 +93,58 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 )
             ) { backStackEntry ->
                 val songId = backStackEntry.arguments?.getLong("songId") ?: -1L
-
-                // Using Hilt to get ViewModel
                 val songViewModel = hiltViewModel<SongViewModel>()
                 SongPlayerScreen(
                     navController = navController,
                     songId = songId,
                     viewModel = songViewModel,
                     snackBarHostState = snackbarHostState
+                )
+            }
+
+            // Sound Capsule detail screens
+            composable(
+                route = "${Screen.TimeListened.route}/{month}",
+                arguments = listOf(
+                    navArgument("month") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val month = backStackEntry.arguments?.getString("month") ?: ""
+                val viewModel = hiltViewModel<TimeListenedViewModel>()
+                TimeListenedScreen(
+                    navController = navController,
+                    month = month,
+                    viewModel = viewModel
+                )
+            }
+
+            composable(
+                route = "${Screen.TopArtists.route}/{month}",
+                arguments = listOf(
+                    navArgument("month") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val month = backStackEntry.arguments?.getString("month") ?: ""
+                val viewModel = hiltViewModel<TopArtistsViewModel>()
+                TopArtistsScreen(
+                    navController = navController,
+                    month = month,
+                    viewModel = viewModel
+                )
+            }
+
+            composable(
+                route = "${Screen.TopSongs.route}/{month}",
+                arguments = listOf(
+                    navArgument("month") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val month = backStackEntry.arguments?.getString("month") ?: ""
+                val viewModel = hiltViewModel<TopSongsViewModel>()
+                TopSongsScreen(
+                    navController = navController,
+                    month = month,
+                    viewModel = viewModel
                 )
             }
 
