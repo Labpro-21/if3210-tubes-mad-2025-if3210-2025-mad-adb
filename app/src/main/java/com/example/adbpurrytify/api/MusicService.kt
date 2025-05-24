@@ -1,31 +1,16 @@
 package com.example.adbpurrytify.api
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.PendingIntent.FLAG_IMMUTABLE
-import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Icon
-import androidx.compose.ui.platform.LocalContext
-import androidx.core.app.NotificationCompat
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
-import androidx.media3.common.SimpleBasePlayer
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.CommandButton
@@ -35,14 +20,11 @@ import androidx.media3.session.MediaSession.ConnectionResult.AcceptedResultBuild
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
-import com.example.adbpurrytify.R
-import com.example.adbpurrytify.data.SongRepository_Factory
 import com.example.adbpurrytify.data.local.AppDatabase
-import com.example.adbpurrytify.data.local.SongDao
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.di.DatabaseModule
 import com.example.adbpurrytify.ui.screens.SongPlayer
-import com.example.adbpurrytify.ui.viewmodels.SongViewModel
+import com.example.adbpurrytify.ui.screens.globalPlayer
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.runBlocking
 
@@ -82,6 +64,7 @@ class MusicService : MediaSessionService() {
             }
         }
         player?.addListener(playerListener)
+        globalPlayer.player = player // aku butuh istirahat
 
         val forwardingPlayer = object : ForwardingPlayer(player!!) {
             override fun seekToPrevious() {

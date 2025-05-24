@@ -16,7 +16,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -74,11 +73,13 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
 
+
         if (SongPlayer.mediaController == null) connectMusicPlayer()
         Log.d("RESUME", "Hiii :3")
     }
 
     fun connectMusicPlayer() { // IDEK atp man
+        SongPlayer.release()
         val sessionToken = SessionToken(this, ComponentName(this, MusicService::class.java))
         val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
         controllerFuture.addListener({

@@ -46,36 +46,34 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.media3.common.Player
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.download.downloadSong
 import com.example.adbpurrytify.data.model.SongEntity
+import com.example.adbpurrytify.ui.components.AudioDeviceSelect
 import com.example.adbpurrytify.ui.navigation.Screen
-import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
 import com.example.adbpurrytify.ui.theme.Green
 import com.example.adbpurrytify.ui.theme.SpotifyGreen
 import com.example.adbpurrytify.ui.theme.SpotifyLightGray
 import com.example.adbpurrytify.ui.theme.TEXT_FIELD_TEXT
+import com.example.adbpurrytify.ui.utils.DynamicColorExtractor
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
-import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.layout.ContentScale
-import androidx.media3.common.Player
-import coil3.compose.AsyncImage
-import com.example.adbpurrytify.ui.utils.DynamicColorExtractor
 import java.lang.Long.max
 
 // Update the SongPlayerScreen composable
@@ -242,6 +240,7 @@ fun SongPlayerScreen(
                 )
 
                 Spacer(modifier = Modifier.width(48.dp))
+
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -461,6 +460,10 @@ fun SongPlayerScreen(
                             )
                         }
                 }
+
+                Spacer(modifier = Modifier.height(64.dp))
+                AudioDeviceSelect()
+
             } ?: run {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = Green)

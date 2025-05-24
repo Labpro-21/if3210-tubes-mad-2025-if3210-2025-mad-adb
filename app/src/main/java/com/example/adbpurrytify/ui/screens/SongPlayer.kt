@@ -14,10 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.session.MediaController
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.theme.Green
@@ -30,6 +28,15 @@ fun formatTime(millis: Long): String {
     return String.format("%02d:%02d", minutes, seconds)
 }
 
+object globalPlayer {
+// all that work refactoring dan ternyata gabisa akses .setPreferredDevice() dari mediaController bruh
+// I will declare this global reference and use the player from anywhere I damn well please
+// i hate OOP, i hate encapsulation, i hate using people's dumb libraries.
+// i want to make syscalls and make my own damn calls to the audio driver
+// is that too much to ask for
+var player: ExoPlayer? = null
+var userSelectedAudioDeviceId: Int = -1
+}
 
 object SongPlayer {
 
