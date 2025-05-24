@@ -3,6 +3,9 @@ package com.example.adbpurrytify.api
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.PendingIntent.FLAG_IMMUTABLE
+import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -52,6 +55,15 @@ class MusicService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
 
+        val iintent = packageManager.getLaunchIntentForPackage(packageName)
+        val intent = Intent().apply {
+
+            setClassName("com.example.adbpurrytify", "com.example.adbpurrytify.MainActivity")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+        }
+//        packageManager.getLaunchIntentForPackage()
+        val pendingIntent = PendingIntent.getActivity(this, 0, iintent, PendingIntent.FLAG_IMMUTABLE)
+
         val nextButton =
             CommandButton.Builder(CommandButton.ICON_NEXT)
                 .setDisplayName("Next Song")
@@ -79,6 +91,7 @@ class MusicService : MediaSessionService() {
             .setId("MusicSession")
             .setCustomLayout(mutableListOf<CommandButton>(nextButton))
             .setCallback(MyCallback(this))
+            .setSessionActivity(pendingIntent)
             .build()
 
     }

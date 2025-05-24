@@ -24,11 +24,13 @@
     <!-- ADD THIS LINE for Foreground Service Media Playback -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
-
     <!-- Camera feature (optional) -->
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
+
+    <!-- AudioRouting and Output Device -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <application
         android:name=".PurrytifyApplication"
@@ -72,8 +74,12 @@
             android:theme="@style/Theme.ADBPurrytify">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <action android:name="androidx.media3.session.MediaSessionService" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="purrytify"
                     android:host="song"
@@ -92,6 +98,10 @@
             android:exported="false"
             android:label="Pick Location on Map"
             android:theme="@style/Theme.ADBPurrytify" />
-    </application>
 
+
+    </application>
+    <queries>
+        <package android:name="com.example.adbpurrytify" />
+    </queries>
 </manifest>
