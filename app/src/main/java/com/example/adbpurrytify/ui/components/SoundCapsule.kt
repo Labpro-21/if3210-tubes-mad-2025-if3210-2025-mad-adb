@@ -25,16 +25,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.model.SoundCapsule
 import com.example.adbpurrytify.data.model.DayStreak
+import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.theme.SpotifyGreen
 import com.example.adbpurrytify.ui.theme.SpotifyLightBlack
 
 @Composable
 fun MonthSelector(
-    months: List<String>,
-    selectedMonth: String,
+    months: List<String>, // List of MM-YYYY strings
+    selectedMonth: String, // MM-YYYY format
     onMonthSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -48,11 +50,31 @@ fun MonthSelector(
     ) {
         items(reversedMonths) { month ->
             MonthBadge(
-                month = month,
+                month = formatMonthForDisplay(month), // Convert MM-YYYY to display format
                 isSelected = month == selectedMonth,
                 onClick = { onMonthSelected(month) }
             )
         }
+    }
+}
+
+// Helper function to convert MM-YYYY to display format
+private fun formatMonthForDisplay(monthYear: String): String {
+    return try {
+        val parts = monthYear.split("-")
+        if (parts.size == 2) {
+            val month = parts[0].toInt()
+            val year = parts[1]
+            val monthNames = listOf(
+                "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+            )
+            "${monthNames[month - 1]} $year"
+        } else {
+            monthYear
+        }
+    } catch (e: Exception) {
+        monthYear
     }
 }
 
@@ -80,147 +102,19 @@ fun MonthBadge(
         )
     }
 }
-
 @Composable
-fun SoundCapsuleCard(
-    soundCapsule: SoundCapsule,
-    onDownloadClick: () -> Unit = {},
-    onShareClick: () -> Unit = {},
+fun TimeListenedSection(
+    timeListened: Int,
+    month: String, // MM-YYYY format
+    navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            // Header with title and icons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Your Sound Capsule",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    IconButton(
-                        onClick = onDownloadClick, // CSV/PDF download
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Download,
-                            contentDescription = "Download CSV/PDF",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onShareClick, // Share functionality
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = "Share",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
-
-
-            Text(
-                text = soundCapsule.month,
-                color = Color.Gray,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            if (!soundCapsule.hasData) {
-                // No data available
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "📊",
-                            fontSize = 48.sp
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "No data available",
-                            color = Color.Gray,
-                            fontSize = 16.sp
-                        )
-                    }
-                }
-            } else {
-                // Time listened section with arrow
-                TimeListenedSection(timeListened = soundCapsule.timeListened)
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Top artist and top song with arrows
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    soundCapsule.topArtist?.let { artist ->
-                        TopItemCard(
-                            title = "Top artist",
-                            itemName = artist.name,
-                            imageUrl = artist.imageUrl,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    soundCapsule.topSong?.let { song ->
-                        TopItemCard(
-                            title = "Top song",
-                            itemName = song.title,
-                            imageUrl = song.imageUrl,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Day streak
-                soundCapsule.dayStreak?.let { streak ->
-                    DayStreakCard(dayStreak = streak)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun TimeListenedSection(
-    timeListened: Int,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
+            .clickable {
+                navController.navigate("${Screen.TimeListened.route}/$month")
+            },
         colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A2A)),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -261,10 +155,19 @@ fun TopItemCard(
     title: String,
     itemName: String,
     imageUrl: String,
+    month: String, // MM-YYYY format
+    navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier,
+        modifier = modifier.clickable {
+            val route = if (title.contains("artist")) {
+                "${Screen.TopArtists.route}/$month"
+            } else {
+                "${Screen.TopSongs.route}/$month"
+            }
+            navController.navigate(route)
+        },
         colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A2A)),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -292,10 +195,9 @@ fun TopItemCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Artist/Song name with color coding
             Text(
                 text = itemName,
-                color = if (title.contains("artist")) Color(0xFF4A9EFF) else Color(0xFFFFD700), // Blue for artist, Yellow for song
+                color = if (title.contains("artist")) Color(0xFF4A9EFF) else Color(0xFFFFD700),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
@@ -304,7 +206,6 @@ fun TopItemCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Circular image
             Box(
                 modifier = Modifier
                     .size(64.dp)
@@ -312,7 +213,7 @@ fun TopItemCard(
                     .background(Color.Gray)
             ) {
                 Image(
-                    painter = painterResource(R.drawable.remembering_sunday), // Placeholder
+                    painter = painterResource(R.drawable.remembering_sunday),
                     contentDescription = itemName,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
@@ -321,6 +222,146 @@ fun TopItemCard(
         }
     }
 }
+
+@Composable
+fun SoundCapsuleCard(
+    soundCapsule: SoundCapsule,
+    navController: NavHostController,
+    onDownloadClick: () -> Unit = {},
+    onShareClick: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp)
+        ) {
+            // Header with title and icons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Your Sound Capsule",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    IconButton(
+                        onClick = onDownloadClick,
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Download,
+                            contentDescription = "Download CSV/PDF",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = onShareClick,
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Share",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            Text(
+                text = soundCapsule.displayMonth, // Use displayMonth for UI
+                color = Color.Gray,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            if (!soundCapsule.hasData) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "📊",
+                            fontSize = 48.sp
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "No data available",
+                            color = Color.Gray,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+            } else {
+                // Time listened section with navigation (use month in MM-YYYY format)
+                TimeListenedSection(
+                    timeListened = soundCapsule.timeListened,
+                    month = soundCapsule.month, // MM-YYYY format
+                    navController = navController
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Top artist and top song with navigation
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    soundCapsule.topArtist?.let { artist ->
+                        TopItemCard(
+                            title = "Top artist",
+                            itemName = artist.name,
+                            imageUrl = artist.imageUrl,
+                            month = soundCapsule.month, // MM-YYYY format
+                            navController = navController,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    soundCapsule.topSong?.let { song ->
+                        TopItemCard(
+                            title = "Top song",
+                            itemName = song.title,
+                            imageUrl = song.imageUrl,
+                            month = soundCapsule.month, // MM-YYYY format
+                            navController = navController,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                soundCapsule.dayStreak?.let { streak ->
+                    DayStreakCard(dayStreak = streak)
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 fun DayStreakCard(

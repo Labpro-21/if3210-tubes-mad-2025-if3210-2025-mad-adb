@@ -2,7 +2,8 @@
 package com.example.adbpurrytify.data.model
 
 data class SoundCapsule(
-    val month: String, // e.g., "April 2025"
+    val month: String, // e.g., "04-2025" (MM-YYYY format)
+    val displayMonth: String, // e.g., "April 2025" (for display purposes)
     val timeListened: Int, // in minutes
     val topArtist: Artist?,
     val topSong: Song?,

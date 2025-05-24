@@ -117,8 +117,10 @@ class ProfileViewModel @Inject constructor(
                             artist = "Daniel Caesar",
                             imageUrl = "https://example.com/loose.jpg",
                             streakDays = 5,
-                            dateRange = "Mar 21-26, 2025"
-                        )
+                            dateRange = "Mar 21-26, 2025",
+                        ),
+                        displayMonth = "April 2025",
+                        hasData = true
                     )
                 }
                 1 -> { // March 2025
@@ -142,7 +144,10 @@ class ProfileViewModel @Inject constructor(
                             imageUrl = "https://example.com/lavender.jpg",
                             streakDays = 7,
                             dateRange = "Mar 15-21, 2025"
-                        )
+                        ),
+                        displayMonth = "March 2025",
+
+
                     )
                 }
                 2 -> { // February 2025 - No data
@@ -152,7 +157,8 @@ class ProfileViewModel @Inject constructor(
                         topArtist = null,
                         topSong = null,
                         dayStreak = null,
-                        hasData = false
+                        hasData = false,
+                        displayMonth = "April 2025"
                     )
                 }
                 3 -> { // January 2025
@@ -176,7 +182,7 @@ class ProfileViewModel @Inject constructor(
                             imageUrl = "https://example.com/physical.jpg",
                             streakDays = 3,
                             dateRange = "Jan 10-12, 2025"
-                        )
+                        ), displayMonth = "Jan 2025"
                     )
                 }
             }

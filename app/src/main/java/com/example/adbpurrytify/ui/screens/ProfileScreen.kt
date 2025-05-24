@@ -271,6 +271,7 @@ private fun ProfileContent(
                 soundCapsules[selectedMonth]?.let { capsule ->
                     SoundCapsuleCard(
                         soundCapsule = capsule,
+                        navController = navController,
                         onDownloadClick = {
                             // TODO: Implement CSV/PDF download functionality
                         },
