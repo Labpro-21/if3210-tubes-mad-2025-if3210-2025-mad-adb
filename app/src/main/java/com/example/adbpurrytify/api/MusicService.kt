@@ -15,9 +15,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.SimpleBasePlayer
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.CommandButton
@@ -61,12 +63,19 @@ class MusicService : MediaSessionService() {
             override fun onPlaybackStateChanged(state: Int) {
                 super.onPlaybackStateChanged(state)
                 if (state == Player.STATE_ENDED)
-                    tryToStartNextSong(applicationContext)
+                    tryToStartNextSong(applicationContext, startPreviousInstead = false)
             }
         }
         player?.addListener(playerListener)
 
-        mediaSession = MediaSession.Builder(this, player!!)
+        val forwardingPlayer = object : ForwardingPlayer(player!!) {
+            override fun seekToPrevious() {
+                tryToStartNextSong(applicationContext, startPreviousInstead = true)
+            }
+        }
+
+
+        mediaSession = MediaSession.Builder(this, forwardingPlayer!!)
             .setId("MusicSession")
             .setCustomLayout(mutableListOf<CommandButton>(nextButton))
             .setCallback(MyCallback(this))
@@ -93,7 +102,7 @@ class MusicService : MediaSessionService() {
             customCommand: SessionCommand,
             args: Bundle
         ): ListenableFuture<SessionResult> {
-            if (customCommand.customAction == NEXT_SONG) tryToStartNextSong(context)
+            if (customCommand.customAction == NEXT_SONG) tryToStartNextSong(context, startPreviousInstead = false)
             return super.onCustomCommand(session, controller, customCommand, args)
         }
     }
@@ -110,7 +119,9 @@ class MusicService : MediaSessionService() {
     }
 
 
-    private fun tryToStartNextSong(context: Context) {
+    private fun tryToStartNextSong(context: Context,
+                                   startPreviousInstead: Boolean) // males bikin fungsi lagi
+    {
         var curSongId = SongPlayer.curLoadedSongId
         var curUserId = SongPlayer.curUserId
 
@@ -118,7 +129,10 @@ class MusicService : MediaSessionService() {
             DatabaseModule.provideSongDao(AppDatabase.getDatabase(context))
 
         var nextSong: SongEntity?
-        runBlocking { nextSong = songDao.getNextSong(curUserId, curSongId) }
+        runBlocking { nextSong =
+            if (startPreviousInstead) songDao.getPreviousSong(curUserId, curSongId)
+            else songDao.getNextSong(curUserId, curSongId)
+        }
         if (nextSong != null) {
             Log.d("NOTIF", nextSong.title)
             val mediaItem =
@@ -142,7 +156,7 @@ class MusicService : MediaSessionService() {
 
         else {
             // ini sbnernya muncul tp gk keliatan karena ketutupan notif, yaudala :v
-            Toast.makeText(applicationContext, "There is no next song.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(applicationContext, "You've hit the end.", Toast.LENGTH_SHORT).show()
         }
     }
 

@@ -166,11 +166,21 @@ fun SongPlayerScreen(
 
             else if (nextSong != null && SongPlayer.mediaController != null
                 && SongPlayer.curLoadedSongId == nextSong?.id)
-            { // detect perubahan dari listener player (ini keknya horrible tp idk)
+            { // detect maju dari listener player sm dari control notif
+                // (ini keknya horrible tp idk)
+
                 // go next
                 isPlaying = false
                 playerReady = false
                 song = nextSong
+            }
+
+            else if (prevSong != null && SongPlayer.mediaController != null
+                && SongPlayer.curLoadedSongId == prevSong?.id)
+            { // detect mundur dari notif
+                isPlaying = false
+                playerReady = false
+                song = prevSong
             }
         }
     }

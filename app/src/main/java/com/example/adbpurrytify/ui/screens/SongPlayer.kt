@@ -65,7 +65,6 @@ object SongPlayer {
                 .build()
 
         Log.d("Media Id", mediaItem.mediaId)
-
         mediaController!!.setMediaItem(mediaItem)
         mediaController!!.prepare()
         mediaController!!.playWhenReady = true
