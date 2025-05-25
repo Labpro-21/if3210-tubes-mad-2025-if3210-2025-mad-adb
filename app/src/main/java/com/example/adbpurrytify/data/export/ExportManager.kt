@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.example.adbpurrytify.data.model.SoundCapsule
 import com.example.adbpurrytify.ui.viewmodels.TopArtistsData
@@ -232,11 +233,14 @@ class ExportManager @Inject constructor() {
 
     private fun showDownloadNotification(context: Context, fileName: String, format: String) {
         // Show toast notification
-        Toast.makeText(
-            context,
-            "✓ $format file downloaded to Downloads/Purrytify/$fileName",
-            Toast.LENGTH_LONG
-        ).show()
+        ContextCompat.getMainExecutor(context).execute {
+            // This is where your UI code goes.
+            Toast.makeText(
+                context,
+                "✓ $format file downloaded to Downloads/Purrytify/$fileName",
+                Toast.LENGTH_LONG
+            ).show()
+        }
 
         // You can also add system notification here if needed
         // This would require notification permission in newer Android versions
