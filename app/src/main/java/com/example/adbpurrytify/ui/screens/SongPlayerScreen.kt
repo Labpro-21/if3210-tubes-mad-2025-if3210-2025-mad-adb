@@ -469,7 +469,7 @@ fun SongPlayerScreen(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (prevSong != null)
+                    if (prevSong != null) {
                         IconButton(
                             onClick = {
                                 Log.d("SongPlayer", "Previous song clicked")
@@ -495,6 +495,10 @@ fun SongPlayerScreen(
                                 modifier = Modifier.size(32.dp)
                             )
                         }
+                    } else {
+                        Spacer(Modifier.width(40.dp))
+                    }
+
                     Spacer(modifier = Modifier.width(32.dp))
 
                     // Improved Play/Pause button with better state handling
@@ -538,7 +542,7 @@ fun SongPlayerScreen(
 
                     Spacer(modifier = Modifier.width(32.dp))
 
-                    if (nextSong != null)
+                    if (nextSong != null) {
                         IconButton(
                             onClick = {
                                 Log.d("SongPlayer", "Next song clicked")
@@ -564,6 +568,9 @@ fun SongPlayerScreen(
                                 modifier = Modifier.size(32.dp)
                             )
                         }
+                    } else {
+                        Spacer(Modifier.width(40.dp))
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(64.dp))
