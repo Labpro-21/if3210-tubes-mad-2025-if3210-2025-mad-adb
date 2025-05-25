@@ -120,18 +120,21 @@ fun SongsSection(
         HorizontalSongsList(
             songs = songsList, showBorder = false, onSongClick = { song ->
                 scope.launch {
-                    /** Instead of inserting it and then updating it pointlessly (my own stupidity)
-                     * why not change it's metadata first, and THEN inserting it?
-                     */
-                    val updatedSong: SongEntity = song.copy(
-                        // Way cooler than making 2 separate updatedSong
-                        userId = if (songViewModel.getSongById(song.id) == null) userId ?: song.userId else song.userId,
-                        lastPlayedTimestamp = System.currentTimeMillis(),
-                        lastPlayedPositionMs = 0
-                    )
-                    songViewModel.insert(updatedSong)
+                    // Save the online song to user's library when they click on it
+                    if (userId != null) {
+                        val savedSong = songViewModel.saveOnlineSongForUser(song.id)
+                        if (savedSong != null) {
+                            // Navigate to the saved song
+                            navController?.navigate("${Screen.Player.route}/${savedSong.id}")
+                        } else {
+                            // Fallback: navigate to the original song (for display)
+                            navController?.navigate("${Screen.Player.route}/${song.id}")
+                        }
+                    } else {
+                        // No user ID available, just navigate for display
+                        navController?.navigate("${Screen.Player.route}/${song.id}")
+                    }
                 }
-                navController?.navigate("${Screen.Player.route}/${song.id}")
             })
     }
 }

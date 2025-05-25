@@ -5,6 +5,7 @@ import com.example.adbpurrytify.api.ApiService
 import com.example.adbpurrytify.data.local.AnalyticsDao
 import com.example.adbpurrytify.data.local.SongDao
 import com.example.adbpurrytify.data.model.SongEntity
+import com.example.adbpurrytify.data.model.toDisplaySongEntity
 import com.example.adbpurrytify.data.model.toSongEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -63,12 +64,12 @@ class SongRepository @Inject constructor(
         songDao.update(song)
     }
 
-    // Remote data operations
+    // Remote data operations - FOR DISPLAY ONLY
     suspend fun getTopGlobalSongs(): List<SongEntity> = withContext(Dispatchers.IO) {
         try {
             val response = apiService.getTopGlobalSongs()
             if (response.isSuccessful) {
-                response.body()?.map { it.toSongEntity() } ?: emptyList()
+                response.body()?.map { it.toDisplaySongEntity() } ?: emptyList()  // For display only
             } else {
                 emptyList()
             }
@@ -93,12 +94,57 @@ class SongRepository @Inject constructor(
         try {
             val response = apiService.getTopCountrySongs(countryCode)
             if (response.isSuccessful) {
-                response.body()?.map { it.toSongEntity() } ?: emptyList()
+                response.body()?.map { it.toDisplaySongEntity() } ?: emptyList()  // For display only
             } else {
                 emptyList()
             }
         } catch (e: Exception) {
             emptyList()
+        }
+    }
+
+    // Get online song for display purposes
+    suspend fun getOnlineSongForDisplay(songId: Long): SongEntity? = withContext(Dispatchers.IO) {
+        try {
+            val response = apiService.getOnlineSong(songId)
+            if (response.isSuccessful) {
+                response.body()?.toDisplaySongEntity()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    // Save online song to user's library
+    suspend fun saveOnlineSongForUser(songId: Long, userId: Long): SongEntity? = withContext(Dispatchers.IO) {
+        try {
+            // Check if song already exists for this user
+            val existingSong = getSongById(songId)
+            if (existingSong != null && existingSong.userId == userId) {
+                // Song already exists for this user, just update timestamp
+                val updatedSong = existingSong.copy(
+                    lastPlayedTimestamp = System.currentTimeMillis()
+                )
+                updateSong(updatedSong)
+                return@withContext updatedSong
+            }
+
+            // Fetch from API and save with proper user ID
+            val response = apiService.getOnlineSong(songId)
+            if (response.isSuccessful) {
+                val onlineSong = response.body()
+                if (onlineSong != null) {
+                    val songEntity = onlineSong.toSongEntity(userId)
+                    insertSong(songEntity)
+                    return@withContext songEntity
+                }
+            }
+            null
+        } catch (e: Exception) {
+            Log.e("SongRepository", "Error saving online song for user", e)
+            null
         }
     }
 
@@ -119,18 +165,5 @@ class SongRepository @Inject constructor(
     suspend fun markSongAsPlayed(songId: Long) {
         val song = getSongById(songId) ?: return
         updateSong(song.copy(lastPlayedTimestamp = System.currentTimeMillis()))
-    }
-
-    suspend fun getOnlineSong(songId: Long): SongEntity = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.getOnlineSong(songId)
-            if (response.isSuccessful) {
-                response.body()?.toSongEntity() ?: SongEntity(0, "", "", "", "", 0, false, 0, 0)
-            } else {
-                SongEntity(0, "", "", "", "", 0, false, 0, 0)
-            }
-        } catch (e: Exception) {
-            SongEntity(0, "", "", "", "", 0, false, 0, 0)
-        }
     }
 }

@@ -123,30 +123,45 @@ fun SongPlayerScreen(
         val userId = viewModel.getCurrentUserId()!!
         SongPlayer.curUserId = userId
 
-        song?.let {
-            prevSong = viewModel.getPrevSong(it.id)
-            nextSong = viewModel.getNextSong(it.id)
+        song?.let { currentSong ->
+            prevSong = viewModel.getPrevSong(currentSong.id)
+            nextSong = viewModel.getNextSong(currentSong.id)
 
             // Extract dominant color
-            val imageUrl = if (it.artUri.isNotEmpty()) it.artUri else R.drawable.song_art_placeholder
+            val imageUrl = if (currentSong.artUri.isNotEmpty()) currentSong.artUri else R.drawable.song_art_placeholder
             dominantColor = DynamicColorExtractor.extractDominantColor(
                 imageUrl.toString(),
                 context,
                 Color(0xFF121212)
             )
 
-            viewModel.updateSongTimestamp(it)
-            isLiked = it.isLiked
+            // Handle song saving and like status
+            if (currentSong.userId == -1L) {
+                // This is an online song that hasn't been saved to user's library yet
+                val savedSong = viewModel.saveOnlineSongForUser(currentSong.id)
+                if (savedSong != null) {
+                    // Update the song reference to the saved version
+                    song = savedSong
+                    isLiked = savedSong.isLiked
+                } else {
+                    // Failed to save, use display version
+                    isLiked = false
+                }
+            } else {
+                // This is already a user's song, just update timestamp
+                viewModel.updateSongTimestamp(currentSong)
+                isLiked = currentSong.isLiked
+            }
 
             if (SongPlayer.songLoaded == false
-                or ((SongPlayer.songLoaded) and (SongPlayer.curLoadedSongId != it.id))) {
+                or ((SongPlayer.songLoaded) and (SongPlayer.curLoadedSongId != currentSong.id))) {
 
                 playerReady = false
 
                 // Start analytics session through the enhanced music service
-                MusicService.startPlayback(context, it, userId)
+                MusicService.startPlayback(context, currentSong, userId)
 
-                SongPlayer.loadSong(it, context, it.id)
+                SongPlayer.loadSong(currentSong, context, currentSong.id)
 
                 while (SongPlayer.getDuration() <= 0) {
                     delay(100)
@@ -155,7 +170,7 @@ fun SongPlayerScreen(
 
                 // Properly sync initial playing state
                 isPlaying = SongPlayer.isPlaying()
-                Log.d("SongPlayer", "New song loaded: ${it.title}, playing: $isPlaying")
+                Log.d("SongPlayer", "New song loaded: ${currentSong.title}, playing: $isPlaying")
             }
             else { // same song
                 // Always sync with actual player state

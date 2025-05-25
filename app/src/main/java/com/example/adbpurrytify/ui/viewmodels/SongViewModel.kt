@@ -58,11 +58,20 @@ class SongViewModel @Inject constructor(
     }
 
     suspend fun getSongById(songId: Long): SongEntity? {
-        return if (songRepository.getSongById(songId) != null) {
-            songRepository.getSongById(songId)
-        } else {
-            songRepository.getOnlineSong(songId)
+        // First check local database
+        val localSong = songRepository.getSongById(songId)
+        if (localSong != null) {
+            return localSong
         }
+
+        // If not found locally, get from online for display purposes
+        return songRepository.getOnlineSongForDisplay(songId)
+    }
+
+    // Save online song to user's library when they interact with it
+    suspend fun saveOnlineSongForUser(songId: Long): SongEntity? {
+        val userId = currentUserId ?: return null
+        return songRepository.saveOnlineSongForUser(songId, userId)
     }
 
     // Set the current user ID and trigger the initial load
