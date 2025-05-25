@@ -86,7 +86,7 @@ fun ProfileScreen(
                     )
                 }
                 is ProfileViewModel.ProfileUiState.Error -> {
-                    ErrorContent(message = state.message, onRetry = { viewModel.loadProfile() })
+                    ErrorContent(message = state.message, onRetry = { viewModel.loadProfile() }, navController)
                 }
             }
         }
@@ -286,7 +286,7 @@ private fun ProfileContent(
 }
 
 @Composable
-private fun ErrorContent(message: String, onRetry: () -> Unit) {
+private fun ErrorContent(message: String, onRetry: () -> Unit, navController: NavHostController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -298,6 +298,9 @@ private fun ErrorContent(message: String, onRetry: () -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onRetry) {
             Text("Retry")
+        }
+        Button(onClick = {navController.navigate(Screen.Login.route)}) {
+            Text("Login")
         }
     }
 }
