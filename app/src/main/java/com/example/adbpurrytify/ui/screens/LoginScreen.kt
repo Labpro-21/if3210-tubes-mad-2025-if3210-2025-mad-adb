@@ -39,6 +39,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -81,7 +82,8 @@ fun PurritifyTextField(
     label: String,
     modifier: Modifier = Modifier,
     placeholder: String = "",
-    isPassword: Boolean = false
+    isPassword: Boolean = false,
+    imeAction: ImeAction
 ) {
     Column(modifier = modifier) {
         Text(
@@ -114,6 +116,7 @@ fun PurritifyTextField(
             visualTransformation = if (isPassword && !passwordVisible)
                 PasswordVisualTransformation() else VisualTransformation.None,
             keyboardOptions = KeyboardOptions(
+                imeAction = imeAction,
                 keyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Email
             ),
             trailingIcon = {
@@ -214,7 +217,8 @@ fun LoginScreen(
                 onValueChange = { email = it },
                 label = "Email",
                 placeholder = "Email",
-                modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier.padding(bottom = 16.dp),
+                imeAction = ImeAction.Next
             )
 
             PurritifyTextField(
@@ -222,7 +226,8 @@ fun LoginScreen(
                 onValueChange = { password = it },
                 label = "Password",
                 placeholder = "Password",
-                isPassword = true
+                isPassword = true,
+                imeAction = ImeAction.Done
             )
 
             Spacer(modifier = Modifier.height(32.dp))
