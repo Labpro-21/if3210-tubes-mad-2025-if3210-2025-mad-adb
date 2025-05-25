@@ -169,9 +169,9 @@ The application combines local music playback capabilities with online streaming
 3. **13522094 Andhika Tantyo Anugrah**: Add Songs, Profile, Network Sensing
 
 ### Milestone 2
-1. **13522022 Renaldy Arief Susanto**: Notification controls, Audio routing & output device, halaman responsive
-2. **13522066 Nyoman Ganadipa Narayana**: edit profile, rekomendasi lagu, sound capsule
-3. **13522094 Andhika Tantyo Anugrah**: Online songs, download online songs, Share songs via URL+QR
+1. **13522022 Renaldy Arief Susanto**: Notification controls, Audio routing & output device, Halaman responsive
+2. **13522066 Nyoman Ganadipa Narayana**: Edit profile, rekomendasi lagu, Sound capsule, Share sound capsule as image
+3. **13522094 Andhika Tantyo Anugrah**: Online songs, download online songs, Share songs via URL+QR, Server song intergration
 
 
 
