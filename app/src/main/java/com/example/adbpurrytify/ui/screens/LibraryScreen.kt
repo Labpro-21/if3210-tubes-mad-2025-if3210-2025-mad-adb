@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
@@ -23,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -55,13 +58,13 @@ fun LibraryScreen(
     val isLoading by viewModel.isLoading.observeAsState(false)
 
     // Load user data
-    LaunchedEffect(key1 = Unit) {
+    LaunchedEffect(Unit) {
         viewModel.loadUserData()
     }
 
     // Filter songs based on selected tab
-    var selectedTabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("All", "Liked")
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    val tabs = listOf("All", "Liked", "Downloaded")
 
     // When tab changes, update the songs list
     LaunchedEffect(selectedTabIndex) {
@@ -72,6 +75,7 @@ fun LibraryScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor)
+            .verticalScroll(rememberScrollState())
     ) {
         // Fixed header content that won't scroll
         Column(
@@ -153,7 +157,9 @@ fun LibraryScreen(
                 // 2. Show Empty State (only if not loading)
                 allSongs.isEmpty() -> {
                     Text(
-                        text = if (selectedTabIndex == 0) "Add songs to your library" else "Like songs to see them here",
+                        text = if (selectedTabIndex == 0) "Add songs to your library"
+                        else if (selectedTabIndex == 1) "Like songs to see them here"
+                        else "Download online songs to see them here",
                         color = Color.Gray,
                         style = MaterialTheme.typography.bodyLarge
                     )
