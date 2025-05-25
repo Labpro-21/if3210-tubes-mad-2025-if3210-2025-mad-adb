@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -42,21 +43,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.adbpurrytify.R
+import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.components.HorizontalSongsList
 import com.example.adbpurrytify.ui.components.MiniPlayer
 import com.example.adbpurrytify.ui.components.RecyclerSongsList
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
+import com.example.adbpurrytify.ui.viewmodels.SongViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
     navController: NavController? = null,
-    viewModel: HomeViewModel
+    viewModel: HomeViewModel,
+    songViewModel: SongViewModel = hiltViewModel()
 ) {
     val backgroundColor = Color(0xFF121212)
     val primaryColor = Color(0xFF1ED760)
+
+    val scope = rememberCoroutineScope()
 
     // Observe data from ViewModel
     val newSongs by viewModel.newSongs.observeAsState(emptyList())
@@ -129,9 +137,20 @@ fun HomeScreen(
                         songs = recommendedSongs,
                         showBorder = false,
                         onSongClick = { song ->
+                            scope.launch {
+                                /** Instead of inserting it and then updating it pointlessly (my own stupidity)
+                                 * why not change it's metadata first, and THEN inserting it?
+                                 */
+                                val updatedSong: SongEntity = song.copy(
+                                    // Way cooler than making 2 separate updatedSong
+                                    userId = if (songViewModel.getSongById(song.id) == null) viewModel.getUserId() ?: song.userId else song.userId,
+                                    lastPlayedTimestamp = System.currentTimeMillis(),
+                                    lastPlayedPositionMs = 0
+                                )
+                                songViewModel.insert(updatedSong)
+                            }
                             navController?.navigate("${Screen.Player.route}/${song.id}")
-                        }
-                    )
+                        })
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
