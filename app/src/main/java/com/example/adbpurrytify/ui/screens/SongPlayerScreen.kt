@@ -213,14 +213,12 @@ fun SongPlayerScreen(
                 Log.d("SongPlayer", "Detected song change to next song")
                 playerReady = false
                 song = nextSong
-                break // Exit loop to restart with new song
             }
             else if (prevSong != null && SongPlayer.mediaController != null
                 && SongPlayer.curLoadedSongId == prevSong?.id) {
                 Log.d("SongPlayer", "Detected song change to previous song")
                 playerReady = false
                 song = prevSong
-                break // Exit loop to restart with new song
             }
             else if (nextSong == null &&
                 SongPlayer.mediaController?.playbackState == Player.STATE_ENDED) {

@@ -212,6 +212,7 @@ class MusicService : MediaSessionService() {
                     prepare()
                     playWhenReady = true
                 }
+                SongPlayer.curLoadedSongId = song.id
 
                 Log.d("MusicService", "Loaded song with analytics: ${song.title}")
             } catch (e: Exception) {
