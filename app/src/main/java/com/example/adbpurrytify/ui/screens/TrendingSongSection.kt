@@ -118,23 +118,32 @@ fun SongsSection(
         }
     } else {
         HorizontalSongsList(
-            songs = songsList, showBorder = false, onSongClick = { song ->
+            songs = songsList,
+            showBorder = false,
+            onSongClick = { song ->
                 scope.launch {
-                    // Save the online song to user's library when they click on it
-                    if (userId != null) {
-                        val savedSong = songViewModel.saveOnlineSongForUser(song.id)
-                        if (savedSong != null) {
-                            // Navigate to the saved song
-                            navController?.navigate("${Screen.Player.route}/${savedSong.id}")
-                        } else {
-                            // Fallback: navigate to the original song (for display)
-                            navController?.navigate("${Screen.Player.route}/${song.id}")
-                        }
+                    // Check if this song already exists for this user
+                    val existingSong = songViewModel.getSongById(song.id, songViewModel.getCurrentUserId() ?: -1)
+
+                    val updatedSong: SongEntity = if (existingSong != null) {
+                        // Song already exists for this user, just update timestamp
+                        existingSong.copy(
+                            lastPlayedTimestamp = System.currentTimeMillis(),
+                            lastPlayedPositionMs = 0
+                        )
                     } else {
-                        // No user ID available, just navigate for display
-                        navController?.navigate("${Screen.Player.route}/${song.id}")
+                        // Song doesn't exist for this user, create new record
+                        song.copy(
+                            userId = userId ?: song.userId,
+                            lastPlayedTimestamp = System.currentTimeMillis(),
+                            lastPlayedPositionMs = 0
+                        )
                     }
+
+                    songViewModel.insert(updatedSong)
                 }
-            })
+                navController?.navigate("${Screen.Player.route}/${song.id}")
+            }
+        )
     }
 }

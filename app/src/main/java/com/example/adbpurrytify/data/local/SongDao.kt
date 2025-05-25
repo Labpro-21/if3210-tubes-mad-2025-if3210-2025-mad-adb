@@ -20,6 +20,10 @@ interface SongDao {
     @Query("SELECT * FROM songs WHERE id = :songId")
     suspend fun getSongById(songId: Long): SongEntity?
 
+    // Get next available ID with offset
+    @Query("SELECT COALESCE(MAX(id), 999999) + 1 FROM songs WHERE id >= 1000000")
+    suspend fun getNextAvailableId(): Long
+
     // 0. All songs
     @Query("SELECT * FROM songs WHERE userId = :userId")
     fun getAllSongs(userId: Long): Flow<List<SongEntity>>

@@ -1,21 +1,11 @@
 package com.example.adbpurrytify.data.model.analytics
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.example.adbpurrytify.data.model.SongEntity
 
 @Entity(
     tableName = "listening_sessions",
-    foreignKeys = [
-        ForeignKey(
-            entity = SongEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["songId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
     indices = [
         Index(value = ["songId"]),
         Index(value = ["userId"]),

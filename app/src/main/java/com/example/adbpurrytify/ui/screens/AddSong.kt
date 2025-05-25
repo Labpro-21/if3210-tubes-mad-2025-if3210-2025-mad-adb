@@ -68,6 +68,7 @@ import com.example.adbpurrytify.ui.theme.SpotifyGreen
 import com.example.adbpurrytify.ui.theme.SpotifyLightBlack
 import com.example.adbpurrytify.ui.viewmodels.SongViewModel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.io.FileOutputStream
 
@@ -425,6 +426,7 @@ fun AddSong(
                                 }
 
                                 val song = SongEntity(
+                                    id = runBlocking { viewModel.getAvailableSongId() },
                                     title = title,
                                     author = author,
                                     artUri = artUri,

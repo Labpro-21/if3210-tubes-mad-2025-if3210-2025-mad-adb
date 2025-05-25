@@ -143,7 +143,7 @@ fun HomeScreen(
                                  */
                                 val updatedSong: SongEntity = song.copy(
                                     // Way cooler than making 2 separate updatedSong
-                                    userId = if (songViewModel.getSongById(song.id) == null) viewModel.getUserId() ?: song.userId else song.userId,
+                                    userId = if (songViewModel.getSongById(song.id, viewModel.getUserId()  ?: -1) == null) viewModel.getUserId() ?: song.userId else song.userId,
                                     lastPlayedTimestamp = System.currentTimeMillis(),
                                     lastPlayedPositionMs = 0
                                 )

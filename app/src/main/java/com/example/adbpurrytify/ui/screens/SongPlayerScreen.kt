@@ -97,7 +97,7 @@ fun SongPlayerScreen(
     viewModel: SongViewModel = hiltViewModel()
 ) {
 
-    var firstsong = runBlocking { viewModel.getSongById(songId) }
+    var firstsong = runBlocking { viewModel.getSongById(songId, viewModel.getCurrentUserId() ?: -1) }
     var song by remember { mutableStateOf<SongEntity?>(firstsong) }
     var prevSong by remember { mutableStateOf<SongEntity?>(null) }
     var nextSong by remember { mutableStateOf<SongEntity?>(null) }

@@ -63,7 +63,7 @@ fun MiniPlayer(
     // Update current song and playing state
     LaunchedEffect(currentSong) {
         if (SongPlayer.curLoadedSongId > 0L) {
-            currentSong = viewModel.getSongById(SongPlayer.curLoadedSongId)
+            currentSong = viewModel.getSongById(SongPlayer.curLoadedSongId, SongPlayer.curUserId ?: -1)
             currentSong?.let { song ->
                 // Extract dominant color from album art
                 val imageUrl = if (song.artUri.isNotEmpty()) song.artUri else R.drawable.song_art_placeholder

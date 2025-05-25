@@ -41,6 +41,10 @@ class SongViewModel @Inject constructor(
         return currentUserId
     }
 
+    suspend fun getAvailableSongId(): Long {
+        return songRepository.getAvailableSongId()
+    }
+
     // Load user data from the API
     fun loadUserData() {
         viewModelScope.launch {
@@ -57,16 +61,18 @@ class SongViewModel @Inject constructor(
         }
     }
 
-    suspend fun getSongById(songId: Long): SongEntity? {
-        // First check local database
-        val localSong = songRepository.getSongById(songId)
-        if (localSong != null) {
-            return localSong
+    suspend fun getSongById(songId: Long, userId: Long): SongEntity? {
+
+        // First check if the song exists for this specific user
+        val userSong = songRepository.getSongByIdForUser(songId, userId)
+        if (userSong != null) {
+            return userSong
         }
 
-        // If not found locally, get from online for display purposes
-        return songRepository.getOnlineSongForDisplay(songId)
+        // If not found for this user, try to get it from online API
+        return songRepository.getSongById(songId)
     }
+
 
     // Save online song to user's library when they interact with it
     suspend fun saveOnlineSongForUser(songId: Long): SongEntity? {

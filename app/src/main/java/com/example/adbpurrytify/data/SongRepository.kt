@@ -36,6 +36,10 @@ class SongRepository @Inject constructor(
         return songDao.getLikedSongs(userId)
     }
 
+    suspend fun getAvailableSongId(): Long {
+        return songDao.getNextAvailableId()
+    }
+
     suspend fun getPreviousSong(userId: Long, currentSongId: Long): SongEntity? {
         return songDao.getPreviousSong(userId, currentSongId)
     }
@@ -45,9 +49,6 @@ class SongRepository @Inject constructor(
         return songDao.getNextSong(userId, currentSongId)
     }
 
-    suspend fun getSongById(songId: Long): SongEntity? {
-        return songDao.getSongById(songId)
-    }
 
     suspend fun insertSong(song: SongEntity) {
         songDao.insert(song)
@@ -71,17 +72,6 @@ class SongRepository @Inject constructor(
         }
     }
 
-    suspend fun getLastIncompleteSong(userId: Long): SongEntity? {
-        return try {
-            val incompleteSession = analyticsDao.getActiveListeningSession(userId)
-            if (incompleteSession != null) {
-                getSongById(incompleteSession.songId)
-            } else null
-        } catch (e: Exception) {
-            Log.e("SongRepository", "Error getting incomplete song", e)
-            null
-        }
-    }
 
     suspend fun getTopCountrySongs(countryCode: String): List<SongEntity> = withContext(Dispatchers.IO) {
         try {
@@ -171,6 +161,17 @@ class SongRepository @Inject constructor(
     fun getLocalSongs(userId: Long): Flow<List<SongEntity>> {
         return songDao.getLocalSongs(userId)
     }
+
+    // Add this method to check if song exists for specific user
+    suspend fun getSongByIdForUser(songId: Long, userId: Long): SongEntity? {
+        return songDao.getSongById(songId)
+    }
+
+    // Update existing getSongById to work with composite key
+    suspend fun getSongById(songId: Long): SongEntity? {
+        return songDao.getSongById(songId)
+    }
+
 
     suspend fun getLastPlayedSong(userId: Long): SongEntity? {
         return songDao.getLastPlayedSong(userId)
