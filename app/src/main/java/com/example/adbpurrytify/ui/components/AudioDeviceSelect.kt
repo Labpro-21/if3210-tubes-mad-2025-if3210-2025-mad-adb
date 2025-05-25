@@ -93,8 +93,7 @@ fun AudioDeviceSelect()
             AudioDeviceInfo.TYPE_BUILTIN_SPEAKER,
             AudioDeviceInfo.TYPE_WIRED_HEADSET,
             AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
-            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
-            AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> true
+            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> true
             else -> false
         }
     }
@@ -104,8 +103,7 @@ fun AudioDeviceSelect()
             AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> "Phone Speaker"
             AudioDeviceInfo.TYPE_WIRED_HEADSET,
             AudioDeviceInfo.TYPE_WIRED_HEADPHONES -> "Wired Headphones"
-            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
-            AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> "Bluetooth Device"
+            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> "Bluetooth Device"
             else -> "Other Device"
         }
     }
@@ -115,8 +113,7 @@ fun AudioDeviceSelect()
             AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> Icons.Default.Speaker
             AudioDeviceInfo.TYPE_WIRED_HEADSET,
             AudioDeviceInfo.TYPE_WIRED_HEADPHONES -> Icons.Default.Headset
-            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
-            AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> Icons.Default.BluetoothAudio
+            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> Icons.Default.BluetoothAudio
             else -> Icons.Default.DeviceUnknown
         }
     }
