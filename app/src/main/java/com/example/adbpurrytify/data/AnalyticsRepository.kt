@@ -21,6 +21,7 @@ import com.example.adbpurrytify.ui.viewmodels.TopArtistsData
 import com.example.adbpurrytify.ui.viewmodels.TopSongsData
 import com.example.adbpurrytify.ui.viewmodels.WeeklyListeningData
 import com.example.adbpurrytify.utils.DateUtils
+import com.example.adbpurrytify.utils.DateUtils.formatMonthForDisplay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import java.text.SimpleDateFormat
@@ -342,79 +343,71 @@ class AnalyticsRepository @Inject constructor(
 
 
     suspend fun getTopArtistsData(userId: Long, year: Int, month: Int): TopArtistsData {
-        // Use the improved query that includes ongoing sessions with minimum duration
-        val artists = analyticsDao.getTopArtistsForMonthWithMinDuration(userId, year, month, 5000L, 20)
-        val monthStr = DateUtils.formatMonthKey(year, month)
-        val displayMonth = DateUtils.formatMonthForDisplay(monthStr)
+        val topArtistResults = analyticsDao.getTopArtistsForMonth(userId, year, month, 20)
 
-        // Get current session for real-time updates
-        val currentSession = analyticsService.getCurrentSession()
-        val isCurrentMonthData = isCurrentMonth(year, month)
-
-        // Merge current session data if applicable
-        val mergedArtists = if (isCurrentMonthData && currentSession != null &&
-            currentSession.year == year && currentSession.month == month) {
-            mergeCurrentSessionWithArtists(artists, currentSession, analyticsService.getCurrentSessionDuration())
-        } else {
-            artists
+        // ✅ PRESERVE ORDER - Use mapIndexed
+        val artists = topArtistResults.mapIndexed { index, result ->
+            ArtistListeningData(
+                id = result.artistName.hashCode().toLong(), // Generate ID from name
+                name = result.artistName,
+                imageUrl = getArtistImageUrl(userId, result.artistName), // Helper method
+                minutesListened = (result.totalTime / 60000).toInt(),
+                songsCount = result.uniqueSongs,
+                rank = index + 1 // Preserve SQL order
+            )
         }
 
+        val displayMonth = formatMonthForDisplay(String.format("%02d-%04d", month, year))
+
         return TopArtistsData(
-            month = monthStr,
+            month = String.format("%02d-%04d", month, year),
             displayMonth = displayMonth,
-            totalArtists = analyticsDao.getUniqueArtistsForMonth(userId, year, month),
-            artists = mergedArtists.mapIndexed { index, artist ->
-                // Get artwork from any song by this artist
-                val artistSong = getBestSongByArtist(userId, artist.artistName)
-                ArtistListeningData(
-                    id = 0,
-                    name = artist.artistName,
-                    imageUrl = artistSong?.artUri ?: "",
-                    minutesListened = (artist.totalTime / 60000).toInt(),
-                    songsCount = artist.uniqueSongs,
-                    rank = index + 1
-                )
-            }
+            totalArtists = artists.size,
+            artists = artists // Order preserved!
         )
     }
 
-// REPLACE the existing getTopSongsData method in your AnalyticsRepository.kt with this:
+    // Helper method to get artist image (you might want to implement this)
+    private suspend fun getArtistImageUrl(userId: Long, artistName: String): String {
+        // Try to get an image from any song by this artist
+        // This is just an example - implement based on your needs
+        return try {
+            val songByArtist = songRepository.getAllSongs(userId)
+                .first()
+                .find { it.author.equals(artistName, ignoreCase = true) }
+            songByArtist?.artUri ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+    }
 
     suspend fun getTopSongsData(userId: Long, year: Int, month: Int): TopSongsData {
-        // Use the improved query that includes ongoing sessions with minimum duration
-        val songs = analyticsDao.getTopSongsForMonthWithMinDuration(userId, year, month, 5000L, 20)
-        val monthStr = DateUtils.formatMonthKey(year, month)
-        val displayMonth = DateUtils.formatMonthForDisplay(monthStr)
+        // Get ordered results from DAO
+        val topSongResults = analyticsDao.getTopSongsForMonth(userId, year, month, 20)
 
-        // Get current session for real-time updates
-        val currentSession = analyticsService.getCurrentSession()
-        val isCurrentMonthData = isCurrentMonth(year, month)
+        // ✅ PRESERVE ORDER - Use mapIndexed to maintain SQL ordering
+        val songs = topSongResults.mapIndexed { index, result ->
+            // Get song metadata while preserving order
+            val song = songRepository.getSongById(result.songId)
 
-        // Merge current session data if applicable
-        val mergedSongs = if (isCurrentMonthData && currentSession != null &&
-            currentSession.year == year && currentSession.month == month) {
-            mergeCurrentSessionWithSongs(songs, currentSession, analyticsService.getCurrentSessionDuration())
-        } else {
-            songs
+            SongListeningData(
+                id = result.songId,
+                title = result.songTitle,
+                artist = result.artistName,
+                imageUrl = song?.artUri ?: "", // Get image from existing song data
+                playsCount = result.playCount,
+                minutesListened = (result.totalTime / 60000).toInt(), // Convert to minutes
+                rank = index + 1 // Use index to preserve original SQL order
+            )
         }
 
+        val displayMonth = formatMonthForDisplay(String.format("%02d-%04d", month, year))
+
         return TopSongsData(
-            month = monthStr,
+            month = String.format("%02d-%04d", month, year),
             displayMonth = displayMonth,
-            totalSongs = analyticsDao.getUniqueSongsForMonth(userId, year, month),
-            songs = mergedSongs.mapIndexed { index, song ->
-                // Get the actual song entity to access artwork
-                val songEntity = songRepository.getSongById(song.songId)
-                SongListeningData(
-                    id = song.songId,
-                    title = song.songTitle,
-                    artist = song.artistName,
-                    imageUrl = songEntity?.artUri ?: "",
-                    playsCount = song.playCount,
-                    minutesListened = (song.totalTime / 60000).toInt(),
-                    rank = index + 1
-                )
-            }
+            totalSongs = songs.size,
+            songs = songs // Order is preserved!
         )
     }
 
