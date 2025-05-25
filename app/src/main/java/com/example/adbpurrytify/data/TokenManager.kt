@@ -56,6 +56,8 @@ class TokenManager @Inject constructor(@ApplicationContext private val context: 
         return getAuthToken() != null && getRefreshToken() != null
     }
 
+
+
     companion object {
         private const val PREFS_NAME = "purrytify_secure_prefs"
         private const val KEY_AUTH_TOKEN = "auth_token"
