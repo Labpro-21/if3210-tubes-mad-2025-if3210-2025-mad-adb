@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.Log
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -24,7 +25,7 @@ class JwtExpiryWorker(appContext: Context, workerParams: WorkerParameters) :
     companion object {
         const val WORK_NAME = "JwtExpiryCheckWork"
         private const val TAG = "JwtExpiryWorker"
-        private const val REFRESH_INTERVAL_MINUTES = 5L
+        private const val REFRESH_INTERVAL_MINUTES = 1L
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -40,15 +41,16 @@ class JwtExpiryWorker(appContext: Context, workerParams: WorkerParameters) :
         try {
             val result = attemptTokenRefresh(refreshToken)
 
-            // Schedule next refresh regardless of current result
-            scheduleNextWorker(applicationContext)
+            if (result == Result.success()) {
+                scheduleNextWorker(applicationContext)
+            }
 
             return@withContext result
 
         } catch (e: Exception) {
             Log.e(TAG, "Unexpected error during periodic token refresh", e)
-            scheduleNextWorker(applicationContext)
-            return@withContext Result.retry()
+            // ❌ DON'T schedule next worker on unexpected errors
+            return@withContext Result.failure()
         }
     }
 
@@ -65,28 +67,20 @@ class JwtExpiryWorker(appContext: Context, workerParams: WorkerParameters) :
                 TokenManager.saveRefreshToken(newTokens.refreshToken)
 
                 Log.i(TAG, "Periodic token refresh successful!")
-                Log.i(TAG, "New access token is $newTokens")
-
                 return Result.success()
             } else {
-                Log.e(
-                    TAG,
-                    "Periodic token refresh failed with code: ${refreshResponse.code()}. Logging out."
-                )
+                Log.e(TAG, "Periodic token refresh failed with code: ${refreshResponse.code()}. Logging out.")
                 performLogout()
-                return Result.success()
+                // ❌ DON'T schedule next worker when tokens are invalid
+                return Result.success() // Success means we handled the error properly
             }
         } catch (e: HttpException) {
-            Log.e(
-                TAG,
-                "HTTP error during periodic token refresh: ${e.code()}. Logging out.",
-                e
-            )
+            Log.e(TAG, "HTTP error during periodic token refresh: ${e.code()}. Logging out.", e)
             performLogout()
             return Result.success()
         } catch (e: IOException) {
             Log.e(TAG, "Network error during periodic token refresh.", e)
-            return Result.retry()
+            return Result.retry() // Retry network errors
         } catch (e: Exception) {
             Log.e(TAG, "Unexpected error during periodic token refresh. Logging out.", e)
             performLogout()
@@ -97,6 +91,9 @@ class JwtExpiryWorker(appContext: Context, workerParams: WorkerParameters) :
     private fun performLogout() {
         Log.i(TAG, "Performing logout: Clearing tokens.")
         TokenManager.clearTokens()
+
+        // ✅ Cancel all future work when logging out
+        WorkManager.getInstance(applicationContext).cancelUniqueWork(WORK_NAME)
     }
 
     private fun scheduleNextWorker(context: Context) {
@@ -109,7 +106,12 @@ class JwtExpiryWorker(appContext: Context, workerParams: WorkerParameters) :
             )
             .build()
 
-        WorkManager.getInstance(context).enqueue(nextWork)
+        // ✅ Use unique work to prevent multiple workers
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            WORK_NAME,
+            ExistingWorkPolicy.REPLACE, // Replace any existing work
+            nextWork
+        )
         Log.d(TAG, "Scheduled next token refresh in $REFRESH_INTERVAL_MINUTES minutes")
     }
 }
