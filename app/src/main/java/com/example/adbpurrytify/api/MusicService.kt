@@ -45,7 +45,7 @@ const val STOP = "stop"
 @AndroidEntryPoint
 class MusicService : MediaSessionService() {
     private val nextCommand = SessionCommand(NEXT_SONG, Bundle.EMPTY)
-    private val prevCommand = SessionCommand(PREV_SONG, Bundle.EMPTY)
+//    private val prevCommand = SessionCommand(PREV_SONG, Bundle.EMPTY)
     private val stopCommand = SessionCommand(STOP, Bundle.EMPTY)
     private var mediaSession: MediaSession? = null
     private var player: ExoPlayer? = null
@@ -78,10 +78,10 @@ class MusicService : MediaSessionService() {
             .setSessionCommand(nextCommand)
             .build()
 
-        val prevButton = CommandButton.Builder(CommandButton.ICON_PREVIOUS)
-            .setDisplayName("Previous Song")
-            .setSessionCommand(prevCommand)
-            .build()
+//        val prevButton = CommandButton.Builder(CommandButton.ICON_PREVIOUS)
+//            .setDisplayName("Previous Song")
+//            .setSessionCommand(prevCommand)
+//            .build()
 
         val stopButton = CommandButton.Builder(CommandButton.ICON_STOP)
             .setDisplayName("Stop")
@@ -126,10 +126,12 @@ class MusicService : MediaSessionService() {
 
         mediaSession = MediaSession.Builder(this, forwardingPlayer)
             .setId("MusicSession")
-            .setCustomLayout(mutableListOf(prevButton, nextButton, stopButton))
+            .setCustomLayout(mutableListOf(nextButton, stopButton))
             .setCallback(MyCallback(this))
             .setSessionActivity(pendingIntent)
             .build()
+
+//        startForeground()
 
         startProgressTracking()
     }
@@ -299,7 +301,7 @@ class MusicService : MediaSessionService() {
                 .setAvailableSessionCommands(
                     ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
                         .add(nextCommand)
-                        .add(prevCommand)
+//                        .add(prevCommand)
                         .add(stopCommand)
                         .build()
                 ).build()
@@ -313,7 +315,7 @@ class MusicService : MediaSessionService() {
         ): ListenableFuture<SessionResult> {
             when (customCommand.customAction) {
                 NEXT_SONG -> handleNextTrack()
-                PREV_SONG -> handlePreviousTrack()
+//                PREV_SONG -> handlePreviousTrack()
                 STOP -> {
                     player?.stop()
                     player?.clearMediaItems()
@@ -397,7 +399,7 @@ class MusicService : MediaSessionService() {
                 putExtra("song_id", song.id)
                 putExtra("user_id", userId)
             }
-            context.startForegroundService(intent)
+            context.startService(intent)
         }
 
         fun stopPlayback(context: Context) {
