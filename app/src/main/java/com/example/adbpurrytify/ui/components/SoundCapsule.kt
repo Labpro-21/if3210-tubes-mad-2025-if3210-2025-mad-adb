@@ -356,6 +356,22 @@ fun SoundCapsuleCard(
                 ) {
                     IconButton(
                         onClick = {
+                            // Navigate to share sound capsule screen with just the month
+                            navController.navigate("share_sound_capsule/${soundCapsule.month}")
+                        },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Share Sound Capsule",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+
+                    IconButton(
+                        onClick = {
                             isDownloadAction = true
                             showFormatDialog = true
                         },
@@ -364,21 +380,6 @@ fun SoundCapsuleCard(
                         Icon(
                             imageVector = Icons.Default.Download,
                             contentDescription = "Download CSV/PDF",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = {
-                            isDownloadAction = false
-                            showFormatDialog = true
-                        },
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = "Share",
                             tint = Color.Gray,
                             modifier = Modifier.size(20.dp)
                         )
@@ -477,10 +478,13 @@ fun SoundCapsuleCard(
                     Spacer(modifier = Modifier.height(20.dp))
                 }
 
-                // Day streak section
                 soundCapsule.dayStreak?.let { streak ->
                     DayStreakCard(
-                        dayStreak = streak
+                        dayStreak = streak,
+                        onShareClick = { dayStreak ->
+                            // Navigate to share day streak screen with just the month
+                            navController.navigate("share_day_streak/${soundCapsule.month}")
+                        }
                     )
                 }
             }
@@ -624,6 +628,7 @@ fun SoundCapsuleCard(
 @Composable
 fun DayStreakCard(
     dayStreak: DayStreak,
+    onShareClick: (DayStreak) -> Unit = {}, // Add share callback
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -695,7 +700,7 @@ fun DayStreakCard(
                 )
 
                 IconButton(
-                    onClick = { /* Share action */ },
+                    onClick = { onShareClick(dayStreak) }, // Call share callback
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(

@@ -13,4 +13,8 @@ sealed class Screen(val route: String) {
     object TimeListened : Screen("time_listened")
     object TopArtists : Screen("top_artists")
     object TopSongs : Screen("top_songs")
+
+    // Share screens
+    object ShareSoundCapsule : Screen("share_sound_capsule")
+    object ShareDayStreak : Screen("share_day_streak")
 }

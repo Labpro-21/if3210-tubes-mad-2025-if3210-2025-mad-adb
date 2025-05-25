@@ -18,23 +18,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
-import com.example.adbpurrytify.ui.screens.EditProfileScreen
-import com.example.adbpurrytify.ui.screens.HomeScreen
-import com.example.adbpurrytify.ui.screens.LibraryScreen
-import com.example.adbpurrytify.ui.screens.LoginScreen
-import com.example.adbpurrytify.ui.screens.NetworkSensingSnackbar
-import com.example.adbpurrytify.ui.screens.ProfileScreen
-import com.example.adbpurrytify.ui.screens.SongPlayerScreen
-import com.example.adbpurrytify.ui.screens.SplashScreen
-import com.example.adbpurrytify.ui.screens.TimeListenedScreen
-import com.example.adbpurrytify.ui.screens.TopArtistsScreen
-import com.example.adbpurrytify.ui.screens.TopSongsScreen
-import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
-import com.example.adbpurrytify.ui.viewmodels.ProfileViewModel
-import com.example.adbpurrytify.ui.viewmodels.SongViewModel
-import com.example.adbpurrytify.ui.viewmodels.TimeListenedViewModel
-import com.example.adbpurrytify.ui.viewmodels.TopArtistsViewModel
-import com.example.adbpurrytify.ui.viewmodels.TopSongsViewModel
+import com.example.adbpurrytify.ui.screens.*
+import com.example.adbpurrytify.ui.viewmodels.*
 
 @Composable
 fun AppNavigation(navController: NavHostController = rememberNavController()) {
@@ -160,6 +145,36 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     navController = navController,
                     month = month,
                     viewModel = viewModel
+                )
+            }
+
+            // Share Sound Capsule Screen - UPDATED to pass month instead of creating dummy data
+            composable(
+                route = "${Screen.ShareSoundCapsule.route}/{month}",
+                arguments = listOf(
+                    navArgument("month") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val month = backStackEntry.arguments?.getString("month") ?: ""
+
+                ShareSoundCapsuleScreen(
+                    navController = navController,
+                    month = month // Pass month to let ViewModel load real data
+                )
+            }
+
+            // Share Day Streak Screen - UPDATED to pass month instead of creating dummy data
+            composable(
+                route = "${Screen.ShareDayStreak.route}/{month}",
+                arguments = listOf(
+                    navArgument("month") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val month = backStackEntry.arguments?.getString("month") ?: ""
+
+                ShareDayStreakScreen(
+                    navController = navController,
+                    month = month // Pass month to let ViewModel load real data
                 )
             }
         }
