@@ -5,18 +5,22 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +29,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -58,13 +61,13 @@ fun LibraryScreen(
     val isLoading by viewModel.isLoading.observeAsState(false)
 
     // Load user data
-    LaunchedEffect(Unit) {
+    LaunchedEffect(key1 = Unit) {
         viewModel.loadUserData()
     }
 
     // Filter songs based on selected tab
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("All", "Liked", "Downloaded")
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    val tabs = listOf("Listened", "Liked", "Downloaded", "Local")
 
     // When tab changes, update the songs list
     LaunchedEffect(selectedTabIndex) {
@@ -75,7 +78,6 @@ fun LibraryScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor)
-            .verticalScroll(rememberScrollState())
     ) {
         // Fixed header content that won't scroll
         Column(
@@ -111,15 +113,16 @@ fun LibraryScreen(
             }
 
             // Tabs
-            Row(
+            LazyRow (
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 16.dp) // Add bottom padding
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                tabs.forEachIndexed { index, tab ->
+                itemsIndexed(tabs) { index, tab ->
                     Box(
                         modifier = Modifier
-                            .padding(end = 8.dp)
                             .clip(RoundedCornerShape(20.dp))
                             .background(
                                 if (selectedTabIndex == index) SpotifyGreen
@@ -157,9 +160,7 @@ fun LibraryScreen(
                 // 2. Show Empty State (only if not loading)
                 allSongs.isEmpty() -> {
                     Text(
-                        text = if (selectedTabIndex == 0) "Add songs to your library"
-                        else if (selectedTabIndex == 1) "Like songs to see them here"
-                        else "Download online songs to see them here",
+                        text = getEmptyStateMessage(selectedTabIndex),
                         color = Color.Gray,
                         style = MaterialTheme.typography.bodyLarge
                     )
@@ -187,5 +188,15 @@ fun LibraryScreen(
             show = showAddSongSheet,
             onDismiss = { showAddSongSheet = false }
         )
+    }
+}
+
+private fun getEmptyStateMessage(tabIndex: Int): String {
+    return when (tabIndex) {
+        0 -> "No listened songs yet"
+        1 -> "Like songs to see them here"
+        2 -> "No downloaded songs yet"
+        3 -> "Add local songs to see them here"
+        else -> "No songs found"
     }
 }

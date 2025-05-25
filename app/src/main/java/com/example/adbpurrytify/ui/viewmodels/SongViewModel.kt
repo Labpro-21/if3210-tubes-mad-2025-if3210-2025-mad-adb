@@ -82,20 +82,6 @@ class SongViewModel @Inject constructor(
         }
     }
 
-    // Unified function to load songs based on tab index
-    fun loadSongsForTab(tabIndex: Int) {
-        currentUserId?.let { userId ->
-            lastLoadedTabIndex = tabIndex
-            when (tabIndex) {
-                0 -> loadAllSongs(userId)
-                1 -> loadLikedSongs(userId)
-            }
-        } ?: run {
-            _isLoading.postValue(false)
-            _allSongs.postValue(emptyList())
-            _error.postValue("User ID not available.")
-        }
-    }
 
     // Get liked songs for the current user
     fun loadLikedSongs(userId: Long) {
@@ -138,6 +124,87 @@ class SongViewModel @Inject constructor(
                         isFirstEmission = false
                     }
                 }
+        }
+    }
+
+
+    // Load recently played songs for the current user
+    fun loadRecentlyPlayedSongs(userId: Long) {
+        _isLoading.postValue(true)
+        _error.postValue(null)
+        viewModelScope.launch {
+            var isFirstEmission = true
+            songRepository.getRecentlyPlayedSongs(userId)
+                .catch { e ->
+                    _error.postValue("Failed to load recently played songs: ${e.message}")
+                    _isLoading.postValue(false)
+                }
+                .collect { songs ->
+                    _allSongs.postValue(songs)
+                    if (isFirstEmission) {
+                        _isLoading.postValue(false)
+                        isFirstEmission = false
+                    }
+                }
+        }
+    }
+
+    // Load downloaded songs for the current user
+    fun loadDownloadedSongs(userId: Long) {
+        _isLoading.postValue(true)
+        _error.postValue(null)
+        viewModelScope.launch {
+            var isFirstEmission = true
+            songRepository.getDownloadedSongs(userId)
+                .catch { e ->
+                    _error.postValue("Failed to load downloaded songs: ${e.message}")
+                    _isLoading.postValue(false)
+                }
+                .collect { songs ->
+                    _allSongs.postValue(songs)
+                    if (isFirstEmission) {
+                        _isLoading.postValue(false)
+                        isFirstEmission = false
+                    }
+                }
+        }
+    }
+
+    // Load local songs for the current user
+    fun loadLocalSongs(userId: Long) {
+        _isLoading.postValue(true)
+        _error.postValue(null)
+        viewModelScope.launch {
+            var isFirstEmission = true
+            songRepository.getLocalSongs(userId)
+                .catch { e ->
+                    _error.postValue("Failed to load local songs: ${e.message}")
+                    _isLoading.postValue(false)
+                }
+                .collect { songs ->
+                    _allSongs.postValue(songs)
+                    if (isFirstEmission) {
+                        _isLoading.postValue(false)
+                        isFirstEmission = false
+                    }
+                }
+        }
+    }
+
+    // Unified function to load songs based on tab index
+    fun loadSongsForTab(tabIndex: Int) {
+        currentUserId?.let { userId ->
+            lastLoadedTabIndex = tabIndex
+            when (tabIndex) {
+                0 -> loadRecentlyPlayedSongs(userId)
+                1 -> loadLikedSongs(userId)
+                2 -> loadDownloadedSongs(userId)
+                3 -> loadLocalSongs(userId)
+            }
+        } ?: run {
+            _isLoading.postValue(false)
+            _allSongs.postValue(emptyList())
+            _error.postValue("User ID not available.")
         }
     }
 

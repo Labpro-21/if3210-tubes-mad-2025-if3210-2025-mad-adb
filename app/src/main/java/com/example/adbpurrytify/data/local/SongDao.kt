@@ -40,6 +40,14 @@ interface SongDao {
     @Query("SELECT * FROM songs WHERE userId = :userId AND lastPlayedTimestamp IS NOT NULL ORDER BY lastPlayedTimestamp DESC LIMIT 1")
     suspend fun getLastPlayedSong(userId: Long): SongEntity?
 
+    // 5. Get downloaded songs (artUri starts with http AND audioUri doesn't start with http)
+    @Query("SELECT * FROM songs WHERE userId = :userId AND artUri LIKE 'http%' AND audioUri NOT LIKE 'http%'")
+    fun getDownloadedSongs(userId: Long): Flow<List<SongEntity>>
+
+    // 6. Get local songs (audioUri doesn't start with http)
+    @Query("SELECT * FROM songs WHERE userId = :userId AND audioUri NOT LIKE 'http%'")
+    fun getLocalSongs(userId: Long): Flow<List<SongEntity>>
+
     // prev
     @Query("""
         SELECT * FROM songs 
@@ -59,4 +67,5 @@ interface SongDao {
     LIMIT 1
     """)
     suspend fun getNextSong(userId: Long, currentSongId: Long): SongEntity?
+
 }

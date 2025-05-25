@@ -36,17 +36,10 @@ class SongRepository @Inject constructor(
         return songDao.getLikedSongs(userId)
     }
 
-    fun getRecentlyPlayedSongs(userId: Long): Flow<List<SongEntity>> {
-        return songDao.getRecentlyPlayedSongs(userId)
-    }
-
-    suspend fun getLastPlayedSong(userId: Long): SongEntity? {
-        return songDao.getLastPlayedSong(userId)
-    }
-
     suspend fun getPreviousSong(userId: Long, currentSongId: Long): SongEntity? {
         return songDao.getPreviousSong(userId, currentSongId)
     }
+
 
     suspend fun getNextSong(userId: Long, currentSongId: Long): SongEntity? {
         return songDao.getNextSong(userId, currentSongId)
@@ -165,5 +158,21 @@ class SongRepository @Inject constructor(
     suspend fun markSongAsPlayed(songId: Long) {
         val song = getSongById(songId) ?: return
         updateSong(song.copy(lastPlayedTimestamp = System.currentTimeMillis()))
+    }
+
+    fun getRecentlyPlayedSongs(userId: Long): Flow<List<SongEntity>> {
+        return songDao.getRecentlyPlayedSongs(userId)
+    }
+
+    fun getDownloadedSongs(userId: Long): Flow<List<SongEntity>> {
+        return songDao.getDownloadedSongs(userId)
+    }
+
+    fun getLocalSongs(userId: Long): Flow<List<SongEntity>> {
+        return songDao.getLocalSongs(userId)
+    }
+
+    suspend fun getLastPlayedSong(userId: Long): SongEntity? {
+        return songDao.getLastPlayedSong(userId)
     }
 }
