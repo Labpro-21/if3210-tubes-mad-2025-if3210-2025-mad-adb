@@ -2,11 +2,9 @@ package com.example.adbpurrytify.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.example.adbpurrytify.R
 
 // If you have Spotify fonts, add them to res/font/
 // Otherwise, we'll use system fonts that look similar

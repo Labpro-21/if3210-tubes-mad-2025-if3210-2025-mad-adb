@@ -19,8 +19,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaController
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.theme.Green
-import java.util.concurrent.TimeUnit
-
 
 
 object globalPlayer {

@@ -18,8 +18,23 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
-import com.example.adbpurrytify.ui.screens.*
-import com.example.adbpurrytify.ui.viewmodels.*
+import com.example.adbpurrytify.ui.screens.EditProfileScreen
+import com.example.adbpurrytify.ui.screens.HomeScreen
+import com.example.adbpurrytify.ui.screens.LibraryScreen
+import com.example.adbpurrytify.ui.screens.LoginScreen
+import com.example.adbpurrytify.ui.screens.NetworkSensingSnackbar
+import com.example.adbpurrytify.ui.screens.ProfileScreen
+import com.example.adbpurrytify.ui.screens.SongPlayerScreen
+import com.example.adbpurrytify.ui.screens.SplashScreen
+import com.example.adbpurrytify.ui.screens.TimeListenedScreen
+import com.example.adbpurrytify.ui.screens.TopArtistsScreen
+import com.example.adbpurrytify.ui.screens.TopSongsScreen
+import com.example.adbpurrytify.ui.viewmodels.HomeViewModel
+import com.example.adbpurrytify.ui.viewmodels.ProfileViewModel
+import com.example.adbpurrytify.ui.viewmodels.SongViewModel
+import com.example.adbpurrytify.ui.viewmodels.TimeListenedViewModel
+import com.example.adbpurrytify.ui.viewmodels.TopArtistsViewModel
+import com.example.adbpurrytify.ui.viewmodels.TopSongsViewModel
 
 @Composable
 fun AppNavigation(navController: NavHostController = rememberNavController()) {

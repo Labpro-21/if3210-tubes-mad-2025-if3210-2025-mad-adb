@@ -9,8 +9,8 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.recyclerview.widget.RecyclerView
 import coil3.load
 import coil3.request.crossfade
-import coil3.request.placeholder
 import coil3.request.error
+import coil3.request.placeholder
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.components.MinimalDropdownMenu

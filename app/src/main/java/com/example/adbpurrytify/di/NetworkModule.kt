@@ -1,13 +1,10 @@
 package com.example.adbpurrytify.di
 
-import android.content.Context
 import com.example.adbpurrytify.api.ApiService
 import com.example.adbpurrytify.api.AuthInterceptor
-import com.example.adbpurrytify.data.TokenManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor

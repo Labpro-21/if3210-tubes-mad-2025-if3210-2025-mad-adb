@@ -16,14 +16,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,13 +56,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.rememberAsyncImagePainter
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.data.model.SongEntity
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
 import com.example.adbpurrytify.ui.theme.SpotifyBlack
-import com.example.adbpurrytify.ui.theme.SpotifyButtonShape
 import com.example.adbpurrytify.ui.theme.SpotifyGray
 import com.example.adbpurrytify.ui.theme.SpotifyGreen
 import com.example.adbpurrytify.ui.theme.SpotifyLightBlack
@@ -407,7 +404,7 @@ fun AddSong(
                                 val currentTimestamp = java.time.Instant.now().toEpochMilli()
 
                                 try {
-                                    val copiedPath = copyUriToInternalStorage(context, Uri.parse(artUri))
+                                    val copiedPath = copyUriToInternalStorage(context, artUri.toUri())
                                     if (copiedPath != null) artUri = copiedPath
                                     else artUri = ""
                                 } catch (e: Exception) {
@@ -418,7 +415,7 @@ fun AddSong(
                                 }
 
                                 try {
-                                    val copiedPath = copyUriToInternalStorage(context, Uri.parse(audioUri))
+                                    val copiedPath = copyUriToInternalStorage(context, audioUri.toUri())
                                     if (copiedPath != null) audioUri = copiedPath
                                     else audioUri = ""
                                 } catch (e: Exception) {

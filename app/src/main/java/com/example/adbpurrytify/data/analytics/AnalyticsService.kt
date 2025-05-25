@@ -3,13 +3,19 @@ package com.example.adbpurrytify.data.analytics
 import android.util.Log
 import com.example.adbpurrytify.data.local.AnalyticsDao
 import com.example.adbpurrytify.data.model.SongEntity
-import com.example.adbpurrytify.data.model.analytics.*
-import kotlinx.coroutines.*
+import com.example.adbpurrytify.data.model.analytics.ListeningSessionEntity
+import com.example.adbpurrytify.data.model.analytics.StreakEntity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 

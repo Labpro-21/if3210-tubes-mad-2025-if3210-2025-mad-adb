@@ -2,9 +2,9 @@ package com.example.adbpurrytify.di
 
 import android.content.Context
 import androidx.room.Room
+import com.example.adbpurrytify.data.local.AnalyticsDao
 import com.example.adbpurrytify.data.local.AppDatabase
 import com.example.adbpurrytify.data.local.SongDao
-import com.example.adbpurrytify.data.local.AnalyticsDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

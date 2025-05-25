@@ -13,9 +13,9 @@ import com.example.adbpurrytify.data.SongRepository
 import com.example.adbpurrytify.data.export.ExportManager
 import com.example.adbpurrytify.data.export.exportAsCSV
 import com.example.adbpurrytify.data.export.exportAsPDF
+import com.example.adbpurrytify.data.model.SoundCapsule
 import com.example.adbpurrytify.data.model.User
 import com.example.adbpurrytify.data.model.UserStats
-import com.example.adbpurrytify.data.model.SoundCapsule
 import com.example.adbpurrytify.utils.PermissionHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -27,8 +27,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
-import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
 import javax.inject.Inject
 
 @HiltViewModel

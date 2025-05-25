@@ -55,11 +55,8 @@ import androidx.work.WorkManager
 import com.example.adbpurrytify.R
 import com.example.adbpurrytify.ui.navigation.Screen
 import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
-import com.example.adbpurrytify.ui.theme.Green
 import com.example.adbpurrytify.ui.theme.SpotifyGreen
 import com.example.adbpurrytify.ui.theme.SpotifyLightBlack
-import com.example.adbpurrytify.ui.theme.TEXT_FIELD_BACKGROUND
-import com.example.adbpurrytify.ui.theme.TEXT_FIELD_TEXT
 import com.example.adbpurrytify.ui.viewmodels.AuthViewModel
 import com.example.adbpurrytify.worker.JwtExpiryWorker
 import kotlinx.coroutines.launch

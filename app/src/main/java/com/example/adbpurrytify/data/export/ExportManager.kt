@@ -1,6 +1,5 @@
 package com.example.adbpurrytify.data.export
 
-import android.app.DownloadManager
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -13,8 +12,6 @@ import android.provider.MediaStore
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import com.example.adbpurrytify.data.model.SoundCapsule
-import com.example.adbpurrytify.ui.viewmodels.ArtistListeningData
-import com.example.adbpurrytify.ui.viewmodels.SongListeningData
 import com.example.adbpurrytify.ui.viewmodels.TopArtistsData
 import com.example.adbpurrytify.ui.viewmodels.TopSongsData
 import kotlinx.coroutines.Dispatchers

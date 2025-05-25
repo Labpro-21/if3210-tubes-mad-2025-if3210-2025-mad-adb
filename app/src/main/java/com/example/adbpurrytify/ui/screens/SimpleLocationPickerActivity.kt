@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -26,7 +25,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -47,8 +45,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.adbpurrytify.ui.theme.ADBPurrytifyTheme
 import com.example.adbpurrytify.ui.theme.BLACK_BACKGROUND
-import com.example.adbpurrytify.ui.theme.SpotifyGreen
 import com.example.adbpurrytify.ui.theme.SpotifyGray
+import com.example.adbpurrytify.ui.theme.SpotifyGreen
 import com.example.adbpurrytify.ui.theme.SpotifyLightBlack
 
 class SimpleLocationPickerActivity : ComponentActivity() {

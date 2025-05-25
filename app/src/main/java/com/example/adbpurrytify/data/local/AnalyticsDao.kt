@@ -1,7 +1,12 @@
 package com.example.adbpurrytify.data.local
 
-import androidx.room.*
-import com.example.adbpurrytify.data.model.analytics.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
+import com.example.adbpurrytify.data.model.analytics.ListeningSessionEntity
+import com.example.adbpurrytify.data.model.analytics.StreakEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

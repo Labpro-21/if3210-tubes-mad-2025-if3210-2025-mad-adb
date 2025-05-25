@@ -1,7 +1,6 @@
 package com.example.adbpurrytify.ui.utils
 
 import androidx.compose.ui.graphics.Color
-import kotlin.random.Random
 
 object DynamicColorExtractor {
     // Simplified version that generates colors based on image path/name
