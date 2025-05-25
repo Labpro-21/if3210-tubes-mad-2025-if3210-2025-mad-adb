@@ -179,6 +179,18 @@ interface AnalyticsDao {
         minDuration: Long = 5000L, // 5 seconds minimum
         limit: Int = 10
     ): List<TopArtistResult>
+
+    @Query("""
+        SELECT songTitle, artistName, songId, 
+               COUNT(*) as playCount, 
+               SUM(duration) as totalTime
+        FROM listening_sessions 
+        WHERE userId = :userId AND duration >= 5000
+        GROUP BY songId 
+        ORDER BY totalTime DESC, playCount DESC
+        LIMIT :limit
+    """)
+    suspend fun getTopSongsAllTime(userId: Long, limit: Int = 10): List<TopSongResult>
 }
 
 // Helper data classes for query results

@@ -278,7 +278,6 @@ fun LoginScreen(
                         }
                     }
                 },
-                // Disable button while loading
                 modifier = Modifier.then(if (isLoading) Modifier.alpha(0.6f) else Modifier),
                 enabled = !isLoading
             )

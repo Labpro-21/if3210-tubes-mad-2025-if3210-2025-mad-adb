@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.adbpurrytify.data.AuthRepository
+import com.example.adbpurrytify.data.RecommendationRepository
 import com.example.adbpurrytify.data.SongRepository
 import com.example.adbpurrytify.data.model.SongEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,7 +16,8 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val songRepository: SongRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val recommendationRepository: RecommendationRepository
 ) : ViewModel() {
     // New songs LiveData
     private val _newSongs = MutableLiveData<List<SongEntity>>()
@@ -33,6 +35,10 @@ class HomeViewModel @Inject constructor(
     private val _trendingCountrySongs = MutableLiveData<List<SongEntity>>()
     val trendingCountrySongs: LiveData<List<SongEntity>> = _trendingCountrySongs
 
+    // Recommendations LiveData
+    private val _recommendedSongs = MutableLiveData<List<SongEntity>>()
+    val recommendedSongs: LiveData<List<SongEntity>> = _recommendedSongs
+
     // Loading states
     private val _isNewSongsLoading = MutableLiveData<Boolean>(false)
     val isNewSongsLoading: LiveData<Boolean> = _isNewSongsLoading
@@ -45,6 +51,10 @@ class HomeViewModel @Inject constructor(
 
     private val _isTrendingCountryLoading = MutableLiveData<Boolean>(false)
     val isTrendingCountryLoading: LiveData<Boolean> = _isTrendingCountryLoading
+
+    // Recommendations loading state
+    private val _isRecommendationsLoading = MutableLiveData<Boolean>(false)
+    val isRecommendationsLoading: LiveData<Boolean> = _isRecommendationsLoading
 
     // Error state
     private val _error = MutableLiveData<String?>(null)
@@ -73,11 +83,16 @@ class HomeViewModel @Inject constructor(
                     currentUserId = userId
                     loadNewSongs(userId)
                     loadRecentlyPlayedSongs(userId)
+                    loadRecommendations(userId, userLocation)
                 }
 
                 if (userLocation != currentLocation) {
                     currentLocation = userLocation
                     loadTrendingSongs()
+                    // Reload recommendations if location changed
+                    if (currentUserId != null) {
+                        loadRecommendations(currentUserId!!, userLocation)
+                    }
                 }
             }
         }
@@ -118,6 +133,7 @@ class HomeViewModel @Inject constructor(
                 .catch { e ->
                     _error.postValue("Failed to load new songs: ${e.message}")
                     _isNewSongsLoading.postValue(false)
+                    _newSongs.postValue(emptyList()) // Ensure empty list on error
                 }
                 .collect { songs ->
                     _newSongs.postValue(songs)
@@ -139,6 +155,7 @@ class HomeViewModel @Inject constructor(
                 .catch { e ->
                     _error.postValue("Failed to load recently played songs: ${e.message}")
                     _isRecentlyPlayedLoading.postValue(false)
+                    _recentlyPlayed.postValue(emptyList()) // Ensure empty list on error
                 }
                 .collect { songs ->
                     _recentlyPlayed.postValue(songs)
@@ -147,6 +164,23 @@ class HomeViewModel @Inject constructor(
                         isFirstEmission = false
                     }
                 }
+        }
+    }
+
+    // Load recommendations
+    fun loadRecommendations(userId: Long, userCountry: String?) {
+        _isRecommendationsLoading.postValue(true)
+        _error.postValue(null)
+        viewModelScope.launch {
+            try {
+                val recommendations = recommendationRepository.getPersonalizedRecommendations(userId, userCountry)
+                _recommendedSongs.postValue(recommendations)
+            } catch (e: Exception) {
+                _error.postValue("Failed to load recommendations: ${e.message}")
+                _recommendedSongs.postValue(emptyList())
+            } finally {
+                _isRecommendationsLoading.postValue(false)
+            }
         }
     }
 
