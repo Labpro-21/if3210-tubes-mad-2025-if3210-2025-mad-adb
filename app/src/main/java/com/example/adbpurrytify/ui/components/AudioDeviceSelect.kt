@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.media3.common.util.UnstableApi
 import com.example.adbpurrytify.ui.screens.globalPlayer
-import java.lang.Thread.sleep
 
 //import kotlinx.coroutines.withContext
 
@@ -63,8 +62,8 @@ fun onDeviceSelected(device: AudioDeviceInfo?, context: Context) {
     if (isDeviceStillConnected) {
         globalPlayer.player?.pause()
         globalPlayer.player?.setPreferredAudioDevice(device)
-        sleep(250L) // ya
-        globalPlayer.player?.play()
+//        sleep(250L) // ya
+//        globalPlayer.player?.play()
         globalPlayer.userSelectedAudioDeviceId = device!!.id
     } else {
         Toast.makeText(
