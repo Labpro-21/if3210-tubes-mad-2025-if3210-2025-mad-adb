@@ -375,6 +375,8 @@ fun SongPlayerScreen(
                                 )
                             }
                         }
+                    } else {
+                        Spacer(Modifier.width(40.dp))
                     }
 
                     Column(
