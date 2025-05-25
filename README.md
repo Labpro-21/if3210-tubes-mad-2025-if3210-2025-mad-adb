@@ -149,17 +149,19 @@ The application combines local music playback capabilities with online streaming
 ### Milestone 1 Screenshots
 | | | |
 |:---:|:---:|:---:|
-| ![alt text1](screenshots/Screenshot_20250412_235403.jpg) | ![alt text1](screenshots/Screenshot_20250412_235406.jpg) | ![alt text1](screenshots/Screenshot_20250412_235428.jpg) |
-| ![alt text1](screenshots/Screenshot_20250412_235430.jpg) | ![alt text1](screenshots/Screenshot_20250412_235433.jpg) | ![alt text1](screenshots/Screenshot_20250412_235435.jpg) |
-| ![alt text1](screenshots/Screenshot_20250412_235438.jpg) | ![alt text1](screenshots/Screenshot_20250412_235524.jpg) | |
+| ![alt text1](screenshots/m1/Screenshot_20250412_235403.jpg) | ![alt text1](screenshots/m1/Screenshot_20250412_235406.jpg) | ![alt text1](screenshots/m1/Screenshot_20250412_235428.jpg) |
+| ![alt text1](screenshots/m1/Screenshot_20250412_235430.jpg) | ![alt text1](screenshots/m1/Screenshot_20250412_235433.jpg) | ![alt text1](screenshots/m1/Screenshot_20250412_235435.jpg) |
+| ![alt text1](screenshots/m1/Screenshot_20250412_235438.jpg) | ![alt text1](screenshots/m1/Screenshot_20250412_235524.jpg) | |
+
 
 ### Milestone 2 Screenshots
-![Online Songs](screenshots/milestone2_online_songs.jpg)
-![Sound Capsule](screenshots/milestone2_sound_capsule.jpg)
-![Notification Player](screenshots/milestone2_notification.jpg)
-![Share Features](screenshots/milestone2_share.jpg)
-![Audio Routing](screenshots/milestone2_audio_routing.jpg)
-![QR Scanner](screenshots/milestone2_qr_scanner.jpg)
+| ![](screenshots/m2/audio_device.jpg) | ![](screenshots/m2/downloaded.jpg) | ![](screenshots/m2/editprofile.jpg) |
+|---|---|---|
+| ![](screenshots/m2/home.jpg) | ![](screenshots/m2/lock.jpg) | ![](screenshots/m2/maps.jpg) |
+| ![](screenshots/m2/notif.jpg) | ![](screenshots/m2/player.jpg) | ![](screenshots/m2/profile.jpg) |
+| ![](screenshots/m2/sharecapsule.jpg) | ![](screenshots/m2/sharesong.jpg) | ![](screenshots/m2/timelistened.jpg) |
+| ![](screenshots/m2/topartists.jpg) | ![](screenshots/m2/topsongs.jpg) |  |
+
 
 ## Contribution
 
